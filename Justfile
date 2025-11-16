@@ -83,8 +83,8 @@ sudoif command *args:
 # just build $target_image $tag $base_img
 #
 # Example usage:
-#   just build binaryos latest
-#   just build binaryos nvidia ghcr.io/ublue-os/bluefin-dx-nvidia:stable-daily
+#   just build hypercube latest
+#   just build hypercube nvidia ghcr.io/ublue-os/bluefin-dx-nvidia:stable-daily
 #
 # This will build an image with the specified base image.
 #

@@ -2,7 +2,7 @@
 # Sign up and add the Repository ID to the right field. Owners fields are optional.
 # Examples: https://artifacthub.io/packages/search?ts_query_web=ublue&sort=relevance&page=1
 
-repositoryID: binarypie/binaryos
+repositoryID: binarypie-dev/hypercube
 owners:
   - name: binarypie
     email: code@binarypie.com

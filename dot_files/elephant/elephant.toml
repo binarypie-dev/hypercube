@@ -1,4 +1,4 @@
-# Elephant Configuration - BinaryOS
+# Elephant Configuration - Hypercube
 # Configuration for the Elephant data provider service
 
 # Disable Arch Linux packages provider since we're on Fedora

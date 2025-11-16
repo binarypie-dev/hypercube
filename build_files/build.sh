@@ -133,19 +133,19 @@ dnf5 -y install neovim python3-neovim
 
 # Fish shell configs
 # Fish doesn't use XDG_CONFIG_DIRS, so we install to /etc/fish
-install -Dm644 /usr/share/binaryos/config/fish/config.fish /etc/fish/config.fish
-cp -r /usr/share/binaryos/config/fish/conf.d /etc/fish/
-cp -r /usr/share/binaryos/config/fish/functions /etc/fish/ 2>/dev/null || true
-cp -r /usr/share/binaryos/config/fish/completions /etc/fish/ 2>/dev/null || true
+install -Dm644 /usr/share/hypercube/config/fish/config.fish /etc/fish/config.fish
+cp -r /usr/share/hypercube/config/fish/conf.d /etc/fish/
+cp -r /usr/share/hypercube/config/fish/functions /etc/fish/ 2>/dev/null || true
+cp -r /usr/share/hypercube/config/fish/completions /etc/fish/ 2>/dev/null || true
 
 # Wezterm configs
 # Wezterm doesn't support XDG_CONFIG_DIRS for system defaults, so we install to /etc/skel
 # which will be copied to new user home directories
-install -Dm644 /usr/share/binaryos/config/wezterm/wezterm.lua /etc/skel/.config/wezterm/wezterm.lua
+install -Dm644 /usr/share/hypercube/config/wezterm/wezterm.lua /etc/skel/.config/wezterm/wezterm.lua
 
-# Configure XDG environment for BinaryOS
-# This makes all configs in /usr/share/binaryos/config discoverable
+# Configure XDG environment for Hypercube
+# This makes all configs in /usr/share/hypercube/config discoverable
 # while preserving user and admin override capabilities
-install -Dm644 /ctx/60-binaryos-xdg.conf /usr/lib/environment.d/60-binaryos-xdg.conf
+install -Dm644 /ctx/60-hypercube-xdg.conf /usr/lib/environment.d/60-hypercube-xdg.conf
 
 # systemctl enable podman.socket

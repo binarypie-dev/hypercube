@@ -1,10 +1,10 @@
-# BinaryOS
+# Hypercube
 
-BinaryOS is a custom [bootc](https://github.com/bootc-dev/bootc) image built on top of [Bluefin-DX](https://projectbluefin.io/) with Hyprland and an opinionated set of development tools. This image is designed primarily for my personal software development workflow, but you're welcome to use it, fork it, or submit issues and pull requests.
+Hypercube is a custom [bootc](https://github.com/bootc-dev/bootc) image built on top of [Bluefin-DX](https://projectbluefin.io/) with Hyprland and an opinionated set of development tools. This image is designed primarily for my personal software development workflow, but you're welcome to use it, fork it, or submit issues and pull requests.
 
 ## What's Inside
 
-BinaryOS builds on Bluefin-DX's excellent developer experience foundation and adds:
+Hypercube builds on Bluefin-DX's excellent developer experience foundation and adds:
 
 - **Hyprland**: A dynamic tiling Wayland compositor for an efficient, keyboard-driven workflow
 - **Opinionated Development Tools**: A curated set of tools and configurations optimized for my development workflow
@@ -12,7 +12,7 @@ BinaryOS builds on Bluefin-DX's excellent developer experience foundation and ad
 
 ### Available Variants
 
-BinaryOS is available in two variants:
+Hypercube is available in two variants:
 
 - **Regular**: Built on `bluefin-dx:stable-daily` for systems with Intel/AMD graphics
 - **NVIDIA**: Built on `bluefin-dx-nvidia:stable-daily` with NVIDIA driver support
@@ -37,18 +37,18 @@ While this is a personal image, community contributions are welcome! If you enco
 - A machine running a bootc-compatible image (e.g., Bazzite, Bluefin, Aurora, or Fedora Atomic)
 - Basic familiarity with bootc and container-based operating systems
 
-### Switching to BinaryOS
+### Switching to Hypercube
 
 From your existing bootc system, run:
 
 **For systems with Intel/AMD graphics:**
 ```bash
-sudo bootc switch ghcr.io/binarypie/binaryos:latest
+sudo bootc switch ghcr.io/binarypie-dev/hypercube:latest
 ```
 
 **For systems with NVIDIA graphics:**
 ```bash
-sudo bootc switch ghcr.io/binarypie/binaryos:latest-nvidia
+sudo bootc switch ghcr.io/binarypie-dev/hypercube:latest-nvidia
 ```
 
 Then reboot your system:
@@ -57,11 +57,11 @@ Then reboot your system:
 systemctl reboot
 ```
 
-After rebooting, you'll be running BinaryOS.
+After rebooting, you'll be running Hypercube.
 
 ### Switching Back
 
-If BinaryOS isn't for you, you can switch back to your previous image:
+If Hypercube isn't for you, you can switch back to your previous image:
 
 ```bash
 sudo bootc status  # Find your previous image
@@ -71,7 +71,7 @@ systemctl reboot
 
 ## Customization & Forking
 
-Want to create your own variant of BinaryOS? You're welcome to fork this repository! Here's how the build system works:
+Want to create your own variant of Hypercube? You're welcome to fork this repository! Here's how the build system works:
 
 ### Repository Structure
 
@@ -94,7 +94,7 @@ For detailed information about customizing the image, see the files mentioned ab
 
 The repository includes workflows for creating bootable disk images (ISO, QCOW2, raw) using [bootc-image-builder](https://osbuild.org/docs/bootc/). These can be used for:
 
-- Installing BinaryOS on bare metal (ISO)
+- Installing Hypercube on bare metal (ISO)
 - Testing in virtual machines (QCOW2)
 - Deploying to cloud environments (raw)
 
@@ -108,15 +108,15 @@ You can also build disk images locally using the included `just` commands (see [
 
 ## Artifacthub
 
-BinaryOS is indexed on [artifacthub.io](https://artifacthub.io) to make it easier to discover and track. If you fork this image, you can list your own variant there as well using the `artifacthub-repo.yml` file.
+Hypercube is indexed on [artifacthub.io](https://artifacthub.io) to make it easier to discover and track. If you fork this image, you can list your own variant there as well using the `artifacthub-repo.yml` file.
 
 Learn more in the [Universal Blue Artifacthub discussion](https://universal-blue.discourse.group/t/listing-your-custom-image-on-artifacthub/6446).
 
 ## Development with Just
 
-The repository includes a [`Justfile`](./Justfile) with commands for building and testing BinaryOS locally. [just](https://just.systems/) is a command runner that simplifies common development tasks.
+The repository includes a [`Justfile`](./Justfile) with commands for building and testing Hypercube locally. [just](https://just.systems/) is a command runner that simplifies common development tasks.
 
-Just is pre-installed on all Universal Blue images (including BinaryOS and Bluefin-DX). If you're using another system, install it from your package manager or see the [just installation guide](https://just.systems/man/en/introduction.html).
+Just is pre-installed on all Universal Blue images (including Hypercube and Bluefin-DX). If you're using another system, install it from your package manager or see the [just installation guide](https://just.systems/man/en/introduction.html).
 
 ### Available Commands
 
@@ -124,7 +124,7 @@ Run `just` without arguments to see all available commands. Here are the most us
 
 #### Building
 
-- `just build` - Build the BinaryOS container image locally (regular variant)
+- `just build` - Build the Hypercube container image locally (regular variant)
 - `just build-regular` - Build the regular variant (Intel/AMD graphics)
 - `just build-nvidia` - Build the NVIDIA variant
 - `just build-all` - Build both regular and NVIDIA variants
@@ -134,8 +134,8 @@ Run `just` without arguments to see all available commands. Here are the most us
 
 #### Testing
 
-- `just run-vm-qcow2` - Run BinaryOS in a VM using QCOW2 image
-- `just spawn-vm` - Run BinaryOS using systemd-vmspawn
+- `just run-vm-qcow2` - Run Hypercube in a VM using QCOW2 image
+- `just spawn-vm` - Run Hypercube using systemd-vmspawn
 
 #### Maintenance
 
@@ -147,9 +147,9 @@ For detailed usage and additional commands, see the [Justfile](./Justfile) itsel
 
 ## Related Projects
 
-BinaryOS is part of the larger Universal Blue ecosystem. Check out these other custom images for inspiration:
+Hypercube is part of the larger Universal Blue ecosystem. Check out these other custom images for inspiration:
 
-- [Bluefin-DX](https://projectbluefin.io/) - The base image for BinaryOS
+- [Bluefin-DX](https://projectbluefin.io/) - The base image for Hypercube
 - [m2Giles' OS](https://github.com/m2giles/m2os) - Another custom bootc image
 - [bOS](https://github.com/bsherman/bos) - Custom image by bsherman
 - [Homer](https://github.com/bketelsen/homer/) - Custom image by bketelsen
@@ -162,7 +162,7 @@ This project follows the same licensing as the Universal Blue project. See the L
 
 ## Acknowledgments
 
-BinaryOS is built on the shoulders of giants:
+Hypercube is built on the shoulders of giants:
 
 - [Universal Blue](https://universal-blue.org/) for the excellent image-based desktop platform
 - [Project Bluefin](https://projectbluefin.io/) for the outstanding developer experience foundation
