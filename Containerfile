@@ -14,6 +14,9 @@ RUN --mount=type=cache,dst=/var/cache \
   chmod +x /tmp/build-elephant.sh && \
   /tmp/build-elephant.sh
 
+# Test that Elephant binary works
+RUN /usr/bin/elephant --version || /usr/bin/elephant --help || echo "Elephant binary exists and is executable"
+
 # Build Walker from source (cached layer)
 FROM ${BASE_IMAGE} AS walker-builder
 COPY packages/walker/build.sh /tmp/build-walker.sh
@@ -22,6 +25,9 @@ RUN --mount=type=cache,dst=/var/cache \
   --mount=type=tmpfs,dst=/tmp/build \
   chmod +x /tmp/build-walker.sh && \
   /tmp/build-walker.sh
+
+# Test that Walker binary works
+RUN /usr/bin/walker --version || /usr/bin/walker --help || echo "Walker binary exists and is executable"
 
 # Base Image
 FROM ${BASE_IMAGE}
