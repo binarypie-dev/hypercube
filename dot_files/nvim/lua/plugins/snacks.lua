@@ -1,6 +1,9 @@
 return {
-  "snacks.nvim",
+  "folke/snacks.nvim",
   opts = {
+    statuscolumn = {
+      enabled = true,
+    },
     picker = {
       files = {
         sources = {

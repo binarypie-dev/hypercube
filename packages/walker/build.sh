@@ -6,7 +6,7 @@ set -ouex pipefail
 dnf5 -y install git rust cargo gtk4-devel gtk4-layer-shell-devel protobuf-compiler cairo-devel poppler-glib-devel
 
 # Clone Walker repository
-WALKER_VERSION="v2.10.0"
+WALKER_VERSION="v2.12.0"
 git clone --depth 1 --branch ${WALKER_VERSION} https://github.com/abenz1267/walker.git /tmp/walker
 
 cd /tmp/walker

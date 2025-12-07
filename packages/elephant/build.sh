@@ -6,7 +6,7 @@ set -ouex pipefail
 dnf5 -y install git golang protobuf-compiler
 
 # Clone Elephant repository
-ELEPHANT_VERSION="v2.15.0"
+ELEPHANT_VERSION="v2.17.0"
 git clone --depth 1 --branch ${ELEPHANT_VERSION} https://github.com/abenz1267/elephant.git /tmp/elephant
 
 cd /tmp/elephant
