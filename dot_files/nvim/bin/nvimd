@@ -1,0 +1,85 @@
+#!/usr/bin/env bash
+# Docker Neovim wrapper script
+# Usage: docker-nvim [file or directory]
+#
+# Add to your shell config:
+#   alias dnvim="$HOME/.config/nvim/docker-nvim.sh"
+
+set -e
+
+IMAGE_NAME="nvim-dev"
+NVIM_DATA="$HOME/.local/share/nvim"
+NVIM_STATE="$HOME/.local/state/nvim"
+NVIM_CACHE="$HOME/.cache/nvim"
+
+# Find nvim config - prefer user config, fall back to system config
+if [[ -d "$HOME/.config/nvim" ]]; then
+    NVIM_CONFIG="$HOME/.config/nvim"
+elif [[ -d "/usr/share/hypercube/config/nvim" ]]; then
+    NVIM_CONFIG="/usr/share/hypercube/config/nvim"
+else
+    echo "Error: No nvim config found at ~/.config/nvim or /usr/share/hypercube/config/nvim"
+    exit 1
+fi
+
+# Create data directories if they don't exist
+mkdir -p "$NVIM_DATA" "$NVIM_STATE" "$NVIM_CACHE"
+
+# Determine what to mount and what to open
+if [[ $# -eq 0 ]]; then
+    # No arguments - mount and open current directory
+    MOUNT_DIR="$(pwd)"
+    NVIM_ARGS=""
+elif [[ -d "$1" ]]; then
+    # Argument is a directory - mount it and open there
+    MOUNT_DIR="$(cd "$1" && pwd)"
+    shift
+    NVIM_ARGS="$*"
+elif [[ -f "$1" ]]; then
+    # Argument is a file - mount parent dir, open the file
+    MOUNT_DIR="$(cd "$(dirname "$1")" && pwd)"
+    NVIM_ARGS="$(basename "$1") $*"
+    shift
+else
+    # Argument is a new file or pattern - mount parent if path has dir component
+    if [[ "$1" == */* ]]; then
+        # Has directory component (e.g., ./foo.txt or path/to/file.txt)
+        DIR_PART="$(dirname "$1")"
+        if [[ -d "$DIR_PART" ]]; then
+            MOUNT_DIR="$(cd "$DIR_PART" && pwd)"
+            NVIM_ARGS="$(basename "$1")"
+        else
+            # Parent doesn't exist, mount cwd
+            MOUNT_DIR="$(pwd)"
+            NVIM_ARGS="$1"
+        fi
+    else
+        # Just a filename, mount cwd
+        MOUNT_DIR="$(pwd)"
+        NVIM_ARGS="$1"
+    fi
+    shift
+    NVIM_ARGS="$NVIM_ARGS $*"
+fi
+
+# Build the image if it doesn't exist
+if ! podman image inspect "$IMAGE_NAME" &>/dev/null; then
+    echo "Building $IMAGE_NAME image (this may take a while on first run)..."
+    podman build -t "$IMAGE_NAME" "$NVIM_CONFIG"
+fi
+
+# Run the container
+# --userns=keep-id maps host UID/GID to container user (fixes file permission issues)
+# :z relabels for SELinux (required on Fedora)
+exec podman run -it --rm \
+    --name "nvim-$$" \
+    --userns=keep-id \
+    -e "TERM=${TERM:-xterm-256color}" \
+    -e "COLORTERM=${COLORTERM:-truecolor}" \
+    -v "$NVIM_CONFIG:/home/nvim/.config/nvim:ro,z" \
+    -v "$NVIM_DATA:/home/nvim/.local/share/nvim:rw,z" \
+    -v "$NVIM_STATE:/home/nvim/.local/state/nvim:rw,z" \
+    -v "$NVIM_CACHE:/home/nvim/.cache/nvim:rw,z" \
+    -v "$MOUNT_DIR:/workspace:rw,z" \
+    -w "/workspace" \
+    "$IMAGE_NAME" $NVIM_ARGS

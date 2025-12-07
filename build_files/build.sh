@@ -20,12 +20,12 @@ dnf5 -y install fd-find
 # Remove extra things
 # TODO: Figure out what we don't need from solopasha/hyprland
 
-# Application Launcher - Walker / Elephant
-dnf5 -y copr enable errornointernet/packages
-dnf5 -y install walker elephant
+# Application Launcher - Walker / Elephant (build from source)
+/ctx/packages/walker/build.sh
+/ctx/packages/elephant/build.sh
 
 # On Screen Display
-dnf5 -y copr enable markupstart/SwayOSD
+dnf5 -y copr enable codelovr/swayosd
 dnf5 -y install swayosd
 
 # Desktop Notifications
@@ -42,6 +42,9 @@ dnf -y install ghostty
 # Editor
 dnf5 -y copr enable agriffis/neovim-nightly
 dnf5 -y install neovim python3-neovim
+
+# Install nvimd (containerized neovim wrapper) to /usr/local/bin
+install -Dm755 /usr/share/hypercube/config/nvim/bin/nvimd /usr/local/bin/nvimd
 
 # Fish shell configs
 # Fish doesn't use XDG_CONFIG_DIRS, so we install to /etc/fish

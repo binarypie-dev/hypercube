@@ -1,34 +1,157 @@
-# Tokyo Night Theme for Ghostty
-# Based on the popular Tokyo Night color scheme
+# Ghostty keybindings matching WezTerm config
+# Leader key is CTRL+a (simulated via prefix since Linux doesn't support global leader)
 
-# Background and Foreground
-background = 1a1b26
-foreground = a9b1d6
+# ----------------------------------------------------------------
+# APPLICATION - Behavior and Configuraiton
+# ----------------------------------------------------------------
+async-backend = auto
+desktop-notifications = false
+clipboard-trim-trailing-spaces = true
+clipboard-read = allow
+clipboard-write = allow
 
-# Normal colors (palette 0-7)
-palette = 0=#32344a
-palette = 1=#f7768e
-palette = 2=#9ece6a
-palette = 3=#e0af68
-palette = 4=#7aa2f7
-palette = 5=#ad8ee6
-palette = 6=#449dab
-palette = 7=#787c99
+# ----------------------------------------------------------------
+# APPEARANCE - Hide all chrome
+# ----------------------------------------------------------------
 
-# Bright colors (palette 8-15)
-palette = 8=#444b6a
-palette = 9=#ff7a93
-palette = 10=#b9f27c
-palette = 11=#ff9e64
-palette = 12=#7da6ff
-palette = 13=#bb9af7
-palette = 14=#0db9d7
-palette = 15=#acb0d0
+window-theme = ghostty
+window-decoration = none
+gtk-titlebar = false
+gtk-tabs-location = bottom
+gtk-wide-tabs = false
 
-# Cursor colors
-cursor-color = a9b1d6
+# ----------------------------------------------------------------
+# FONT CONFIGURATION
+# ----------------------------------------------------------------
 
-# Selection colors
-selection-background = 7aa2f7
-selection-foreground = 1a1b26
+font-family = JetBrainsMono Nerd Font
+font-size = 13
 
+# ----------------------------------------------------------------
+# TOKYO NIGHT MOON COLOR SCHEME
+# Matching Neovim's Tokyo Night Moon theme with darker backgrounds
+# ----------------------------------------------------------------
+
+# Background and foreground
+background = #222436
+foreground = #c8d3f5
+
+# Cursor
+cursor-color = #c8d3f5
+cursor-text = #222436
+
+# Selection
+selection-background = #2f334d
+selection-foreground = #c8d3f5
+
+# Black (terminal_black and darker variants)
+palette = 0=#1e2030
+palette = 8=#444a73
+
+# Red
+palette = 1=#ff757f
+palette = 9=#ff757f
+
+# Green
+palette = 2=#c3e88d
+palette = 10=#c3e88d
+
+# Yellow
+palette = 3=#ffc777
+palette = 11=#ffc777
+
+# Blue
+palette = 4=#82aaff
+palette = 12=#65bcff
+
+# Magenta/Purple
+palette = 5=#c099ff
+palette = 13=#fca7ea
+
+# Cyan
+palette = 6=#86e1fc
+palette = 14=#86e1fc
+
+# White
+palette = 7=#c8d3f5
+palette = 15=#c8d3f5
+
+# ----------------------------------------------------------------
+# APPLICATION
+# ----------------------------------------------------------------
+
+# Reload Config
+keybind = ctrl+a>shift+r=reload_config
+
+# ----------------------------------------------------------------
+# TABS
+# ----------------------------------------------------------------
+
+# Rename
+keybind = ctrl+a>,=prompt_surface_title
+
+# Show tab navigator
+keybind = ctrl+a>w=toggle_tab_overview
+
+# Create a new tab
+keybind = ctrl+a>c=new_tab
+
+# Rename current tab (Ghostty doesn't support this natively, but we can use new_tab as closest)
+# Note: ctrl+a>, is for rename in WezTerm but Ghostty doesn't have direct rename support
+
+# Move to next/previous tab
+keybind = ctrl+a>n=next_tab
+keybind = ctrl+a>p=previous_tab
+
+# Close tab (using & which is shift+7, but Ghostty uses physical keys)
+keybind = ctrl+a>shift+seven=close_tab
+
+# ----------------------------------------------------------------
+# PANES/SPLITS
+# ----------------------------------------------------------------
+
+# Make active pane more obvijnihjous - dim unfocused splits
+unfocused-split-opacity = 0.75
+
+# Make split dividers visible
+#split-divider-color = #c099ff
+
+# Vertical split (|)
+keybind = ctrl+a>shift+backslash=new_split:right
+
+# Horizontal split (-)
+keybind = ctrl+a>-=new_split:down
+
+# Close/kill active pane
+keybind = ctrl+a>x=close_surface
+
+# Swap pane with another (using { which is shift+[)
+keybind = ctrl+a>shift+left_bracket=goto_split:previous
+
+# Zoom current pane (toggle)
+keybind = ctrl+a>z=toggle_split_zoom
+keybind = alt+f=toggle_split_zoom
+
+# Move to next/previous pane
+keybind = ctrl+a>semicolon=goto_split:previous
+keybind = ctrl+a>o=goto_split:next
+
+# Vim-style pane navigation
+keybind = ctrl+a>h=goto_split:left
+keybind = ctrl+a>l=goto_split:right
+keybind = ctrl+a>k=goto_split:top
+keybind = ctrl+a>j=goto_split:bottom
+
+# Pane resizing (ctrl+a>r enters resize mode, then h/j/k/l to resize)
+# Note: Ghostty doesn't have key tables/modes like WezTerm, so we use direct bindings
+keybind = ctrl+a>r>h=resize_split:left,10
+keybind = ctrl+a>r>l=resize_split:right,10
+keybind = ctrl+a>r>k=resize_split:up,10
+keybind = ctrl+a>r>j=resize_split:down,10
+
+# ----------------------------------------------------------------
+# COPY MODE
+# ----------------------------------------------------------------
+
+# Activate copy mode (similar to tmux/vim)
+keybind = ctrl+a>left_bracket=copy_to_clipboard

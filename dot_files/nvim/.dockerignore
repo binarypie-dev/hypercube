@@ -1,0 +1,19 @@
+# Ignore Neovim runtime data (will be mounted separately)
+.git
+*.md
+!README.md
+LICENSE
+
+# Ignore local plugin data
+plugin/
+spell/
+
+# Ignore caches and generated files
+*.log
+*.swp
+*.swo
+*~
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
