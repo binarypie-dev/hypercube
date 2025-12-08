@@ -19,21 +19,14 @@ dnf5 -y copr enable solopasha/hyprland
 dnf5 -y install waybar-git xdg-desktop-portal-hyprland hyprland hyprland-contrib hyprland-plugins hyprpaper hyprpicker hypridle hyprshot hyprlock pyprland xdg-desktop-portal-hyprland hyprland-qtutils
 
 # CLI Tools
-dnf5 -y install fd-find
+dnf5 -y install fd-find brightnessctl playerctl
 
 # Remove extra things
 # TODO: Figure out what we don't need from solopasha/hyprland
 
-# Application Launcher - Eww (from solopasha/hyprland COPR)
-dnf5 -y install eww-git
-
-# On Screen Display
-dnf5 -y copr enable codelovr/swayosd
-dnf5 -y install swayosd
-
-# Desktop Notifications
-dnf5 -y install mako
-systemctl --global mask mako.service
+# Quickshell - Application Launcher, Notifications, OSD
+dnf5 -y copr enable errornointernet/quickshell
+dnf5 -y install quickshell
 
 # Terminals
 dnf5 -y copr enable wezfurlong/wezterm-nightly
@@ -139,13 +132,13 @@ EOF
   echo "Hypercube Plymouth theme installed successfully"
 fi
 
-### Install Eww config
-# Install eww launcher configuration to system-wide location
-if [ -d /usr/share/hypercube/config/eww ]; then
-  echo "Installing Eww launcher configuration..."
-  mkdir -p /etc/skel/.config/eww
-  cp -r /usr/share/hypercube/config/eww/* /etc/skel/.config/eww/
-  echo "Eww configuration installed successfully"
+### Install Quickshell config
+# Install quickshell launcher configuration to system-wide location
+if [ -d /usr/share/hypercube/config/quickshell ]; then
+  echo "Installing Quickshell launcher configuration..."
+  mkdir -p /etc/skel/.config/quickshell
+  cp -r /usr/share/hypercube/config/quickshell/* /etc/skel/.config/quickshell/
+  echo "Quickshell configuration installed successfully"
 fi
 
 ### Install GDM branding (login screen customization)
