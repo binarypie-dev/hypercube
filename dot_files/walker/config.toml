@@ -11,6 +11,11 @@ disable_mouse = false
 debug = false
 page_jump_items = 10
 hide_quick_activation = false
+single_click = true
+
+# Column settings for grid-based providers
+[columns]
+symbols = 3
 
 [shell]
 anchor_top = true

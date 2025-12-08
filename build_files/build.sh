@@ -127,5 +127,30 @@ DeviceTimeout=8
 EOF
     fi
 
+    # Rebuild initramfs to include Plymouth theme
+    # This is required for the theme to be available during early boot
+    echo "Rebuilding initramfs with Plymouth theme..."
+    dracut --force --regenerate-all
+
     echo "Hypercube Plymouth theme installed successfully"
+fi
+
+### Install GDM branding (login screen customization)
+if [ -d /usr/share/hypercube/config/gdm/dconf ]; then
+    echo "Installing GDM branding..."
+
+    # Install dconf profile for GDM
+    mkdir -p /etc/dconf/profile
+    cp -f /usr/share/hypercube/config/gdm/dconf/profile /etc/dconf/profile/gdm
+
+    # Create dconf database directory
+    mkdir -p /etc/dconf/db/hypercube-gdm.d
+
+    # Copy the GDM settings file
+    cp -f /usr/share/hypercube/config/gdm/dconf/hypercube-gdm /etc/dconf/db/hypercube-gdm.d/00-hypercube
+
+    # Compile the dconf database
+    dconf update
+
+    echo "GDM branding installed successfully"
 fi

@@ -36,7 +36,10 @@ fi
 cd /
 rm -rf /tmp/walker /tmp/cargo /tmp/cargo-target
 
-# Remove build dependencies to keep layer small
-dnf5 -y remove rust cargo protobuf-compiler
+# Ensure runtime dependencies are installed (gtk4-layer-shell is needed at runtime)
+dnf5 -y install gtk4-layer-shell
+
+# Remove build-only dependencies to keep layer small
+dnf5 -y remove rust cargo protobuf-compiler gtk4-devel gtk4-layer-shell-devel cairo-devel poppler-glib-devel
 dnf5 -y clean all
 
