@@ -128,9 +128,9 @@ EOF
 
   # Rebuild initramfs to include Plymouth theme
   # This is required for the theme to be available during early boot
-  # --no-xattr: Container filesystems don't support xattrs, suppress warnings
+  # Note: xattr warnings during build are harmless (container fs limitation)
   echo "Rebuilding initramfs with Plymouth theme..."
-  dracut --force --regenerate-all --no-xattr
+  dracut --force --regenerate-all 2>&1 | grep -v "Failed to copy xattr"
 
   echo "Hypercube Plymouth theme installed successfully"
 fi
