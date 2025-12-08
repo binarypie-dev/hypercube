@@ -24,9 +24,8 @@ dnf5 -y install fd-find
 # Remove extra things
 # TODO: Figure out what we don't need from solopasha/hyprland
 
-# Application Launcher - Walker / Elephant (build from source)
-/ctx/packages/walker/build.sh
-/ctx/packages/elephant/build.sh
+# Application Launcher - Eww (from solopasha/hyprland COPR)
+dnf5 -y install eww-git
 
 # On Screen Display
 dnf5 -y copr enable codelovr/swayosd
@@ -72,85 +71,95 @@ install -Dm644 /ctx/60-hypercube-xdg.conf /usr/lib/environment.d/60-hypercube-xd
 ### Install Hypercube branding assets
 # Install logo files to standard locations if they exist
 if [ -d /ctx/branding ]; then
-    # Install to pixmaps for system-wide use
-    mkdir -p /usr/share/pixmaps
-    cp -f /ctx/branding/hypercube-logo.png /usr/share/pixmaps/ 2>/dev/null || true
-    cp -f /ctx/branding/hypercube-logo.svg /usr/share/pixmaps/ 2>/dev/null || true
+  # Install to pixmaps for system-wide use
+  mkdir -p /usr/share/pixmaps
+  cp -f /ctx/branding/hypercube-logo.png /usr/share/pixmaps/ 2>/dev/null || true
+  cp -f /ctx/branding/hypercube-logo.svg /usr/share/pixmaps/ 2>/dev/null || true
 
-    # Install icons to hicolor theme
-    for size in 48 64 128 256; do
-        if [ -f "/ctx/branding/hypercube-icon-${size}.png" ]; then
-            mkdir -p "/usr/share/icons/hicolor/${size}x${size}/apps"
-            cp -f "/ctx/branding/hypercube-icon-${size}.png" "/usr/share/icons/hicolor/${size}x${size}/apps/hypercube.png"
-        fi
-    done
-
-    # Install SVG icon if available
-    if [ -f "/ctx/branding/hypercube-logo.svg" ]; then
-        mkdir -p /usr/share/icons/hicolor/scalable/apps
-        cp -f /ctx/branding/hypercube-logo.svg /usr/share/icons/hicolor/scalable/apps/hypercube.svg
+  # Install icons to hicolor theme
+  for size in 48 64 128 256; do
+    if [ -f "/ctx/branding/hypercube-icon-${size}.png" ]; then
+      mkdir -p "/usr/share/icons/hicolor/${size}x${size}/apps"
+      cp -f "/ctx/branding/hypercube-icon-${size}.png" "/usr/share/icons/hicolor/${size}x${size}/apps/hypercube.png"
     fi
+  done
+
+  # Install SVG icon if available
+  if [ -f "/ctx/branding/hypercube-logo.svg" ]; then
+    mkdir -p /usr/share/icons/hicolor/scalable/apps
+    cp -f /ctx/branding/hypercube-logo.svg /usr/share/icons/hicolor/scalable/apps/hypercube.svg
+  fi
 fi
 
 ### Install Hypercube Plymouth theme
 if [ -d /ctx/branding/plymouth/hypercube ]; then
-    echo "Installing Hypercube Plymouth theme..."
+  echo "Installing Hypercube Plymouth theme..."
 
-    # Install plymouth-plugin-script (required for script-based themes)
-    dnf5 -y clean all
-    dnf5 -y install plymouth-plugin-script
+  # Install plymouth-plugin-script (required for script-based themes)
+  dnf5 -y clean all
+  dnf5 -y install plymouth-plugin-script
 
-    # Create theme directory
-    mkdir -p /usr/share/plymouth/themes/hypercube
+  # Create theme directory
+  mkdir -p /usr/share/plymouth/themes/hypercube
 
-    # Copy all theme files
-    cp -r /ctx/branding/plymouth/hypercube/* /usr/share/plymouth/themes/hypercube/
+  # Copy all theme files
+  cp -r /ctx/branding/plymouth/hypercube/* /usr/share/plymouth/themes/hypercube/
 
-    # Set correct permissions
-    chmod 644 /usr/share/plymouth/themes/hypercube/*
-    chmod 755 /usr/share/plymouth/themes/hypercube
+  # Set correct permissions
+  chmod 644 /usr/share/plymouth/themes/hypercube/*
+  chmod 755 /usr/share/plymouth/themes/hypercube
 
-    # Set Hypercube as the default Plymouth theme
-    plymouth-set-default-theme hypercube
+  # Set Hypercube as the default Plymouth theme
+  plymouth-set-default-theme hypercube
 
-    # Update initramfs to include the new theme
-    # Note: This is handled by bootc/ostree during deployment, but we set the config
-    if [ -f /etc/plymouth/plymouthd.conf ]; then
-        sed -i 's/^Theme=.*/Theme=hypercube/' /etc/plymouth/plymouthd.conf
-    else
-        mkdir -p /etc/plymouth
-        cat > /etc/plymouth/plymouthd.conf << EOF
+  # Update initramfs to include the new theme
+  # Note: This is handled by bootc/ostree during deployment, but we set the config
+  if [ -f /etc/plymouth/plymouthd.conf ]; then
+    sed -i 's/^Theme=.*/Theme=hypercube/' /etc/plymouth/plymouthd.conf
+  else
+    mkdir -p /etc/plymouth
+    cat >/etc/plymouth/plymouthd.conf <<EOF
 [Daemon]
 Theme=hypercube
 ShowDelay=0
 DeviceTimeout=8
 EOF
-    fi
+  fi
 
-    # Rebuild initramfs to include Plymouth theme
-    # This is required for the theme to be available during early boot
-    echo "Rebuilding initramfs with Plymouth theme..."
-    dracut --force --regenerate-all
+  # Rebuild initramfs to include Plymouth theme
+  # This is required for the theme to be available during early boot
+  # --no-xattr: Container filesystems don't support xattrs, suppress warnings
+  echo "Rebuilding initramfs with Plymouth theme..."
+  dracut --force --regenerate-all --no-xattr
 
-    echo "Hypercube Plymouth theme installed successfully"
+  echo "Hypercube Plymouth theme installed successfully"
+fi
+
+### Install Eww config
+# Install eww launcher configuration to system-wide location
+if [ -d /usr/share/hypercube/config/eww ]; then
+  echo "Installing Eww launcher configuration..."
+  mkdir -p /etc/skel/.config/eww
+  cp -r /usr/share/hypercube/config/eww/* /etc/skel/.config/eww/
+  echo "Eww configuration installed successfully"
 fi
 
 ### Install GDM branding (login screen customization)
 if [ -d /usr/share/hypercube/config/gdm/dconf ]; then
-    echo "Installing GDM branding..."
+  echo "Installing GDM branding..."
 
-    # Install dconf profile for GDM
-    mkdir -p /etc/dconf/profile
-    cp -f /usr/share/hypercube/config/gdm/dconf/profile /etc/dconf/profile/gdm
+  # Install dconf profile for GDM
+  mkdir -p /etc/dconf/profile
+  cp -f /usr/share/hypercube/config/gdm/dconf/profile /etc/dconf/profile/gdm
 
-    # Create dconf database directory
-    mkdir -p /etc/dconf/db/hypercube-gdm.d
+  # Create dconf database directory
+  mkdir -p /etc/dconf/db/hypercube-gdm.d
 
-    # Copy the GDM settings file
-    cp -f /usr/share/hypercube/config/gdm/dconf/hypercube-gdm /etc/dconf/db/hypercube-gdm.d/00-hypercube
+  # Copy the GDM settings file
+  cp -f /usr/share/hypercube/config/gdm/dconf/hypercube-gdm /etc/dconf/db/hypercube-gdm.d/00-hypercube
 
-    # Compile the dconf database
-    dconf update
+  # Compile the dconf database
+  dconf update
 
-    echo "GDM branding installed successfully"
+  echo "GDM branding installed successfully"
 fi

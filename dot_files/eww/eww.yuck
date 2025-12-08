@@ -1,0 +1,101 @@
+; Hypercube App Launcher - Eww Configuration
+; Tokyo Night themed application launcher
+
+; State variables
+(defvar search-query "")
+(defvar apps-json "[]")
+(defvar visible false)
+
+; Poll for applications - generates JSON list of .desktop files
+(defpoll all-apps :interval "60s"
+  :initial "[]"
+  `find /usr/share/applications ~/.local/share/applications -name '*.desktop' 2>/dev/null | \
+   head -100 | \
+   while read -r file; do
+     name=$(grep -m1 '^Name=' "$file" 2>/dev/null | cut -d= -f2)
+     exec=$(grep -m1 '^Exec=' "$file" 2>/dev/null | cut -d= -f2 | sed 's/ %[fFuUdDnNickvm]//g')
+     icon=$(grep -m1 '^Icon=' "$file" 2>/dev/null | cut -d= -f2)
+     nodisplay=$(grep -m1 '^NoDisplay=' "$file" 2>/dev/null | cut -d= -f2)
+     if [ -n "$name" ] && [ -n "$exec" ] && [ "$nodisplay" != "true" ]; then
+       printf '{"name":"%s","exec":"%s","icon":"%s"}\n' \
+         "$(echo "$name" | sed 's/"/\\"/g')" \
+         "$(echo "$exec" | sed 's/"/\\"/g')" \
+         "$(echo "$icon" | sed 's/"/\\"/g')"
+     fi
+   done | jq -s 'sort_by(.name | ascii_downcase)'`)
+
+; Filter apps based on search query
+(defvar filtered-apps "[]")
+
+; App entry widget
+(defwidget app-entry [app]
+  (button
+    :class "app-entry"
+    :onclick "eww close launcher && ${app.exec} &"
+    (box
+      :orientation "h"
+      :space-evenly false
+      :spacing 12
+      (image
+        :path {app.icon}
+        :image-width 32
+        :image-height 32
+        :class "app-icon")
+      (label
+        :text {app.name}
+        :class "app-name"
+        :halign "start"
+        :hexpand true))))
+
+; Search input widget
+(defwidget search-box []
+  (box
+    :class "search-container"
+    :orientation "h"
+    :space-evenly false
+    :spacing 10
+    (label :text "" :class "search-icon")
+    (input
+      :class "search-input"
+      :value search-query
+      :hexpand true
+      :onchange "eww update search-query='{}' && eww update filtered-apps=\"$(echo '${all-apps}' | jq -c '[.[] | select(.name | ascii_downcase | contains(\"'{}'\"))]' | head -c 10000)\""
+      :onaccept "app=$(echo '${filtered-apps}' | jq -r '.[0].exec // empty'); [ -n \"$app\" ] && eww close launcher && $app &")))
+
+; App list widget
+(defwidget app-list []
+  (scroll
+    :class "app-list-scroll"
+    :vscroll true
+    :hscroll false
+    :vexpand true
+    (box
+      :orientation "v"
+      :spacing 4
+      :class "app-list"
+      (for app in {filtered-apps != "[]" ? filtered-apps : all-apps}
+        (app-entry :app app)))))
+
+; Main launcher widget
+(defwidget launcher-widget []
+  (box
+    :class "launcher-container"
+    :orientation "v"
+    :spacing 16
+    (search-box)
+    (app-list)))
+
+; Launcher window
+(defwindow launcher
+  :monitor 0
+  :geometry (geometry
+    :x "0%"
+    :y "0%"
+    :width "450px"
+    :height "500px"
+    :anchor "center center")
+  :stacking "overlay"
+  :exclusive false
+  :focusable true
+  :namespace "launcher"
+  (launcher-widget))
