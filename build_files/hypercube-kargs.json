@@ -1,0 +1,10 @@
+{
+  "kargs": [
+    "plymouth.enable=1",
+    "quiet",
+    "splash",
+    "rd.plymouth=1",
+    "plymouth.use-simpledrm=1",
+    "bgrt_disable"
+  ]
+}

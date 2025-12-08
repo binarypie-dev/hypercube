@@ -112,19 +112,23 @@ if [ -d /ctx/branding/plymouth/hypercube ]; then
   # Set Hypercube as the default Plymouth theme
   plymouth-set-default-theme hypercube
 
-  # Update initramfs to include the new theme
-  # Note: This is handled by bootc/ostree during deployment, but we set the config
-  if [ -f /etc/plymouth/plymouthd.conf ]; then
-    sed -i 's/^Theme=.*/Theme=hypercube/' /etc/plymouth/plymouthd.conf
-  else
-    mkdir -p /etc/plymouth
-    cat >/etc/plymouth/plymouthd.conf <<EOF
+  # Configure Plymouth daemon
+  mkdir -p /etc/plymouth
+  cat >/etc/plymouth/plymouthd.conf <<EOF
 [Daemon]
 Theme=hypercube
 ShowDelay=0
 DeviceTimeout=8
 EOF
-  fi
+
+  # Install dracut configuration to ensure Plymouth is included in initramfs
+  mkdir -p /etc/dracut.conf.d
+  cp /ctx/50-hypercube-plymouth.conf /etc/dracut.conf.d/
+
+  # Configure bootc kernel arguments for Plymouth
+  # These ensure Plymouth shows during early boot and hides firmware logo
+  mkdir -p /usr/lib/bootc/kargs.d
+  cp /ctx/hypercube-kargs.json /usr/lib/bootc/kargs.d/
 
   # Rebuild initramfs to include Plymouth theme
   # This is required for the theme to be available during early boot
@@ -162,4 +166,15 @@ if [ -d /usr/share/hypercube/config/gdm/dconf ]; then
   dconf update
 
   echo "GDM branding installed successfully"
+fi
+
+### Install GDM Tokyo Night theme CSS
+if [ -f /usr/share/hypercube/config/gdm/gnome-shell/gnome-shell.css ]; then
+  echo "Installing GDM Tokyo Night CSS theme..."
+
+  # Install custom CSS to GDM's gnome-shell theme directory
+  mkdir -p /usr/share/gnome-shell/theme
+  cp -f /usr/share/hypercube/config/gdm/gnome-shell/gnome-shell.css /usr/share/gnome-shell/theme/gdm.css
+
+  echo "GDM Tokyo Night CSS theme installed successfully"
 fi

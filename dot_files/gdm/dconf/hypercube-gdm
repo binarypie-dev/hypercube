@@ -6,30 +6,30 @@
 disable-user-list=false
 
 # Enable banner message with Hypercube branding
-banner-message-enable=true
+banner-message-enable=false
 banner-message-text='Welcome to Hypercube'
 
 # Logo for GDM (displayed above login)
 logo='/usr/share/pixmaps/hypercube-logo.png'
 
 [org/gnome/desktop/background]
-# GDM background - uses the same background as hyprlock
-picture-uri='file:///usr/share/hypercube/config/hypr/background.webp'
-picture-uri-dark='file:///usr/share/hypercube/config/hypr/background.webp'
-picture-options='zoom'
+# GDM background - cube logo centered on black
+picture-uri='file:///usr/share/pixmaps/hypercube-logo.png'
+picture-uri-dark='file:///usr/share/pixmaps/hypercube-logo.png'
+picture-options='centered'
 
-# Tokyo Night background color as fallback
-primary-color='#1a1b26'
-secondary-color='#1a1b26'
+# Black background behind the centered logo
+primary-color='#000000'
+secondary-color='#000000'
 color-shading-type='solid'
 
 [org/gnome/desktop/screensaver]
-# Lock screen background matches GDM
-picture-uri='file:///usr/share/hypercube/config/hypr/background.webp'
-primary-color='#1a1b26'
-secondary-color='#1a1b26'
+# Lock screen background - cube logo centered on black
+picture-uri='file:///usr/share/pixmaps/hypercube-logo.png'
+primary-color='#000000'
+secondary-color='#000000'
 color-shading-type='solid'
-picture-options='zoom'
+picture-options='centered'
 
 [org/gnome/desktop/interface]
 # Tokyo Night compatible GTK theme and icon settings
@@ -37,3 +37,6 @@ color-scheme='prefer-dark'
 cursor-theme='Adwaita'
 icon-theme='Adwaita'
 gtk-theme='Adwaita-dark'
+font-name='JetBrainsMono Nerd Font 13'
+monospace-font-name='JetBrainsMono Nerd Font Mono 13'
+document-font-name='JetBrainsMono Nerd Font 13'

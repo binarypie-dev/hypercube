@@ -49,11 +49,11 @@ background.sprite.SetZ(-100);
 
 //--------------------------------- Logo Display ------------------------------------
 
-// Load logo image (centered, smaller version of the hypercube)
+// Load logo image (centered on screen)
 logo.image = Image("logo.png");
 logo.sprite = Sprite(logo.image);
 logo.sprite.SetX(screen.half.w - logo.image.GetWidth() / 2);
-logo.sprite.SetY(screen.half.h - logo.image.GetHeight() / 2 - 50);
+logo.sprite.SetY(screen.half.h - logo.image.GetHeight() / 2);
 logo.sprite.SetZ(10);
 logo.sprite.SetOpacity(1);
 
