@@ -84,52 +84,21 @@ if [ -d /ctx/branding ]; then
   fi
 fi
 
-### Install Hypercube Plymouth theme
-if [ -d /ctx/branding/plymouth/hypercube ]; then
-  echo "Installing Hypercube Plymouth theme..."
+### Install Hypercube Plymouth branding
+# Uses Fedora's built-in spinner theme with a custom watermark overlay
+# No plugin required - just drop watermark.png into the spinner theme directory
+if [ -f /ctx/branding/plymouth/hypercube/watermark.png ]; then
+  echo "Installing Hypercube Plymouth watermark..."
 
-  # Install plymouth-plugin-script (required for script-based themes)
-  dnf5 -y clean all
-  dnf5 -y install plymouth-plugin-script
-
-  # Create theme directory
-  mkdir -p /usr/share/plymouth/themes/hypercube
-
-  # Copy all theme files
-  cp -r /ctx/branding/plymouth/hypercube/* /usr/share/plymouth/themes/hypercube/
-
-  # Set correct permissions
-  chmod 644 /usr/share/plymouth/themes/hypercube/*
-  chmod 755 /usr/share/plymouth/themes/hypercube
-
-  # Set Hypercube as the default Plymouth theme
-  plymouth-set-default-theme hypercube
-
-  # Configure Plymouth daemon
-  mkdir -p /etc/plymouth
-  cat >/etc/plymouth/plymouthd.conf <<EOF
-[Daemon]
-Theme=hypercube
-ShowDelay=0
-DeviceTimeout=8
-EOF
-
-  # Install dracut configuration to ensure Plymouth is included in initramfs
-  mkdir -p /etc/dracut.conf.d
-  cp /ctx/50-hypercube-plymouth.conf /etc/dracut.conf.d/
+  # Install watermark to spinner theme directory
+  # The spinner theme automatically displays watermark.png if present
+  cp /ctx/branding/plymouth/hypercube/watermark.png /usr/share/plymouth/themes/spinner/
 
   # Configure bootc kernel arguments for Plymouth
-  # These ensure Plymouth shows during early boot and hides firmware logo
   mkdir -p /usr/lib/bootc/kargs.d
   cp /ctx/hypercube-kargs.json /usr/lib/bootc/kargs.d/
 
-  # Rebuild initramfs to include Plymouth theme
-  # This is required for the theme to be available during early boot
-  # Note: xattr warnings during build are harmless (container fs limitation)
-  echo "Rebuilding initramfs with Plymouth theme..."
-  dracut --force --regenerate-all
-
-  echo "Hypercube Plymouth theme installed successfully"
+  echo "Hypercube Plymouth branding installed successfully"
 fi
 
 ### Install Quickshell config
