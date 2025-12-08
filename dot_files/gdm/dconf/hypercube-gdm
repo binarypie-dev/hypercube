@@ -2,34 +2,14 @@
 # Tokyo Night theme colors applied to GDM login screen
 
 [org/gnome/login-screen]
-# Disable user list for cleaner look (optional - comment out to show user list)
+# Show user list
 disable-user-list=false
 
-# Enable banner message with Hypercube branding
+# Disable banner message
 banner-message-enable=false
-banner-message-text='Welcome to Hypercube'
 
-# Logo for GDM (displayed above login)
-logo='/usr/share/pixmaps/hypercube-logo.png'
-
-[org/gnome/desktop/background]
-# GDM background - cube logo centered on black
-picture-uri='file:///usr/share/pixmaps/hypercube-logo.png'
-picture-uri-dark='file:///usr/share/pixmaps/hypercube-logo.png'
-picture-options='centered'
-
-# Black background behind the centered logo
-primary-color='#000000'
-secondary-color='#000000'
-color-shading-type='solid'
-
-[org/gnome/desktop/screensaver]
-# Lock screen background - cube logo centered on black
-picture-uri='file:///usr/share/pixmaps/hypercube-logo.png'
-primary-color='#000000'
-secondary-color='#000000'
-color-shading-type='solid'
-picture-options='centered'
+# Hide the logo at bottom of screen (empty string removes it)
+logo=''
 
 [org/gnome/desktop/interface]
 # Tokyo Night compatible GTK theme and icon settings
@@ -37,6 +17,3 @@ color-scheme='prefer-dark'
 cursor-theme='Adwaita'
 icon-theme='Adwaita'
 gtk-theme='Adwaita-dark'
-font-name='JetBrainsMono Nerd Font 13'
-monospace-font-name='JetBrainsMono Nerd Font Mono 13'
-document-font-name='JetBrainsMono Nerd Font 13'

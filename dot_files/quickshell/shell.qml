@@ -39,9 +39,9 @@ ShellRoot {
         }
     }
 
-    // Application Launcher
+    // Application Launcher (Variants-based, creates windows per screen)
     Launcher {
-        visible: root.launcherVisible
+        showing: root.launcherVisible
         onClose: root.launcherVisible = false
     }
 

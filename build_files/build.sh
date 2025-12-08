@@ -112,7 +112,7 @@ fi
 
 ### Install GDM branding (login screen customization)
 if [ -d /usr/share/hypercube/config/gdm/dconf ]; then
-  echo "Installing GDM branding..."
+  echo "Installing GDM dconf settings..."
 
   # Install dconf profile for GDM
   mkdir -p /etc/dconf/profile
@@ -127,16 +127,18 @@ if [ -d /usr/share/hypercube/config/gdm/dconf ]; then
   # Compile the dconf database
   dconf update
 
-  echo "GDM branding installed successfully"
+  echo "GDM dconf settings installed successfully"
 fi
 
-### Install GDM Tokyo Night theme CSS
-if [ -f /usr/share/hypercube/config/gdm/gnome-shell/gnome-shell.css ]; then
-  echo "Installing GDM Tokyo Night CSS theme..."
+### Install GDM theme (modifies gnome-shell-theme.gresource)
+# This patches the GDM background to show our logo centered on black
+if [ -f /ctx/gdm-theme.sh ] && [ -f /usr/share/pixmaps/hypercube-logo.png ]; then
+  # Install tools needed to extract and recompile gresource
+  dnf5 -y install glib2-devel
 
-  # Install custom CSS to GDM's gnome-shell theme directory
-  mkdir -p /usr/share/gnome-shell/theme
-  cp -f /usr/share/hypercube/config/gdm/gnome-shell/gnome-shell.css /usr/share/gnome-shell/theme/gdm.css
+  /ctx/gdm-theme.sh
 
-  echo "GDM Tokyo Night CSS theme installed successfully"
+  # Remove build tools to keep image clean
+  dnf5 -y remove glib2-devel
+  dnf5 -y autoremove
 fi
