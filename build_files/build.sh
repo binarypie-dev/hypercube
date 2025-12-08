@@ -84,23 +84,6 @@ if [ -d /ctx/branding ]; then
   fi
 fi
 
-### Install Hypercube Plymouth branding
-# Uses Fedora's built-in spinner theme with a custom watermark overlay
-# No plugin required - just drop watermark.png into the spinner theme directory
-if [ -f /ctx/branding/plymouth/hypercube/watermark.png ]; then
-  echo "Installing Hypercube Plymouth watermark..."
-
-  # Install watermark to spinner theme directory
-  # The spinner theme automatically displays watermark.png if present
-  cp /ctx/branding/plymouth/hypercube/watermark.png /usr/share/plymouth/themes/spinner/
-
-  # Configure bootc kernel arguments for Plymouth
-  mkdir -p /usr/lib/bootc/kargs.d
-  cp /ctx/hypercube-kargs.json /usr/lib/bootc/kargs.d/
-
-  echo "Hypercube Plymouth branding installed successfully"
-fi
-
 ### Install Quickshell config
 # Install quickshell launcher configuration to system-wide location
 if [ -d /usr/share/hypercube/config/quickshell ]; then
@@ -110,35 +93,3 @@ if [ -d /usr/share/hypercube/config/quickshell ]; then
   echo "Quickshell configuration installed successfully"
 fi
 
-### Install GDM branding (login screen customization)
-if [ -d /usr/share/hypercube/config/gdm/dconf ]; then
-  echo "Installing GDM dconf settings..."
-
-  # Install dconf profile for GDM
-  mkdir -p /etc/dconf/profile
-  cp -f /usr/share/hypercube/config/gdm/dconf/profile /etc/dconf/profile/gdm
-
-  # Create dconf database directory
-  mkdir -p /etc/dconf/db/hypercube-gdm.d
-
-  # Copy the GDM settings file
-  cp -f /usr/share/hypercube/config/gdm/dconf/hypercube-gdm /etc/dconf/db/hypercube-gdm.d/00-hypercube
-
-  # Compile the dconf database
-  dconf update
-
-  echo "GDM dconf settings installed successfully"
-fi
-
-### Install GDM theme (modifies gnome-shell-theme.gresource)
-# This patches the GDM background to show our logo centered on black
-if [ -f /ctx/gdm-theme.sh ] && [ -f /usr/share/pixmaps/hypercube-logo.png ]; then
-  # Install tools needed to extract and recompile gresource
-  dnf5 -y install glib2-devel
-
-  /ctx/gdm-theme.sh
-
-  # Remove build tools to keep image clean
-  dnf5 -y remove glib2-devel
-  dnf5 -y autoremove
-fi
