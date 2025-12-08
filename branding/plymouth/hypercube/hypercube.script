@@ -1,0 +1,185 @@
+// Hypercube Plymouth Theme
+// A neon hypercube boot splash for Hypercube Linux
+
+// Screen dimensions
+screen.w = Window.GetWidth(0);
+screen.h = Window.GetHeight(0);
+screen.half.w = screen.w / 2;
+screen.half.h = screen.h / 2;
+
+// Question/Answer prompts
+question = null;
+answer = null;
+
+// Message display
+message = null;
+
+// Password prompt elements
+bullets = null;
+prompt = null;
+bullet.image = Image.Text("*", 1, 1, 1);
+
+// Animation state
+state.status = "play";
+state.time = 0.0;
+
+//--------------------------------- Background Image ---------------------------------
+
+// Load and display the background image, scaled to fill the screen
+background.image = Image("background.png");
+background.sprite = Sprite(background.image);
+
+// Scale background to fill screen while maintaining aspect ratio
+bg_scale_x = screen.w / background.image.GetWidth();
+bg_scale_y = screen.h / background.image.GetHeight();
+bg_scale = Math.Max(bg_scale_x, bg_scale_y);
+
+scaled_bg = background.image.Scale(
+    background.image.GetWidth() * bg_scale,
+    background.image.GetHeight() * bg_scale
+);
+background.sprite = Sprite(scaled_bg);
+
+// Center the background
+bg_x = (screen.w - scaled_bg.GetWidth()) / 2;
+bg_y = (screen.h - scaled_bg.GetHeight()) / 2;
+background.sprite.SetX(bg_x);
+background.sprite.SetY(bg_y);
+background.sprite.SetZ(-100);
+
+//--------------------------------- Logo Display ------------------------------------
+
+// Load logo image (centered, smaller version of the hypercube)
+logo.image = Image("logo.png");
+logo.sprite = Sprite(logo.image);
+logo.sprite.SetX(screen.half.w - logo.image.GetWidth() / 2);
+logo.sprite.SetY(screen.half.h - logo.image.GetHeight() / 2 - 50);
+logo.sprite.SetZ(10);
+logo.sprite.SetOpacity(1);
+
+//--------------------------------- Spinner Animation -------------------------------
+
+// Load spinner frames (simple rotating dots or use progress images)
+spinner_frames = 12;
+for (i = 0; i < spinner_frames; i++) {
+    spinner_image[i] = Image("spinner-" + i + ".png");
+}
+
+spinner.sprite = Sprite();
+spinner.sprite.SetX(screen.half.w - spinner_image[0].GetWidth() / 2);
+spinner.sprite.SetY(screen.half.h + logo.image.GetHeight() / 2 + 20);
+spinner.sprite.SetZ(10);
+
+progress = 0;
+
+// Refresh callback - called every frame to update animation
+fun refresh_callback() {
+    if (state.status == "play") {
+        spinner.sprite.SetImage(spinner_image[Math.Int(progress) % spinner_frames]);
+        progress = progress + 0.3;
+    }
+}
+
+Plymouth.SetRefreshFunction(refresh_callback);
+
+//--------------------------------- Progress Bar (optional) -------------------------
+
+// Simple progress bar at the bottom
+progress_bar.bg = Image("progress-bg.png");
+progress_bar.fg = Image("progress-fg.png");
+
+progress_bar.bg_sprite = Sprite(progress_bar.bg);
+progress_bar.bg_sprite.SetX(screen.half.w - progress_bar.bg.GetWidth() / 2);
+progress_bar.bg_sprite.SetY(screen.h - 80);
+progress_bar.bg_sprite.SetZ(5);
+
+progress_bar.fg_sprite = Sprite(progress_bar.fg);
+progress_bar.fg_sprite.SetX(screen.half.w - progress_bar.bg.GetWidth() / 2 + 2);
+progress_bar.fg_sprite.SetY(screen.h - 78);
+progress_bar.fg_sprite.SetZ(6);
+
+fun boot_progress_callback(time, progress_val) {
+    if (progress_bar.fg.GetWidth() > 0) {
+        new_width = progress_bar.fg.GetWidth() * progress_val;
+        if (new_width > 1) {
+            scaled_fg = progress_bar.fg.Scale(new_width, progress_bar.fg.GetHeight());
+            progress_bar.fg_sprite.SetImage(scaled_fg);
+        }
+    }
+}
+
+Plymouth.SetBootProgressFunction(boot_progress_callback);
+
+//--------------------------------- Question Prompt ---------------------------------
+
+fun DisplayQuestionCallback(prompt_text, entry) {
+    question = null;
+    answer = null;
+
+    if (entry == "")
+        entry = "<answer>";
+
+    question.image = Image.Text(prompt_text, 1, 1, 1);
+    question.sprite = Sprite(question.image);
+    question.sprite.SetX(screen.half.w - question.image.GetWidth() / 2);
+    question.sprite.SetY(screen.h - 120);
+    question.sprite.SetZ(20);
+
+    answer.image = Image.Text(entry, 1, 1, 1);
+    answer.sprite = Sprite(answer.image);
+    answer.sprite.SetX(screen.half.w - answer.image.GetWidth() / 2);
+    answer.sprite.SetY(screen.h - 80);
+    answer.sprite.SetZ(20);
+}
+
+Plymouth.SetDisplayQuestionFunction(DisplayQuestionCallback);
+
+//--------------------------------- Password Prompt ---------------------------------
+
+fun DisplayPasswordCallback(nil, bulletCount) {
+    state.status = "pause";
+    totalWidth = bulletCount * bullet.image.GetWidth();
+    startPos = screen.half.w - totalWidth / 2;
+
+    // Display password prompt text
+    prompt.image = Image.Text("Enter Password", 1, 1, 1);
+    prompt.sprite = Sprite(prompt.image);
+    prompt.sprite.SetX(screen.half.w - prompt.image.GetWidth() / 2);
+    prompt.sprite.SetY(screen.h - 120);
+    prompt.sprite.SetZ(20);
+
+    // Display password bullets
+    bullets = null;
+    for (i = 0; i < bulletCount; i++) {
+        bullets[i].sprite = Sprite(bullet.image);
+        bullets[i].sprite.SetX(startPos + i * bullet.image.GetWidth());
+        bullets[i].sprite.SetY(screen.h - 80);
+        bullets[i].sprite.SetZ(20);
+    }
+}
+
+Plymouth.SetDisplayPasswordFunction(DisplayPasswordCallback);
+
+//--------------------------------- Normal Display ----------------------------------
+
+fun DisplayNormalCallback() {
+    state.status = "play";
+    bullets = null;
+    prompt = null;
+    message = null;
+    question = null;
+    answer = null;
+}
+
+Plymouth.SetDisplayNormalFunction(DisplayNormalCallback);
+
+//--------------------------------- Message Display ---------------------------------
+
+fun MessageCallback(text) {
+    message.image = Image.Text(text, 1, 1, 1);
+    message.sprite = Sprite(message.image);
+    message.sprite.SetPosition(screen.half.w - message.image.GetWidth() / 2, screen.h - 40);
+    message.sprite.SetZ(20);
+}
+
+Plymouth.SetMessageFunction(MessageCallback);

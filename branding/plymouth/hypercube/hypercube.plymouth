@@ -1,0 +1,9 @@
+[Plymouth Theme]
+Name=Hypercube
+Description=Hypercube boot splash with neon hypercube animation
+Comment=Created for Hypercube Linux - A Hyprland-focused bootc image
+ModuleName=script
+
+[script]
+ImageDir=/usr/share/plymouth/themes/hypercube
+ScriptFile=/usr/share/plymouth/themes/hypercube/hypercube.script
