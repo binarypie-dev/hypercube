@@ -1,0 +1,40 @@
+name: Build ISO
+
+on:
+  workflow_run:
+    workflows: [Lint]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Build ISO
+        run: |
+          nix build .#iso --out-link result-iso
+
+      - name: Get ISO filename
+        id: iso
+        run: |
+          ISO_PATH=$(find result-iso -name "*.iso" -type f | head -1)
+          ISO_NAME=$(basename "$ISO_PATH")
+          echo "path=$ISO_PATH" >> $GITHUB_OUTPUT
+          echo "name=$ISO_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.iso.outputs.name }}
+          path: ${{ steps.iso.outputs.path }}
+          retention-days: 7

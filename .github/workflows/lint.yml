@@ -1,0 +1,36 @@
+name: Lint
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        uses: DeterminateSystems/nix-installer-action@main
+
+      - name: Setup Nix cache
+        uses: DeterminateSystems/magic-nix-cache-action@main
+
+      - name: Check nix formatting
+        run: |
+          nix develop --command bash -c 'find . -name "*.nix" -type f -exec nixfmt --check {} \;'
+
+      - name: Check nix syntax
+        run: |
+          find . -name "*.nix" -type f -exec nix-instantiate --parse-only {} \;
+
+      - name: Run statix
+        run: |
+          nix develop --command statix check .
+
+      - name: Validate flake
+        run: |
+          nix flake check --no-build

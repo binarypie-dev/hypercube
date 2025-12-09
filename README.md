@@ -1,171 +1,267 @@
 # Hypercube
 
-Hypercube is a custom [bootc](https://github.com/bootc-dev/bootc) image built on top of [Bluefin-DX](https://projectbluefin.io/) with Hyprland and an opinionated set of development tools. This image is designed primarily for my personal software development workflow, but you're welcome to use it, fork it, or submit issues and pull requests.
+A cloud-native NixOS workstation with Hyprland, opinionated TUI tools, and vim keybindings everywhere.
 
-## What's Inside
+## Features
 
-Hypercube builds on Bluefin-DX's excellent developer experience foundation and adds:
+- **Hyprland** - Dynamic tiling Wayland compositor with Tokyo Night theme
+- **Fish shell** - Modern shell with vim keybindings and hydro prompt
+- **Neovim** - LazyVim configuration with full LSP support
+- **Cloud-native tools** - k9s, kubectl, helm, terraform, lazydocker, and more
+- **Modern CLI** - eza, bat, ripgrep, fzf, zoxide, atuin
+- **Vim mode everywhere** - Shell, TUIs, pagers, and compositor all use vim keybindings
 
-- **Hyprland**: A dynamic tiling Wayland compositor for an efficient, keyboard-driven workflow
-- **Opinionated Development Tools**: A curated set of tools and configurations optimized for my development workflow
-- **Personal Preferences**: Custom configurations and tweaks that I've found useful over time
+## Quick Start
 
-### Available Variants
+### Option 1: From ISO
 
-Hypercube is available in two variants:
-
-- **Regular**: Built on `bluefin-dx:stable-daily` for systems with Intel/AMD graphics
-- **NVIDIA**: Built on `bluefin-dx-nvidia:stable-daily` with NVIDIA driver support
-
-This is not meant to be a general-purpose distribution, but rather a personal daily driver that happens to be publicly available for others who might share similar preferences.
-
-## Community & Support
-
-While this is a personal image, community contributions are welcome! If you encounter issues or have suggestions:
-
-- [Open an issue](../../issues) on this repository
-- Submit a pull request with improvements
-- For general bootc and Universal Blue questions:
-  - [Universal Blue Forums](https://universal-blue.discourse.group/)
-  - [Universal Blue Discord](https://discord.gg/WEu6BdFEtp)
-  - [bootc discussion forums](https://github.com/bootc-dev/bootc/discussions)
-
-## Installation
-
-### Prerequisites
-
-- A machine running a bootc-compatible image (e.g., Bazzite, Bluefin, Aurora, or Fedora Atomic)
-- Basic familiarity with bootc and container-based operating systems
-
-### Switching to Hypercube
-
-From your existing bootc system, run:
-
-**For systems with Intel/AMD graphics:**
-```bash
-sudo bootc switch ghcr.io/binarypie-dev/hypercube:latest
-```
-
-**For systems with NVIDIA graphics:**
-```bash
-sudo bootc switch ghcr.io/binarypie-dev/hypercube:latest-nvidia
-```
-
-Then reboot your system:
+Download the latest ISO from [Releases](https://github.com/binarypie-dev/hypercube/releases) and boot it.
 
 ```bash
-systemctl reboot
+# Login: nixos / nixos
+# Run the Calamares installer from the app menu
 ```
 
-After rebooting, you'll be running Hypercube.
-
-### Switching Back
-
-If Hypercube isn't for you, you can switch back to your previous image:
+After installation, apply the full configuration:
 
 ```bash
-sudo bootc status  # Find your previous image
-sudo bootc switch <your-previous-image>
-systemctl reboot
+sudo nixos-rebuild switch --flake github:binarypie-dev/hypercube#hypercube
 ```
 
-## Customization & Forking
+### Option 2: From Existing NixOS
 
-Want to create your own variant of Hypercube? You're welcome to fork this repository! Here's how the build system works:
+```bash
+# Clone the repo
+git clone https://github.com/binarypie-dev/hypercube.git
+cd hypercube
 
-### Repository Structure
+# Generate hardware config
+sudo nixos-generate-config --show-hardware-config > /etc/nixos/hardware-configuration.nix
 
-- **[Containerfile](./Containerfile)**: The main build definition. This is where the base image is selected and the build process is orchestrated.
-- **[build.sh](./build_files/build.sh)**: The primary customization script. This is where packages are installed and system configurations are applied.
-- **[build.yml](./.github/workflows/build.yml)**: GitHub Actions workflow that builds and publishes the image to GitHub Container Registry (GHCR).
+# Apply configuration
+sudo nixos-rebuild switch --flake .#hypercube
+```
 
-### Building Your Own Variant
+### Option 3: Fresh Install
 
-If you fork this repository:
+Boot from a NixOS ISO, then:
 
-1. Modify `build.sh` to add/remove packages and configurations
-2. Update the `Containerfile` if you want to change the base image
-3. Push your changes - GitHub Actions will automatically build your image
-4. Your image will be available at `ghcr.io/<your-username>/<your-repo-name>`
+```bash
+# Partition disks (example for UEFI with btrfs)
+parted /dev/nvme0n1 -- mklabel gpt
+parted /dev/nvme0n1 -- mkpart ESP fat32 1MB 512MB
+parted /dev/nvme0n1 -- set 1 esp on
+parted /dev/nvme0n1 -- mkpart primary 512MB 100%
 
-For detailed information about customizing the image, see the files mentioned above. They contain examples and documentation.
+mkfs.fat -F 32 -n boot /dev/nvme0n1p1
+mkfs.btrfs -L nixos /dev/nvme0n1p2
 
-## Building Disk Images
+mount /dev/nvme0n1p2 /mnt
+btrfs subvolume create /mnt/@
+btrfs subvolume create /mnt/@home
+umount /mnt
 
-The repository includes workflows for creating bootable disk images (ISO, QCOW2, raw) using [bootc-image-builder](https://osbuild.org/docs/bootc/). These can be used for:
+mount -o subvol=@,compress=zstd,noatime /dev/nvme0n1p2 /mnt
+mkdir -p /mnt/{home,boot}
+mount -o subvol=@home,compress=zstd,noatime /dev/nvme0n1p2 /mnt/home
+mount /dev/nvme0n1p1 /mnt/boot
 
-- Installing Hypercube on bare metal (ISO)
-- Testing in virtual machines (QCOW2)
-- Deploying to cloud environments (raw)
+# Generate hardware config
+nixos-generate-config --root /mnt
 
-### Available via GitHub Actions
+# Install
+nixos-install --flake github:binarypie-dev/hypercube#hypercube
 
-The [build-disk.yml](./.github/workflows/build-disk.yml) workflow can generate these images automatically. After the workflow completes, disk images are available as artifacts in the GitHub Actions run.
+# Reboot
+reboot
+```
 
-### Building Locally
+## Configuration
 
-You can also build disk images locally using the included `just` commands (see [Justfile Documentation](#justfile-documentation) below).
+### Customize Username/Hostname
 
-## Artifacthub
+Edit `flake.nix`:
 
-Hypercube is indexed on [artifacthub.io](https://artifacthub.io) to make it easier to discover and track. If you fork this image, you can list your own variant there as well using the `artifacthub-repo.yml` file.
+```nix
+username = "yourusername";
+hostname = "yourhostname";
+```
 
-Learn more in the [Universal Blue Artifacthub discussion](https://universal-blue.discourse.group/t/listing-your-custom-image-on-artifacthub/6446).
+### Customize Git
 
-## Development with Just
+Edit `home/git.nix`:
 
-The repository includes a [`Justfile`](./Justfile) with commands for building and testing Hypercube locally. [just](https://just.systems/) is a command runner that simplifies common development tasks.
+```nix
+userName = "Your Name";
+userEmail = "your@email.com";
+```
 
-Just is pre-installed on all Universal Blue images (including Hypercube and Bluefin-DX). If you're using another system, install it from your package manager or see the [just installation guide](https://just.systems/man/en/introduction.html).
+### Customize Timezone
 
-### Available Commands
+Edit `configuration.nix`:
 
-Run `just` without arguments to see all available commands. Here are the most useful ones:
+```nix
+time.timeZone = "America/Los_Angeles";
+```
 
-#### Building
+## Directory Structure
 
-- `just build` - Build the Hypercube container image locally (regular variant)
-- `just build-regular` - Build the regular variant (Intel/AMD graphics)
-- `just build-nvidia` - Build the NVIDIA variant
-- `just build-all` - Build both regular and NVIDIA variants
-- `just build-iso` - Build a bootable ISO image
-- `just build-qcow2` - Build a QCOW2 VM image
-- `just build-raw` - Build a raw disk image
+```
+.
+├── flake.nix              # Flake definition with inputs
+├── configuration.nix      # System-level NixOS configuration
+├── home.nix               # Home Manager entry point
+├── iso.nix                # ISO image configuration
+├── Justfile               # Build recipes
+└── home/
+    ├── packages.nix       # All user packages
+    ├── fish.nix           # Fish shell + aliases
+    ├── neovim.nix         # Neovim + LSPs
+    ├── git.nix            # Git configuration
+    ├── hyprland.nix       # Hyprland compositor
+    ├── waybar.nix         # Status bar
+    ├── ...                # Other program configs
+    └── nvim/              # Neovim LazyVim config
+```
 
-#### Testing
+## Keybindings
 
-- `just run-vm-qcow2` - Run Hypercube in a VM using QCOW2 image
-- `just spawn-vm` - Run Hypercube using systemd-vmspawn
+### Hyprland
 
-#### Maintenance
+| Key | Action |
+|-----|--------|
+| `Super + Q` | Terminal (ghostty) |
+| `Super + C` | Close window |
+| `Super + R` | App launcher (wofi) |
+| `Super + F` | Fullscreen |
+| `Super + V` | Toggle floating |
+| `Super + H/J/K/L` | Move focus (vim-style) |
+| `Super + Shift + H/J/K/L` | Move window |
+| `Super + Ctrl + H/J/K/L` | Resize window |
+| `Super + 1-0` | Switch workspace |
+| `Super + Shift + 1-0` | Move to workspace |
+| `Super + Shift + L` | Lock screen |
 
-- `just clean` - Clean build artifacts
-- `just lint` - Check shell scripts for issues
-- `just format` - Format shell scripts
+### Shell Aliases
 
-For detailed usage and additional commands, see the [Justfile](./Justfile) itself.
+| Alias | Command |
+|-------|---------|
+| `k` | kubectl |
+| `kx` | kubectx |
+| `kn` | kubens |
+| `lg` | lazygit |
+| `ld` | lazydocker |
+| `tf` | terraform |
 
-## Related Projects
+## Included Tools
 
-Hypercube is part of the larger Universal Blue ecosystem. Check out these other custom images for inspiration:
+### Kubernetes
+- kubectl, kubectx, k9s, helm, stern, kustomize, argocd, fluxcd
 
-- [Bluefin-DX](https://projectbluefin.io/) - The base image for Hypercube
-- [m2Giles' OS](https://github.com/m2giles/m2os) - Another custom bootc image
-- [bOS](https://github.com/bsherman/bos) - Custom image by bsherman
-- [Homer](https://github.com/bketelsen/homer/) - Custom image by bketelsen
-- [Amy OS](https://github.com/astrovm/amyos) - Custom image by astrovm
-- [VeneOS](https://github.com/Venefilyn/veneos) - Custom image by Venefilyn
+### Containers
+- lazydocker, dive, ctop, skopeo, buildah
+
+### Infrastructure
+- terraform, opentofu
+
+### Cloud CLIs
+- awscli2, google-cloud-sdk, azure-cli
+
+### Modern CLI
+- eza, bat, delta, zoxide, fzf, atuin, ripgrep, fd, jq, yq
+
+## Development
+
+```bash
+# Enter dev shell with nix tools
+just dev
+
+# Format nix files
+just fmt
+
+# Lint nix files
+just lint
+
+# Run all checks
+just check-all
+
+# Build ISO
+just build-iso
+
+# Test ISO in VM
+just run-iso
+```
+
+## Building
+
+### Build System Configuration
+
+```bash
+just build
+```
+
+### Build ISO
+
+```bash
+just build-iso
+# ISO output: result-iso/iso/hypercube-*.iso
+```
+
+### Test in VM
+
+```bash
+just run-iso
+```
+
+## Customization
+
+### Adding Packages
+
+User packages go in `home/packages.nix`:
+
+```nix
+home.packages = with pkgs; [
+  your-package
+];
+```
+
+System packages go in `configuration.nix`:
+
+```nix
+environment.systemPackages = with pkgs; [
+  your-package
+];
+```
+
+### Changing Theme
+
+Tokyo Night is used throughout. Key files to modify:
+
+- `home/hyprland.nix` - Compositor colors
+- `home/waybar.nix` - Status bar styles
+- `home/wofi.nix` - Launcher styles
+- `home/k9s.nix` - Kubernetes TUI theme
+
+### Switching Prompt
+
+Starship is included but disabled. To use instead of hydro, edit `home/starship.nix`:
+
+```nix
+programs.starship.enable = true;
+```
+
+## Standalone Home Manager
+
+Use the configuration on non-NixOS systems (Fedora, Ubuntu, etc.):
+
+```bash
+# Install Nix
+curl --proto '=https' --tlsv1.2 -sSf -L https://install.determinate.systems/nix | sh -s -- install
+
+# Apply home-manager config
+nix run home-manager -- switch --flake github:binarypie-dev/hypercube#binarypie
+```
 
 ## License
 
-This project follows the same licensing as the Universal Blue project. See the LICENSE file for details.
-
-## Acknowledgments
-
-Hypercube is built on the shoulders of giants:
-
-- [Universal Blue](https://universal-blue.org/) for the excellent image-based desktop platform
-- [Project Bluefin](https://projectbluefin.io/) for the outstanding developer experience foundation
-- [bootc](https://github.com/bootc-dev/bootc) for the bootable container technology
-- [Hyprland](https://hyprland.org/) for the amazing Wayland compositor
-- The Fedora and broader open source community
+See [LICENSE](LICENSE)
