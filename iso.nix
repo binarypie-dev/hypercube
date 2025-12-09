@@ -1,6 +1,9 @@
 { config, pkgs, lib, inputs, username, ... }:
 
 {
+  # Allow unfree packages (terraform)
+  nixpkgs.config.allowUnfree = true;
+
   imports = [
     # Base ISO modules
     "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-graphical-calamares.nix"
@@ -27,7 +30,7 @@
     enable = true;
     settings = {
       default_session = {
-        command = "${pkgs.greetd.tuigreet}/bin/tuigreet --time --remember --cmd Hyprland";
+        command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --cmd Hyprland";
         user = "nixos";
       };
     };
