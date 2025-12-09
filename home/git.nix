@@ -3,27 +3,31 @@
 {
   programs.git = {
     enable = true;
-    userName = "binarypie";
-    userEmail = "code@binarypie.com";
 
-    delta = {
-      enable = true;
-      options = {
-        navigate = true;
-        light = false;
-        syntax-theme = "tokyonight_night";
-        side-by-side = true;
-        line-numbers = true;
+    settings = {
+      user = {
+        name = "binarypie";
+        email = "code@binarypie.com";
       };
-    };
-
-    extraConfig = {
       init.defaultBranch = "main";
       pull.rebase = true;
       push.autoSetupRemote = true;
       merge.conflictStyle = "diff3";
       diff.colorMoved = "default";
       core.editor = "nvim";
+    };
+  };
+
+  # Delta for better diffs
+  programs.delta = {
+    enable = true;
+    enableGitIntegration = true;
+    options = {
+      navigate = true;
+      light = false;
+      syntax-theme = "tokyonight_night";
+      side-by-side = true;
+      line-numbers = true;
     };
   };
 

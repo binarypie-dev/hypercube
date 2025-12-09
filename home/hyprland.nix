@@ -5,6 +5,10 @@
     enable = true;
     # Use nix package on NixOS, null on other distros (uses system hyprland)
     package = lib.mkDefault null;
+    # Disable portal (handled at system level)
+    portalPackage = null;
+    # Disable systemd integration (handled at system level)
+    systemd.enable = false;
 
     settings = {
       "$mod" = "SUPER";

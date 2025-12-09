@@ -152,6 +152,83 @@ hm-switch:
     nix run home-manager -- switch --flake .#binarypie
 
 # ============================================================================
+# Docker Testing
+# ============================================================================
+
+# Build the Docker image for testing
+[group('Docker')]
+docker-build:
+    docker build -t hypercube-nix .
+
+# Create persistent volume for Nix store cache
+[group('Docker')]
+docker-cache:
+    docker volume create hypercube-nix-store 2>/dev/null || true
+
+# Run nix flake show in Docker
+[group('Docker')]
+docker-show: docker-build docker-cache
+    docker run --rm -v hypercube-nix-store:/nix hypercube-nix nix flake show
+
+# Run nix flake check in Docker
+[group('Docker')]
+docker-check: docker-build docker-cache
+    docker run --rm -v hypercube-nix-store:/nix hypercube-nix nix flake check --no-build
+
+# Build ISO in Docker with persistent cache (outputs to ./result-iso)
+[group('Docker')]
+docker-iso: docker-build docker-cache
+    rm -rf result-iso
+    mkdir -p result-iso
+    docker run --rm \
+        -e OWNER_UID=$(id -u) \
+        -e OWNER_GID=$(id -g) \
+        -v hypercube-nix-store:/nix \
+        -v $(pwd)/result-iso:/workspace/result-iso \
+        hypercube-nix sh -c "nix build .#iso && cp -rL result/* result-iso/ && chown -R \$OWNER_UID:\$OWNER_GID result-iso/"
+
+# Run interactive shell in Docker for debugging
+[group('Docker')]
+docker-shell: docker-build docker-cache
+    docker run --rm -it \
+        -v hypercube-nix-store:/nix \
+        -v $(pwd):/workspace \
+        hypercube-nix bash
+
+# Test ISO in QEMU (4 CPUs, 8GB RAM, 10GB disk)
+[group('Docker')]
+docker-test-iso:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    ISO=$(find result-iso -name "*.iso" -type f 2>/dev/null | head -1)
+    if [[ -z "$ISO" ]]; then
+        echo "No ISO found in result-iso/. Run 'just docker-iso' first."
+        exit 1
+    fi
+    DISK="/tmp/hypercube-test.qcow2"
+    if [[ ! -f "$DISK" ]]; then
+        echo "Creating 10GB test disk at $DISK"
+        qemu-img create -f qcow2 "$DISK" 10G
+    fi
+    echo "Running ISO: $ISO"
+    qemu-system-x86_64 \
+        -enable-kvm \
+        -m 8G \
+        -smp 4 \
+        -cpu host \
+        -cdrom "$ISO" \
+        -boot d \
+        -drive file="$DISK",format=qcow2,if=virtio \
+        -device virtio-vga-gl \
+        -display gtk,gl=on \
+        -nic user,model=virtio-net-pci
+
+# Clean Docker cache volume
+[group('Docker')]
+docker-clean:
+    docker volume rm hypercube-nix-store || true
+
+# ============================================================================
 # Utility
 # ============================================================================
 

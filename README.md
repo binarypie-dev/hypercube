@@ -106,7 +106,7 @@ time.timeZone = "America/Los_Angeles";
 
 ## Directory Structure
 
-```
+```text
 .
 ├── flake.nix              # Flake definition with inputs
 ├── configuration.nix      # System-level NixOS configuration
@@ -128,46 +128,51 @@ time.timeZone = "America/Los_Angeles";
 
 ### Hyprland
 
-| Key | Action |
-|-----|--------|
-| `Super + Q` | Terminal (ghostty) |
-| `Super + C` | Close window |
-| `Super + R` | App launcher (wofi) |
-| `Super + F` | Fullscreen |
-| `Super + V` | Toggle floating |
-| `Super + H/J/K/L` | Move focus (vim-style) |
-| `Super + Shift + H/J/K/L` | Move window |
-| `Super + Ctrl + H/J/K/L` | Resize window |
-| `Super + 1-0` | Switch workspace |
-| `Super + Shift + 1-0` | Move to workspace |
-| `Super + Shift + L` | Lock screen |
+| Key                       | Action                 |
+| ------------------------- | ---------------------- |
+| `Super + Q`               | Terminal (ghostty)     |
+| `Super + C`               | Close window           |
+| `Super + R`               | App launcher (wofi)    |
+| `Super + F`               | Fullscreen             |
+| `Super + V`               | Toggle floating        |
+| `Super + H/J/K/L`         | Move focus (vim-style) |
+| `Super + Shift + H/J/K/L` | Move window            |
+| `Super + Ctrl + H/J/K/L`  | Resize window          |
+| `Super + 1-0`             | Switch workspace       |
+| `Super + Shift + 1-0`     | Move to workspace      |
+| `Super + Shift + L`       | Lock screen            |
 
 ### Shell Aliases
 
-| Alias | Command |
-|-------|---------|
-| `k` | kubectl |
-| `kx` | kubectx |
-| `kn` | kubens |
-| `lg` | lazygit |
-| `ld` | lazydocker |
-| `tf` | terraform |
+| Alias | Command    |
+| ----- | ---------- |
+| `k`   | kubectl    |
+| `kx`  | kubectx    |
+| `kn`  | kubens     |
+| `lg`  | lazygit    |
+| `ld`  | lazydocker |
+| `tf`  | terraform  |
 
 ## Included Tools
 
 ### Kubernetes
+
 - kubectl, kubectx, k9s, helm, stern, kustomize, argocd, fluxcd
 
 ### Containers
+
 - lazydocker, dive, ctop, skopeo, buildah
 
 ### Infrastructure
+
 - terraform, opentofu
 
 ### Cloud CLIs
+
 - awscli2, google-cloud-sdk, azure-cli
 
 ### Modern CLI
+
 - eza, bat, delta, zoxide, fzf, atuin, ripgrep, fd, jq, yq
 
 ## Development

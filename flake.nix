@@ -58,7 +58,13 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = { inherit inputs; username = "nixos"; };
-            home-manager.users.nixos = import ./home.nix;
+            home-manager.users.nixos = { config, lib, ... }: {
+              imports = [ ./home.nix ];
+              # Auto-start Calamares installer on ISO boot
+              wayland.windowManager.hyprland.settings.exec-once = lib.mkAfter [
+                "sudo -E calamares"
+              ];
+            };
           }
         ];
       };

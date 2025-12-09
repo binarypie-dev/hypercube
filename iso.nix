@@ -4,6 +4,9 @@
   # Allow unfree packages (terraform)
   nixpkgs.config.allowUnfree = true;
 
+  # Disable man cache generation (fails in sandboxed builds)
+  documentation.man.generateCaches = false;
+
   imports = [
     # Base ISO modules
     "${inputs.nixpkgs}/nixos/modules/installer/cd-dvd/installation-cd-graphical-calamares.nix"
@@ -11,8 +14,8 @@
   ];
 
   # ISO naming
+  image.fileName = lib.mkForce "hypercube-${config.system.nixos.label}-x86_64.iso";
   isoImage = {
-    isoName = lib.mkForce "hypercube-${config.system.nixos.label}-x86_64.iso";
     volumeID = lib.mkForce "HYPERCUBE";
     makeEfiBootable = true;
     makeUsbBootable = true;
@@ -21,16 +24,16 @@
   # Use our Hyprland config for the live session
   programs.hyprland = {
     enable = true;
-    package = inputs.hyprland.packages.${pkgs.system}.hyprland;
+    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
     xwayland.enable = true;
   };
 
-  # Auto-login to live session
+  # Auto-login to live session (no greeter, straight to Hyprland)
   services.greetd = {
     enable = true;
     settings = {
       default_session = {
-        command = "${pkgs.tuigreet}/bin/tuigreet --time --remember --cmd Hyprland";
+        command = "Hyprland";
         user = "nixos";
       };
     };
@@ -41,6 +44,7 @@
     isNormalUser = true;
     extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
     shell = pkgs.fish;
+    initialHashedPassword = lib.mkForce null;
     initialPassword = "nixos";
   };
 
@@ -104,17 +108,30 @@
     nerd-fonts.jetbrains-mono
     nerd-fonts.fira-code
     noto-fonts
-    noto-fonts-emoji
+    noto-fonts-color-emoji
   ];
 
-  # XDG portal
+  # XDG portal (hyprland module adds the portal package automatically)
   xdg.portal = {
     enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
+    config.common.default = "*";
   };
 
   # Polkit
   security.polkit.enable = true;
+
+  # Desktop entry for Calamares installer in wofi/app menu (backup if auto-start fails)
+  xdg.mime.enable = true;
+  environment.etc."xdg/applications/calamares.desktop".text = ''
+    [Desktop Entry]
+    Type=Application
+    Name=Install NixOS
+    Comment=Install NixOS to your computer
+    Exec=sudo -E calamares
+    Icon=calamares
+    Terminal=false
+    Categories=System;
+  '';
 
   # Include the flake in the ISO for easy install
   environment.etc."hypercube-config" = {

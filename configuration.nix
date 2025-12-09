@@ -38,7 +38,7 @@
   # Hyprland (from git for latest features)
   programs.hyprland = {
     enable = true;
-    package = inputs.hyprland.packages.${pkgs.system}.hyprland;
+    package = inputs.hyprland.packages.${pkgs.stdenv.hostPlatform.system}.hyprland;
     xwayland.enable = true;
   };
 
@@ -105,10 +105,10 @@
     networkmanagerapplet
   ];
 
-  # XDG portal for Hyprland
+  # XDG portal (hyprland module adds the portal package automatically)
   xdg.portal = {
     enable = true;
-    extraPortals = [ pkgs.xdg-desktop-portal-hyprland ];
+    config.common.default = "*";
   };
 
   # Fonts
@@ -116,7 +116,7 @@
     nerd-fonts.jetbrains-mono
     nerd-fonts.fira-code
     noto-fonts
-    noto-fonts-emoji
+    noto-fonts-color-emoji
   ];
 
   # Polkit agent

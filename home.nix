@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, username, ... }:
+{ config, pkgs, lib, inputs, username, ... }:
 
 {
   imports = [
@@ -34,6 +34,12 @@
   home.username = username;
   home.homeDirectory = "/home/${username}";
   home.stateVersion = "25.11";
+
+  # Disable man page cache generation (fails in sandboxed builds)
+  programs.man.generateCaches = false;
+
+  # Disable xdg.portal in home-manager (handled at system level)
+  xdg.portal.enable = lib.mkForce false;
 
   # Let home-manager manage itself
   programs.home-manager.enable = true;
