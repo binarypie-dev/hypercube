@@ -17,8 +17,6 @@ on:
 env:
   IMAGE_NAME: ${{ github.event.repository.name }}
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
-  DEFAULT_TAG: "latest"
-  BIB_IMAGE: "quay.io/centos-bootc/bootc-image-builder:latest"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -27,17 +25,15 @@ concurrency:
 jobs:
   build:
     name: Build ISO (${{ matrix.variant.name }})
-    runs-on: ubuntu-latest-m
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
         variant:
           - name: "regular"
             tag: "latest"
-            config: "./disk_config/iso-regular.toml"
           - name: "nvidia"
             tag: "latest-nvidia"
-            config: "./disk_config/iso-nvidia.toml"
     permissions:
       contents: write
       packages: read
@@ -46,47 +42,39 @@ jobs:
     steps:
       - name: Prepare environment
         run: |
-          USER_UID=$(id -u)
-          USER_GID=$(id -g)
           echo "IMAGE_REGISTRY=${IMAGE_REGISTRY,,}" >> ${GITHUB_ENV}
           echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
-          echo "USER_UID=${USER_UID}" >> ${GITHUB_ENV}
-          echo "USER_GID=${USER_GID}" >> ${GITHUB_ENV}
 
       - name: Maximize build space
-        uses: ublue-os/remove-unwanted-software@cc0becac701cf642c8f0a6613bbdaf5dc36b259e # v9
-        with:
-          remove-codeql: true
+        uses: ublue-os/remove-unwanted-software@695eb75bc387dbcd9685a8e72d23439d8686cba6 # v10
 
       - name: Checkout
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
 
       - name: Build ISO
         id: build
-        uses: osbuild/bootc-image-builder-action@main
+        uses: ublue-os/titanoboa@main
         with:
-          builder-image: ${{ env.BIB_IMAGE }}
-          config-file: ${{ matrix.variant.config }}
-          image: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.variant.tag }}
-          chown: ${{ env.USER_UID }}:${{ env.USER_GID }}
-          types: anaconda-iso
-          additional-args: --use-librepo=True
+          image-ref: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.variant.tag }}
+          iso-dest: ${{ github.workspace }}/output.iso
+          builder-distro: fedora
 
-      - name: Rename ISO for release
+      - name: Rename ISO and generate checksum
         id: rename
         run: |
-          ISO_DIR="${{ steps.build.outputs.output-directory }}"
-          ORIGINAL_ISO=$(find "$ISO_DIR" -name "*.iso" -type f | head -1)
+          set -x
+          mkdir -p output
           NEW_NAME="${{ env.IMAGE_NAME }}-${{ matrix.variant.name }}.iso"
-          mv "$ORIGINAL_ISO" "$ISO_DIR/$NEW_NAME"
-          echo "iso-path=$ISO_DIR/$NEW_NAME" >> $GITHUB_OUTPUT
+          mv "${{ steps.build.outputs.iso-dest }}" "output/$NEW_NAME"
+          (cd output && sha256sum "$NEW_NAME" | tee "$NEW_NAME.sha256")
+          echo "iso-path=output/$NEW_NAME" >> $GITHUB_OUTPUT
           echo "iso-name=$NEW_NAME" >> $GITHUB_OUTPUT
 
       - name: Upload ISO as artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: ${{ env.IMAGE_NAME }}-${{ matrix.variant.name }}-iso
-          path: ${{ steps.build.outputs.output-directory }}
+          path: output/
           if-no-files-found: error
           retention-days: 7
           compression-level: 0
@@ -96,6 +84,8 @@ jobs:
         uses: softprops/action-gh-release@c95fe1489396fe8a9eb87c0abf8aa5b2ef267fda # v2
         with:
           tag_name: ${{ inputs.release-tag }}
-          files: ${{ steps.rename.outputs.iso-path }}
+          files: |
+            output/${{ steps.rename.outputs.iso-name }}
+            output/${{ steps.rename.outputs.iso-name }}.sha256
           fail_on_unmatched_files: true
           generate_release_notes: true
