@@ -139,6 +139,27 @@
     mode = "0755";
   };
 
+  # Post-install script to apply Hypercube config
+  environment.etc."hypercube-install".text = ''
+    #!/usr/bin/env bash
+    set -euo pipefail
+
+    echo "Applying Hypercube configuration..."
+
+    # Copy flake to new system
+    cp -r /etc/hypercube-config /mnt/etc/nixos/hypercube
+
+    # Generate hardware config
+    nixos-generate-config --root /mnt
+
+    # Apply Hypercube flake (with flakes enabled)
+    NIX_CONFIG="experimental-features = nix-command flakes" \
+      nixos-install --flake /mnt/etc/nixos/hypercube#hypercube --no-root-passwd
+
+    echo "Hypercube installation complete! Reboot to start using your system."
+  '';
+  environment.etc."hypercube-install".mode = "0755";
+
   # Welcome message
   environment.etc."motd".text = ''
 
@@ -153,10 +174,13 @@
     ║                                                               ║
     ║   Cloud Native NixOS Workstation                              ║
     ║                                                               ║
-    ║   Login: nixos / nixos                                        ║
-    ║   Install: Run the Calamares installer from the menu          ║
+    ║   Installation:                                               ║
+    ║   1. Calamares will start automatically                       ║
+    ║   2. Select "No Desktop" and check "Unfree Software"          ║
+    ║   3. Complete partitioning and user setup                     ║
+    ║   4. After install, run: sudo /etc/hypercube-install          ║
     ║                                                               ║
-    ║   Config location: /etc/hypercube-config                      ║
+    ║   Config: /etc/hypercube-config                               ║
     ║                                                               ║
     ╚═══════════════════════════════════════════════════════════════╝
 
