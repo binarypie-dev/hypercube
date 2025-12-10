@@ -15,7 +15,7 @@ set -ouex pipefail
 
 # Compositor / Hyprland Utilities
 dnf5 -y clean all
-dnf5 -y copr enable solopasha/hyprland
+dnf5 -y copr enable sdegler/hyprland
 dnf5 -y install waybar-git xdg-desktop-portal-hyprland hyprland hyprland-contrib hyprland-plugins hyprpaper hyprpicker hypridle hyprshot hyprlock pyprland xdg-desktop-portal-hyprland hyprland-qtutils
 
 # CLI Tools
@@ -61,28 +61,6 @@ install -Dm644 /ctx/60-hypercube-xdg.conf /usr/lib/environment.d/60-hypercube-xd
 
 # systemctl enable podman.socket
 
-### Install Hypercube branding assets
-# Install logo files to standard locations if they exist
-if [ -d /ctx/branding ]; then
-  # Install to pixmaps for system-wide use
-  mkdir -p /usr/share/pixmaps
-  cp -f /ctx/branding/hypercube-logo.png /usr/share/pixmaps/ 2>/dev/null || true
-  cp -f /ctx/branding/hypercube-logo.svg /usr/share/pixmaps/ 2>/dev/null || true
-
-  # Install icons to hicolor theme
-  for size in 48 64 128 256; do
-    if [ -f "/ctx/branding/hypercube-icon-${size}.png" ]; then
-      mkdir -p "/usr/share/icons/hicolor/${size}x${size}/apps"
-      cp -f "/ctx/branding/hypercube-icon-${size}.png" "/usr/share/icons/hicolor/${size}x${size}/apps/hypercube.png"
-    fi
-  done
-
-  # Install SVG icon if available
-  if [ -f "/ctx/branding/hypercube-logo.svg" ]; then
-    mkdir -p /usr/share/icons/hicolor/scalable/apps
-    cp -f /ctx/branding/hypercube-logo.svg /usr/share/icons/hicolor/scalable/apps/hypercube.svg
-  fi
-fi
 
 ### Install Quickshell config
 # Install quickshell launcher configuration to system-wide location
@@ -92,4 +70,3 @@ if [ -d /usr/share/hypercube/config/quickshell ]; then
   cp -r /usr/share/hypercube/config/quickshell/* /etc/skel/.config/quickshell/
   echo "Quickshell configuration installed successfully"
 fi
-

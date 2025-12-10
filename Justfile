@@ -229,9 +229,13 @@ build-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_bui
 [group('Build Virtal Machine Image')]
 build-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "raw" "disk_config/disk.toml")
 
-# Build an ISO virtual machine image
+# Build an ISO installer image
 [group('Build Virtal Machine Image')]
-build-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "iso" "disk_config/iso.toml")
+build-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_build-bib target_image tag "anaconda-iso" "disk_config/iso-gnome.toml")
+
+# Build an ISO installer image (NVIDIA variant)
+[group('Build Virtal Machine Image')]
+build-iso-nvidia $target_image=("localhost/" + image_name) $tag=(default_tag + "-nvidia"): && (_build-bib target_image tag "anaconda-iso" "disk_config/iso-nvidia.toml")
 
 # Rebuild a QCOW2 virtual machine image
 [group('Build Virtal Machine Image')]
@@ -241,9 +245,13 @@ rebuild-qcow2 $target_image=("localhost/" + image_name) $tag=default_tag: && (_r
 [group('Build Virtal Machine Image')]
 rebuild-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_rebuild-bib target_image tag "raw" "disk_config/disk.toml")
 
-# Rebuild an ISO virtual machine image
+# Rebuild an ISO installer image
 [group('Build Virtal Machine Image')]
-rebuild-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_rebuild-bib target_image tag "iso" "disk_config/iso.toml")
+rebuild-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_rebuild-bib target_image tag "anaconda-iso" "disk_config/iso-gnome.toml")
+
+# Rebuild an ISO installer image (NVIDIA variant)
+[group('Build Virtal Machine Image')]
+rebuild-iso-nvidia $target_image=("localhost/" + image_name) $tag=(default_tag + "-nvidia"): && (_rebuild-bib target_image tag "anaconda-iso" "disk_config/iso-nvidia.toml")
 
 # Run a virtual machine with the specified image type and configuration
 _run-vm $target_image $tag $type $config:
@@ -252,7 +260,7 @@ _run-vm $target_image $tag $type $config:
 
     # Determine the image file based on the type
     image_file="output/${type}/disk.${type}"
-    if [[ $type == iso ]]; then
+    if [[ $type == iso || $type == anaconda-iso ]]; then
         image_file="output/bootiso/install.iso"
     fi
 
@@ -297,7 +305,7 @@ run-vm-raw $target_image=("localhost/" + image_name) $tag=default_tag: && (_run-
 
 # Run a virtual machine from an ISO
 [group('Run Virtal Machine')]
-run-vm-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_run-vm target_image tag "iso" "disk_config/iso.toml")
+run-vm-iso $target_image=("localhost/" + image_name) $tag=default_tag: && (_run-vm target_image tag "anaconda-iso" "disk_config/iso-gnome.toml")
 
 # Run a virtual machine using systemd-vmspawn
 [group('Run Virtal Machine')]
