@@ -14,36 +14,45 @@ Scope {
     property real osdValue: 0
     property bool osdMuted: false
     property string osdIcon: ""
+    property bool initialized: false
+
+    // Delay initialization to ignore startup signals
+    Timer {
+        id: initTimer
+        interval: 500
+        running: true
+        onTriggered: osdRoot.initialized = true
+    }
 
     // Track Pipewire audio sink
     PwObjectTracker {
         objects: [Pipewire.defaultAudioSink, Pipewire.defaultAudioSource]
     }
 
-    // Watch for volume changes
-    Connections {
-        target: Pipewire.defaultAudioSink?.audio
+    // Track sink volume/mute changes
+    property real sinkVolume: Pipewire.defaultAudioSink?.audio?.averageVolume ?? 0
+    property bool sinkMuted: Pipewire.defaultAudioSink?.audio?.muted ?? false
 
-        function onVolumeChanged() {
-            osdRoot.showOsd("volume", Pipewire.defaultAudioSink.audio.volume, Pipewire.defaultAudioSink.audio.muted);
-        }
-
-        function onMutedChanged() {
-            osdRoot.showOsd("volume", Pipewire.defaultAudioSink.audio.volume, Pipewire.defaultAudioSink.audio.muted);
-        }
+    onSinkVolumeChanged: {
+        if (initialized)
+            showOsd("volume", sinkVolume, sinkMuted);
+    }
+    onSinkMutedChanged: {
+        if (initialized)
+            showOsd("volume", sinkVolume, sinkMuted);
     }
 
-    // Watch for mic changes
-    Connections {
-        target: Pipewire.defaultAudioSource?.audio
+    // Track source volume/mute changes
+    property real sourceVolume: Pipewire.defaultAudioSource?.audio?.averageVolume ?? 0
+    property bool sourceMuted: Pipewire.defaultAudioSource?.audio?.muted ?? false
 
-        function onVolumeChanged() {
-            osdRoot.showOsd("mic", Pipewire.defaultAudioSource.audio.volume, Pipewire.defaultAudioSource.audio.muted);
-        }
-
-        function onMutedChanged() {
-            osdRoot.showOsd("mic", Pipewire.defaultAudioSource.audio.volume, Pipewire.defaultAudioSource.audio.muted);
-        }
+    onSourceVolumeChanged: {
+        if (initialized)
+            showOsd("mic", sourceVolume, sourceMuted);
+    }
+    onSourceMutedChanged: {
+        if (initialized)
+            showOsd("mic", sourceVolume, sourceMuted);
     }
 
     // IPC handler for OSD commands
@@ -51,27 +60,27 @@ Scope {
         target: "osd"
 
         function volumeUp() {
-            if (Pipewire.defaultAudioSink) {
-                var newVol = Math.min(1.0, Pipewire.defaultAudioSink.audio.volume + 0.05);
-                Pipewire.defaultAudioSink.audio.volume = newVol;
+            if (Pipewire.defaultAudioSink?.audio) {
+                var newVol = Math.min(1.0, Pipewire.defaultAudioSink.audio.averageVolume + 0.05);
+                Pipewire.defaultAudioSink.audio.averageVolume = newVol;
             }
         }
 
         function volumeDown() {
-            if (Pipewire.defaultAudioSink) {
-                var newVol = Math.max(0.0, Pipewire.defaultAudioSink.audio.volume - 0.05);
-                Pipewire.defaultAudioSink.audio.volume = newVol;
+            if (Pipewire.defaultAudioSink?.audio) {
+                var newVol = Math.max(0.0, Pipewire.defaultAudioSink.audio.averageVolume - 0.05);
+                Pipewire.defaultAudioSink.audio.averageVolume = newVol;
             }
         }
 
         function volumeMute() {
-            if (Pipewire.defaultAudioSink) {
+            if (Pipewire.defaultAudioSink?.audio) {
                 Pipewire.defaultAudioSink.audio.muted = !Pipewire.defaultAudioSink.audio.muted;
             }
         }
 
         function micMute() {
-            if (Pipewire.defaultAudioSource) {
+            if (Pipewire.defaultAudioSource?.audio) {
                 Pipewire.defaultAudioSource.audio.muted = !Pipewire.defaultAudioSource.audio.muted;
             }
         }
