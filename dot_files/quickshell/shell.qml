@@ -1,6 +1,8 @@
+//@ pragma UseQApplication
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import Quickshell.Services.Notifications
 
 ShellRoot {
     id: root
@@ -8,8 +10,22 @@ ShellRoot {
     // Global HUD visibility state
     property bool hudVisible: false
 
-    // Notification storage (disabled for now)
+    // Notification storage
     property var notificationList: []
+
+    // Notification server
+    NotificationServer {
+        id: notificationServer
+        bodySupported: true
+        actionsSupported: true
+        imageSupported: true
+
+        onNotification: (notification) => {
+            // Must set tracked = true to retain the notification object
+            notification.tracked = true;
+            root.addNotification(notification);
+        }
+    }
 
     function toggleHud() {
         hudVisible = !hudVisible;
@@ -20,13 +36,19 @@ ShellRoot {
     }
 
     function dismissNotification(notification) {
-        notification.dismiss();
+        if (notification) {
+            // Setting tracked = false dismisses and destroys the notification
+            notification.tracked = false;
+        }
         notificationList = notificationList.filter(n => n !== notification);
     }
 
     function clearAllNotifications() {
         for (var i = 0; i < notificationList.length; i++) {
-            notificationList[i].dismiss();
+            var n = notificationList[i];
+            if (n) {
+                n.tracked = false;
+            }
         }
         notificationList = [];
     }

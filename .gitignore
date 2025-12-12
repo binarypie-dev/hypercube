@@ -2,3 +2,6 @@ cosign.key
 _build_*
 output
 _build-*/**
+_titanoboa/
+_vm_build/
+*.iso
