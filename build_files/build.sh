@@ -16,7 +16,7 @@ set -ouex pipefail
 # Compositor / Hyprland Utilities
 dnf5 -y clean all
 dnf5 -y copr enable sdegler/hyprland
-dnf5 -y install waybar-git xdg-desktop-portal-hyprland hyprland hyprland-contrib hyprland-plugins hyprpaper hyprpicker hypridle hyprshot hyprlock pyprland xdg-desktop-portal-hyprland hyprland-qtutils
+dnf5 -y install waybar-git xdg-desktop-portal-hyprland hyprland hyprland-contrib hyprland-plugins hyprpaper hyprpicker hypridle hyprshot hyprlock pyprland xdg-desktop-portal-hyprland hyprland-qtutils hyprpolkitagent
 
 # CLI Tools
 dnf5 -y install fd-find brightnessctl playerctl
