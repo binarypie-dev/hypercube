@@ -19,10 +19,10 @@ dnf5 -y copr enable sdegler/hyprland
 dnf5 -y install waybar-git xdg-desktop-portal-hyprland hyprland hyprland-contrib hyprland-plugins hyprpaper hyprpicker hypridle hyprshot hyprlock pyprland xdg-desktop-portal-hyprland hyprland-qtutils hyprpolkitagent
 
 # CLI Tools
-dnf5 -y install fd-find brightnessctl playerctl
+dnf5 -y install fd-find brightnessctl playerctl lazygit qt6ct
 
-# Tokyo Night GTK Theme and Qt/Kvantum theming
-dnf5 -y install gtk-murrine-engine sassc git kvantum qt6ct adwaita-cursor-theme
+# Tokyo Night GTK Theme
+dnf5 -y install gtk-murrine-engine sassc git adwaita-cursor-theme
 # Clone and install Tokyo Night GTK theme
 git clone --depth 1 https://github.com/Fausto-Korpsvart/Tokyonight-GTK-Theme.git /tmp/tokyonight-gtk
 /tmp/tokyonight-gtk/themes/install.sh -d /usr/share/themes -n Tokyonight --tweaks black
@@ -33,10 +33,6 @@ cp -r /tmp/tokyonight-gtk/icons/Tokyonight-Light /usr/share/icons/
 gtk-update-icon-cache /usr/share/icons/Tokyonight-Dark 2>/dev/null || true
 gtk-update-icon-cache /usr/share/icons/Tokyonight-Light 2>/dev/null || true
 rm -rf /tmp/tokyonight-gtk
-
-# Install Kvantum Tokyo Night theme system-wide
-mkdir -p /usr/share/Kvantum
-cp -r /usr/share/hypercube/config/Kvantum/tokyo-night /usr/share/Kvantum/
 
 # Remove extra things
 # TODO: Figure out what we don't need from solopasha/hyprland
@@ -75,9 +71,15 @@ install -Dm644 /usr/share/hypercube/config/wezterm/wezterm.lua /etc/skel/.config
 install -Dm644 /usr/share/hypercube/config/gtk-3.0/settings.ini /etc/skel/.config/gtk-3.0/settings.ini
 install -Dm644 /usr/share/hypercube/config/gtk-4.0/settings.ini /etc/skel/.config/gtk-4.0/settings.ini
 
-# Qt/Kvantum theme settings - install to /etc/skel for new users
+# Git UI tools configs (Tokyo Night themed)
+install -Dm644 /usr/share/hypercube/config/gitui/theme.ron /etc/skel/.config/gitui/theme.ron
+install -Dm644 /usr/share/hypercube/config/gitui/key_bindings.ron /etc/skel/.config/gitui/key_bindings.ron
+install -Dm644 /usr/share/hypercube/config/lazygit/config.yml /etc/skel/.config/lazygit/config.yml
+
+# Qt6 theming (Tokyo Night color scheme)
 install -Dm644 /usr/share/hypercube/config/qt6ct/qt6ct.conf /etc/skel/.config/qt6ct/qt6ct.conf
-install -Dm644 /usr/share/hypercube/config/Kvantum/kvantum.kvconfig /etc/skel/.config/Kvantum/kvantum.kvconfig
+install -Dm644 /usr/share/hypercube/config/qt6ct/colors/TokyoNight.conf /usr/share/qt6ct/colors/TokyoNight.conf
+
 
 # Configure XDG environment for Hypercube
 # This makes all configs in /usr/share/hypercube/config discoverable
