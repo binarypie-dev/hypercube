@@ -1,40 +1,52 @@
-# This build argument allows building different variants (regular vs NVIDIA)
+# Hypercube Container Build
+# Aligned with Bluefin patterns
+
+# ============================================
+# Build Arguments
+# ============================================
 ARG BASE_IMAGE=ghcr.io/ublue-os/bluefin-dx:stable-daily
+ARG IMAGE_NAME=hypercube
+ARG IMAGE_VENDOR=binarypie-dev
+ARG SHA_HEAD_SHORT=""
 
-# Allow build scripts to be referenced without being copied into the final image
+# ============================================
+# Stage 1: Context Aggregation
+# ============================================
+# Aggregate all build context into a single layer for mounting
 FROM scratch AS ctx
-COPY build_files /
-COPY branding /branding
+COPY system_files /system_files
+COPY build_files /build_files
 
-# Base Image
+# ============================================
+# Stage 2: Main Build
+# ============================================
 FROM ${BASE_IMAGE}
 
-# Copy dot_files into the image at /usr/share/hypercube/config
+# Re-declare ARGs after FROM (they don't persist across stages)
+ARG IMAGE_NAME
+ARG IMAGE_VENDOR
+ARG SHA_HEAD_SHORT
+
+# Export build-time environment variables
+ENV IMAGE_NAME=${IMAGE_NAME}
+ENV IMAGE_VENDOR=${IMAGE_VENDOR}
+
+# Copy dot_files (config templates) into the image
 COPY dot_files /usr/share/hypercube/config
 
 # Ensure all config files are readable by everyone
 RUN chmod -R a+rX /usr/share/hypercube/config
 
-## Other possible base images include:
-# FROM ghcr.io/ublue-os/bazzite:latest
-# FROM ghcr.io/ublue-os/bluefin-dx-nvidia:stable-daily
-#
-# ... and so on, here are more base images
-# Universal Blue Images: https://github.com/orgs/ublue-os/packages
-# Fedora base image: quay.io/fedora/fedora-bootc:41
-# CentOS base images: quay.io/centos-bootc/centos-bootc:stream10
-
-### MODIFICATIONS
-## make modifications desired in your image and install packages by modifying the build.sh script
-## the following RUN directive does all the things required to run "build.sh" as recommended.
-
+# Build with mounted context and caches
+# - Bind mount from ctx stage for build scripts and system files
+# - Cache mounts for DNF and rpm-ostree to speed up rebuilds
+# - Tmpfs for /tmp to avoid polluting the image
 RUN --mount=type=bind,from=ctx,source=/,target=/ctx \
-  --mount=type=cache,dst=/var/cache \
-  --mount=type=cache,dst=/var/log \
-  --mount=type=tmpfs,dst=/tmp \
-  /ctx/build.sh && \
-  ostree container commit
+    --mount=type=cache,dst=/var/cache/libdnf5 \
+    --mount=type=cache,dst=/var/cache/rpm-ostree \
+    --mount=type=tmpfs,dst=/tmp \
+    /ctx/build_files/shared/build.sh && \
+    ostree container commit
 
-### LINTING
-## Verify final image and contents are correct.
+# Final validation
 RUN bootc container lint

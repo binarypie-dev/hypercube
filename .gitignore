@@ -1,7 +1,20 @@
+# Secrets
 cosign.key
-_build_*
-output
-_build-*/**
+
+# Build artifacts
+_build*
+_rechunk_output/
+output/
+output.env
+previous.manifest.json
+changelog.md
+
+# Titanoboa ISO builder
 _titanoboa/
+
+# VM testing
 _vm_build/
+
+# ISO files
 *.iso
+result-iso/
