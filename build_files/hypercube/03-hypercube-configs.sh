@@ -67,11 +67,6 @@ install -Dm644 "${CONFIG_DIR}/gtk-4.0/settings.ini" /etc/xdg/gtk-4.0/settings.in
 # These support XDG_CONFIG_DIRS and will find configs in /usr/share/hypercube/config/
 # No skel copy needed - users can override by creating ~/.config/<app>/
 
-### Disable Bluefin MOTD for new users
-# Create the toggle file that disables the MOTD prompt
-mkdir -p /etc/skel/.config/ublue
-touch /etc/skel/.config/ublue/no-show-user-motd
-
 ### Qt6 theming (Tokyo Night color scheme)
 # Qt6ct supports XDG_CONFIG_DIRS for system-wide defaults
 install -Dm644 "${CONFIG_DIR}/qt6ct/qt6ct.conf" /etc/xdg/qt6ct/qt6ct.conf
