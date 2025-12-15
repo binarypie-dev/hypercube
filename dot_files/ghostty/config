@@ -24,7 +24,7 @@ gtk-wide-tabs = false
 # FONT CONFIGURATION
 # ----------------------------------------------------------------
 
-font-family = JetBrainsMono Nerd Font
+font-family = JetBrains Mono
 font-size = 13
 
 # ----------------------------------------------------------------
