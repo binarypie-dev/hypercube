@@ -1,0 +1,287 @@
+# Hypercube Starship Prompt
+# Based on no-runtimes preset with Tokyo Night theme
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Prompt format - timestamp at start of each line
+format = """
+$time\
+$username\
+$hostname\
+$directory\
+$git_branch\
+$git_status\
+$git_state\
+$c\
+$cmake\
+$golang\
+$haskell\
+$java\
+$kotlin\
+$lua\
+$nodejs\
+$python\
+$ruby\
+$rust\
+$zig\
+$docker_context\
+$kubernetes\
+$terraform\
+$fill\
+$cmd_duration\
+$line_break\
+$character"""
+
+# Tokyo Night color palette
+palette = "tokyo_night"
+
+[palettes.tokyo_night]
+foreground = "#c0caf5"
+comment = "#565f89"
+cyan = "#7dcfff"
+green = "#9ece6a"
+orange = "#ff9e64"
+magenta = "#bb9af7"
+blue = "#7aa2f7"
+red = "#f7768e"
+yellow = "#e0af68"
+
+# Timestamp at start of line
+[time]
+disabled = false
+format = '[$time]($style) '
+style = "comment"
+time_format = "%H:%M:%S"
+
+[character]
+success_symbol = "[❯](bold green)"
+error_symbol = "[❯](bold red)"
+vimcmd_symbol = "[❮](bold blue)"
+vimcmd_replace_one_symbol = "[❮](bold magenta)"
+vimcmd_replace_symbol = "[❮](bold magenta)"
+vimcmd_visual_symbol = "[❮](bold yellow)"
+
+[directory]
+style = "bold blue"
+truncation_length = 5
+truncate_to_repo = true
+format = "[$path]($style)[$read_only]($read_only_style) "
+
+[git_branch]
+style = "bold magenta"
+format = "[$symbol$branch(:$remote_branch)]($style) "
+
+[git_status]
+style = "bold red"
+format = '([\[$all_status$ahead_behind\]]($style) )'
+
+[git_state]
+style = "bold yellow"
+
+[cmd_duration]
+style = "bold yellow"
+min_time = 2_000
+format = "[$duration]($style) "
+
+[fill]
+symbol = " "
+
+[username]
+style_user = "bold cyan"
+style_root = "bold red"
+format = "[$user]($style) "
+show_always = false
+
+[hostname]
+style = "bold green"
+format = "[@$hostname]($style) "
+ssh_only = true
+
+[docker_context]
+style = "bold cyan"
+format = "[$symbol$context]($style) "
+
+[kubernetes]
+style = "bold blue"
+disabled = false
+format = '[$symbol$context( \($namespace\))]($style) '
+
+[terraform]
+style = "bold magenta"
+format = "[$symbol$workspace]($style) "
+
+# No Runtimes Preset - show symbols only, no version numbers
+# This keeps the prompt clean while still indicating language context
+
+[bun]
+format = "via [$symbol]($style)"
+
+[buf]
+format = "with [$symbol]($style)"
+
+[c]
+format = "via [$symbol]($style)"
+style = "bold cyan"
+
+[cmake]
+format = "via [$symbol]($style)"
+style = "bold blue"
+
+[cobol]
+format = "via [$symbol]($style)"
+
+[crystal]
+format = "via [$symbol]($style)"
+
+[daml]
+format = "via [$symbol]($style)"
+
+[dart]
+format = "via [$symbol]($style)"
+style = "bold cyan"
+
+[deno]
+format = "via [$symbol]($style)"
+
+[dotnet]
+format = "[$symbol(🎯 $tfm )]($style)"
+style = "bold magenta"
+
+[elixir]
+format = 'via [$symbol]($style)'
+style = "bold magenta"
+
+[elm]
+format = 'via [$symbol]($style)'
+style = "bold cyan"
+
+[erlang]
+format = 'via [$symbol]($style)'
+style = "bold red"
+
+[fennel]
+format = 'via [$symbol]($style)'
+
+[fortran]
+format = 'via [$symbol]($style)'
+
+[gleam]
+format = 'via [$symbol]($style)'
+style = "bold magenta"
+
+[golang]
+format = 'via [$symbol]($style)'
+style = "bold cyan"
+
+[gradle]
+format = 'via [$symbol]($style)'
+
+[haskell]
+format = 'via [$symbol]($style)'
+style = "bold magenta"
+
+[haxe]
+format = 'via [$symbol]($style)'
+
+[helm]
+format = 'via [$symbol]($style)'
+style = "bold blue"
+
+[java]
+format = 'via [$symbol]($style)'
+style = "bold red"
+
+[julia]
+format = 'via [$symbol]($style)'
+style = "bold magenta"
+
+[kotlin]
+format = 'via [$symbol]($style)'
+style = "bold magenta"
+
+[lua]
+format = 'via [$symbol]($style)'
+style = "bold blue"
+
+[meson]
+format = 'via [$symbol]($style)'
+
+[nim]
+format = 'via [$symbol]($style)'
+style = "bold yellow"
+
+[nodejs]
+format = 'via [$symbol]($style)'
+style = "bold green"
+
+[ocaml]
+format = 'via [$symbol(\($switch_indicator$switch_name\) )]($style)'
+style = "bold orange"
+
+[odin]
+format = 'via [$symbol]($style)'
+
+[opa]
+format = 'via [$symbol]($style)'
+
+[perl]
+format = 'via [$symbol]($style)'
+style = "bold cyan"
+
+[php]
+format = 'via [$symbol]($style)'
+style = "bold magenta"
+
+[pulumi]
+format = 'via [$symbol$stack]($style)'
+
+[purescript]
+format = 'via [$symbol]($style)'
+
+[python]
+format = 'via [$symbol]($style)'
+style = "bold yellow"
+
+[quarto]
+format = 'via [$symbol]($style)'
+
+[raku]
+format = 'via [$symbol]($style)'
+
+[red]
+format = 'via [$symbol]($style)'
+
+[rlang]
+format = 'via [$symbol]($style)'
+style = "bold blue"
+
+[ruby]
+format = 'via [$symbol]($style)'
+style = "bold red"
+
+[rust]
+format = 'via [$symbol]($style)'
+style = "bold orange"
+
+[scala]
+format = 'via [$symbol]($style)'
+style = "bold red"
+
+[solidity]
+format = 'via [$symbol]($style)'
+
+[swift]
+format = 'via [$symbol]($style)'
+style = "bold orange"
+
+[typst]
+format = 'via [$symbol]($style)'
+
+[vagrant]
+format = 'via [$symbol]($style)'
+
+[vlang]
+format = 'via [$symbol]($style)'
+
+[zig]
+format = 'via [$symbol]($style)'
+style = "bold orange"

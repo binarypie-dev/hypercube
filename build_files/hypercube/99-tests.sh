@@ -16,6 +16,7 @@ REQUIRED_PACKAGES=(
     "ghostty"
     "neovim"
     "lazygit"
+    "starship"
 )
 
 for pkg in "${REQUIRED_PACKAGES[@]}"; do
@@ -32,6 +33,7 @@ REQUIRED_FILES=(
     "/usr/lib/environment.d/60-hypercube-xdg.conf"
     "/usr/bin/nvimd"
     "/etc/fish/config.fish"
+    "/usr/share/hypercube/config/starship/starship.toml"
     "/usr/share/themes/Tokyonight-Dark/gtk-3.0/gtk.css"
     "/usr/share/icons/Tokyonight-Dark/index.theme"
 )

@@ -7,17 +7,12 @@ if status is-interactive
     # Editor
     set -gx EDITOR nvim
 
-    # Prompt
-    set --global hydro_multiline true
-    set --global fish_prompt_pwd_dir_length 100
-    set --global hydro_color_pwd $fish_color_comment
-    set --global hydro_color_git $fish_color_operator
-    set --global hydro_color_error $fish_color_error
-    set --global hydro_color_prompt $fish_color_command
-    set --global hydro_color_duration $fish_color_param
+    # Prompt - Starship
+    set -gx STARSHIP_CONFIG /usr/share/hypercube/config/starship/starship.toml
+    starship init fish | source
 
     # Env Variables
-    set -Ux GOOGLE_CLOUD_PROJECT ibexio-src
+    set -gx GOOGLE_CLOUD_PROJECT ibexio-src
 
     # Path
     fish_add_path $HOME/.local/bin

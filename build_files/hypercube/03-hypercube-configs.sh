@@ -18,6 +18,17 @@ cp -r "${CONFIG_DIR}/fish/conf.d" /etc/fish/
 cp -r "${CONFIG_DIR}/fish/functions" /etc/fish/ 2>/dev/null || true
 cp -r "${CONFIG_DIR}/fish/completions" /etc/fish/ 2>/dev/null || true
 
+### Set fish as the default shell for all users
+# Add fish to /etc/shells if not present
+grep -qxF '/usr/bin/fish' /etc/shells || echo '/usr/bin/fish' >> /etc/shells
+# Set fish as default shell in /etc/skel for new users (via useradd defaults)
+sed -i 's|^SHELL=.*|SHELL=/usr/bin/fish|' /etc/default/useradd 2>/dev/null || \
+    echo 'SHELL=/usr/bin/fish' >> /etc/default/useradd
+
+### Starship prompt configuration
+# Starship config is read from STARSHIP_CONFIG env var set in fish config
+# Config lives at /usr/share/hypercube/config/starship/starship.toml (read-only)
+
 ### Wezterm configs
 # Wezterm doesn't support XDG_CONFIG_DIRS for system defaults
 install -Dm644 "${CONFIG_DIR}/wezterm/wezterm.lua" /etc/skel/.config/wezterm/wezterm.lua

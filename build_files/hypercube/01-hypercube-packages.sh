@@ -29,7 +29,8 @@ dnf5 -y install \
 ### CLI Tools (skip packages already in bluefin-dx)
 dnf5 -y install \
     fd-find \
-    qt6ct
+    qt6ct \
+    starship
 
 ### Lazygit from COPR
 dnf5 -y copr enable atim/lazygit
