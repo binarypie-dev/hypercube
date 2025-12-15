@@ -29,29 +29,47 @@ sed -i 's|^SHELL=.*|SHELL=/usr/bin/fish|' /etc/default/useradd 2>/dev/null || \
 # Starship config is read from STARSHIP_CONFIG env var set in fish config
 # Config lives at /usr/share/hypercube/config/starship/starship.toml (read-only)
 
-### Wezterm configs
-# Wezterm doesn't support XDG_CONFIG_DIRS for system defaults
-install -Dm644 "${CONFIG_DIR}/wezterm/wezterm.lua" /etc/skel/.config/wezterm/wezterm.lua
+### Ghostty terminal - stub that sources system config
+# Users can customize by adding settings after the config-file line
+mkdir -p /etc/skel/.config/ghostty
+cat > /etc/skel/.config/ghostty/config << 'EOF'
+# Hypercube Ghostty Configuration
+# System defaults are sourced below. Add your customizations after this line.
+# To replace defaults entirely, remove or comment out the config-file line.
 
-### GTK theme settings - install to /etc/skel for new users
-install -Dm644 "${CONFIG_DIR}/gtk-3.0/settings.ini" /etc/skel/.config/gtk-3.0/settings.ini
-install -Dm644 "${CONFIG_DIR}/gtk-4.0/settings.ini" /etc/skel/.config/gtk-4.0/settings.ini
+config-file = /usr/share/hypercube/config/ghostty/config
 
-### Git UI tools configs (Tokyo Night themed)
-install -Dm644 "${CONFIG_DIR}/gitui/theme.ron" /etc/skel/.config/gitui/theme.ron
-install -Dm644 "${CONFIG_DIR}/gitui/key_bindings.ron" /etc/skel/.config/gitui/key_bindings.ron
-install -Dm644 "${CONFIG_DIR}/lazygit/config.yml" /etc/skel/.config/lazygit/config.yml
+# Your customizations below:
+EOF
+
+### Wezterm terminal - stub that sources system config
+# Users can customize by modifying the config table after dofile()
+mkdir -p /etc/skel/.config/wezterm
+cat > /etc/skel/.config/wezterm/wezterm.lua << 'EOF'
+-- Hypercube Wezterm Configuration
+-- System defaults are loaded below. Add your customizations after this line.
+-- To replace defaults entirely, remove the dofile line and start fresh.
+
+local config = dofile("/usr/share/hypercube/config/wezterm/wezterm.lua")
+
+-- Your customizations below:
+-- Example: config.font_size = 14
+
+return config
+EOF
+
+### GTK theme settings - install to /etc/xdg/ for system-wide defaults
+# Users can override by creating ~/.config/gtk-3.0/settings.ini
+install -Dm644 "${CONFIG_DIR}/gtk-3.0/settings.ini" /etc/xdg/gtk-3.0/settings.ini
+install -Dm644 "${CONFIG_DIR}/gtk-4.0/settings.ini" /etc/xdg/gtk-4.0/settings.ini
+
+### Git UI tools (gitui, lazygit), Quickshell
+# These support XDG_CONFIG_DIRS and will find configs in /usr/share/hypercube/config/
+# No skel copy needed - users can override by creating ~/.config/<app>/
 
 ### Qt6 theming (Tokyo Night color scheme)
-install -Dm644 "${CONFIG_DIR}/qt6ct/qt6ct.conf" /etc/skel/.config/qt6ct/qt6ct.conf
+# Qt6ct supports XDG_CONFIG_DIRS for system-wide defaults
+install -Dm644 "${CONFIG_DIR}/qt6ct/qt6ct.conf" /etc/xdg/qt6ct/qt6ct.conf
 install -Dm644 "${CONFIG_DIR}/qt6ct/colors/TokyoNight.conf" /usr/share/qt6ct/colors/TokyoNight.conf
-
-### Quickshell launcher configuration
-if [ -d "${CONFIG_DIR}/quickshell" ]; then
-    echo "Installing Quickshell launcher configuration..."
-    mkdir -p /etc/skel/.config/quickshell
-    cp -r "${CONFIG_DIR}/quickshell/"* /etc/skel/.config/quickshell/
-    echo "Quickshell configuration installed successfully"
-fi
 
 echo "Hypercube configurations installed successfully"

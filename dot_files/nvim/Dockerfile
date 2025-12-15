@@ -193,22 +193,19 @@ RUN npm install -g \
 # =============================================================================
 # LAYER 11: Directory setup & environment (changes rarely)
 # =============================================================================
-RUN mkdir -p /home/${USERNAME}/.config/nvim \
-    && mkdir -p /home/${USERNAME}/.local/share/nvim \
-    && mkdir -p /home/${USERNAME}/.local/state/nvim \
-    && mkdir -p /home/${USERNAME}/.cache/nvim \
-    && mkdir -p /home/${USERNAME}/workspace
+# Note: nvim data/state/cache dirs are created on host by nvimd script
+# and mounted at runtime. Only create workspace dir here.
+RUN mkdir -p /home/${USERNAME}/workspace
 
 # Install Ghostty terminfo for terminal compatibility
 RUN curl -fsSL https://raw.githubusercontent.com/ghostty-org/ghostty/main/src/terminfo/ghostty.terminfo \
     | tic -x -o ~/.terminfo -
 
 # =============================================================================
-# LAYER 12: Pre-install treesitter parsers (changes rarely)
+# LAYER 12: OSC52 clipboard setup (changes rarely)
 # =============================================================================
-RUN nvim --headless \
-    -c "TSInstallSync bash c diff dockerfile fish git_config git_rebase gitattributes gitcommit gitignore go gomod gosum gowork hcl helm html javascript jsdoc json jsonc lua luadoc luap markdown markdown_inline printf python query regex ron rust sql terraform toml tsx typescript vim vimdoc xml yaml" \
-    -c "qall"
+# Note: Treesitter parsers are not pre-installed because the data directory
+# is mounted from host at runtime. Parsers will install on first use.
 
 # Create OSC52 clipboard init (loaded before user config)
 RUN echo "vim.g.clipboard = { \
