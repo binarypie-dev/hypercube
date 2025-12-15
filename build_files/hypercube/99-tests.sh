@@ -36,6 +36,8 @@ REQUIRED_FILES=(
     "/usr/share/hypercube/config/starship/starship.toml"
     "/usr/share/themes/Tokyonight-Dark/gtk-3.0/gtk.css"
     "/usr/share/icons/Tokyonight-Dark/index.theme"
+    "/usr/share/plymouth/themes/hypercube/hypercube.plymouth"
+    "/usr/share/pixmaps/hypercube-logo.png"
 )
 
 for file in "${REQUIRED_FILES[@]}"; do

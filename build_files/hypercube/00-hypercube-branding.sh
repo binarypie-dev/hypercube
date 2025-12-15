@@ -93,4 +93,18 @@ if [ ! -L /etc/os-release ]; then
     ln -sf ../usr/lib/os-release /etc/os-release
 fi
 
+### Plymouth Boot Theme
+# Set Hypercube as the default Plymouth theme
+if [ -d /usr/share/plymouth/themes/hypercube ]; then
+    plymouth-set-default-theme hypercube
+    echo "Plymouth theme set to hypercube"
+fi
+
+### GDM Login Screen Branding
+# Compile dconf database for GDM logo
+if [ -d /etc/dconf/db/gdm.d ]; then
+    dconf update
+    echo "GDM dconf database updated"
+fi
+
 echo "Hypercube branding applied successfully"
