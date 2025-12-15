@@ -1,5 +1,12 @@
 [org/gnome/login-screen]
-logo='/usr/share/pixmaps/hypercube-logo.png'
+# Disable the logo (removes small icon and "HYPERCUBE" text at bottom)
+logo=''
+disable-user-list=false
 
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'
+
+[org/gnome/desktop/background]
+picture-uri='file:///usr/share/backgrounds/hypercube/background.png'
+picture-uri-dark='file:///usr/share/backgrounds/hypercube/background.png'
+picture-options='zoom'

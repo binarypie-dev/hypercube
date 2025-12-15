@@ -37,6 +37,7 @@ REQUIRED_FILES=(
     "/usr/share/icons/Tokyonight-Dark/index.theme"
     "/usr/share/plymouth/themes/hypercube/hypercube.plymouth"
     "/usr/share/pixmaps/hypercube-logo.png"
+    "/usr/share/backgrounds/hypercube/background.png"
 )
 
 for file in "${REQUIRED_FILES[@]}"; do
