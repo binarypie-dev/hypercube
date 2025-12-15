@@ -142,7 +142,7 @@ build-iso flavor="main": _titanoboa-setup
     echo "Building ISO for ${IMAGE_FULL}..."
 
     # Check if image exists
-    ID=$({{ PODMAN }} images --filter reference="${IMAGE_FULL}" --format '{{`{{.ID}}`}}')
+    ID=$({{ PODMAN }} images --filter reference="${IMAGE_FULL}" --format "{{{{.ID}}}}")
     if [[ -z "$ID" ]]; then
         echo "Error: Image ${IMAGE_FULL} not found. Run 'just build {{ flavor }}' first."
         exit 1

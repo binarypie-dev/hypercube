@@ -1,5 +1,5 @@
-# Hypercube Dark Mode Settings
-# Forces dark mode system-wide for GNOME/GTK applications
+# Hypercube Settings
+# System-wide defaults for GNOME desktop
 
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'
@@ -9,3 +9,7 @@ cursor-theme='Adwaita'
 
 [org/gnome/desktop/wm/preferences]
 theme='Tokyonight-Dark-BL'
+
+[org/gnome/desktop/input-sources]
+# XKB options: Caps Lock as Ctrl, swap Alt and Super
+xkb-options=['caps:ctrl_modifier', 'altwin:swap_alt_win']
