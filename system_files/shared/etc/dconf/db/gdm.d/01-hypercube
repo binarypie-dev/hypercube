@@ -1,2 +1,5 @@
 [org/gnome/login-screen]
 logo='/usr/share/pixmaps/hypercube-logo.png'
+
+[org/gnome/desktop/interface]
+color-scheme='prefer-dark'

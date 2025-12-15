@@ -7,7 +7,6 @@ export image_name := env("IMAGE_NAME", "hypercube")
 export base_image := env("BASE_IMAGE", "ghcr.io/ublue-os/bluefin-dx")
 export base_image_nvidia := env("BASE_IMAGE_NVIDIA", "ghcr.io/ublue-os/bluefin-dx-nvidia")
 export default_tag := env("DEFAULT_TAG", "stable-daily")
-export rechunker_image := "ghcr.io/hhd-dev/rechunk:v1.0.3"
 
 # Runtime detection
 export SUDO := if `id -u` == "0" { "" } else { "sudo" }
@@ -23,7 +22,7 @@ default:
 
 # Build container image
 [group('Build')]
-build flavor="main" ghcr="0" rechunk="0":
+build flavor="main" ghcr="0":
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -67,91 +66,24 @@ build flavor="main" ghcr="0" rechunk="0":
             .
     fi
 
-    # Rechunk if requested
-    if [[ "{{ rechunk }}" == "1" ]]; then
-        just rechunk "{{ image_name }}" "${TAG}"
-        just load-rechunk "{{ image_name }}" "${TAG}"
-    fi
-
     echo ""
     echo "========================================"
     echo "Build complete: ${IMAGE_FULL}"
     echo "========================================"
 
-# Build with rechunking enabled (recommended for production)
-[group('Build')]
-build-rechunk flavor="main":
-    @just build {{ flavor }} 0 1
-
-# Build for GHCR push (rootful, with rechunking)
+# Build for GHCR push (rootful)
 [group('Build')]
 build-ghcr flavor="main":
-    @just build {{ flavor }} 1 1
+    @just build {{ flavor }} 1
 
 # Build both flavors
 [group('Build')]
 build-all:
     @echo "Building main flavor..."
-    @just build-rechunk main
+    @just build main
     @echo ""
     @echo "Building nvidia flavor..."
-    @just build-rechunk nvidia
-
-# Rechunk image for optimized OCI layers
-[group('Build')]
-[private]
-rechunk image tag:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    IMAGE_FULL="localhost/{{ image }}:{{ tag }}"
-    OUTPUT_DIR="${PWD}/_rechunk_output"
-
-    echo "Rechunking: ${IMAGE_FULL}"
-
-    rm -rf "${OUTPUT_DIR}"
-    mkdir -p "${OUTPUT_DIR}"
-
-    # Run rechunker container
-    {{ PODMAN }} run --rm \
-        --privileged \
-        --security-opt label=disable \
-        -v "${OUTPUT_DIR}:/output" \
-        -v /var/lib/containers:/var/lib/containers \
-        {{ rechunker_image }} \
-        "${IMAGE_FULL}" \
-        /output
-
-    echo "Rechunk output saved to: ${OUTPUT_DIR}"
-
-# Load rechunked image into podman
-[group('Build')]
-[private]
-load-rechunk image tag:
-    #!/usr/bin/env bash
-    set -euo pipefail
-
-    OUTPUT_DIR="${PWD}/_rechunk_output"
-    IMAGE_FULL="{{ image }}:{{ tag }}"
-
-    if [[ ! -d "${OUTPUT_DIR}" ]]; then
-        echo "Error: Rechunk output not found at ${OUTPUT_DIR}"
-        exit 1
-    fi
-
-    echo "Loading rechunked image..."
-
-    # Load the OCI image
-    {{ PODMAN }} load -i "${OUTPUT_DIR}/oci-archive.tar"
-
-    # Tag it properly
-    LOADED_IMAGE=$({{ PODMAN }} images --format "{{`{{.ID}}`}}" | head -1)
-    {{ PODMAN }} tag "${LOADED_IMAGE}" "${IMAGE_FULL}"
-
-    # Cleanup
-    rm -rf "${OUTPUT_DIR}"
-
-    echo "Loaded: ${IMAGE_FULL}"
+    @just build nvidia
 
 # Run container interactively for testing
 [group('Build')]
@@ -212,7 +144,7 @@ build-iso flavor="main": _titanoboa-setup
     # Check if image exists
     ID=$({{ PODMAN }} images --filter reference="${IMAGE_FULL}" --format '{{`{{.ID}}`}}')
     if [[ -z "$ID" ]]; then
-        echo "Error: Image ${IMAGE_FULL} not found. Run 'just build-rechunk {{ flavor }}' first."
+        echo "Error: Image ${IMAGE_FULL} not found. Run 'just build {{ flavor }}' first."
         exit 1
     fi
 
@@ -352,7 +284,7 @@ verify-container image tag:
 clean:
     #!/usr/bin/bash
     set -eoux pipefail
-    rm -rf _build* _titanoboa _rechunk_output
+    rm -rf _build* _titanoboa
     rm -f previous.manifest.json changelog.md output.env
     rm -rf output/
     rm -f *.iso

@@ -27,10 +27,10 @@ dnf5 -y install \
     xdg-desktop-portal-hyprland
 
 ### CLI Tools (skip packages already in bluefin-dx)
+# Note: starship is already installed in bluefin-dx
 dnf5 -y install \
     fd-find \
-    qt6ct \
-    starship
+    qt6ct
 
 ### Lazygit from COPR
 dnf5 -y copr enable atim/lazygit

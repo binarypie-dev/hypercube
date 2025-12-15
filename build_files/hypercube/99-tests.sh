@@ -16,7 +16,6 @@ REQUIRED_PACKAGES=(
     "ghostty"
     "neovim"
     "lazygit"
-    "starship"
 )
 
 for pkg in "${REQUIRED_PACKAGES[@]}"; do

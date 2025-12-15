@@ -1,0 +1,11 @@
+# Hypercube Dark Mode Settings
+# Forces dark mode system-wide for GNOME/GTK applications
+
+[org/gnome/desktop/interface]
+color-scheme='prefer-dark'
+gtk-theme='Tokyonight-Dark-BL'
+icon-theme='Tokyonight-Dark'
+cursor-theme='Adwaita'
+
+[org/gnome/desktop/wm/preferences]
+theme='Tokyonight-Dark-BL'
