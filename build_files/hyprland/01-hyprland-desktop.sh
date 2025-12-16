@@ -49,7 +49,8 @@ dnf5 -y install fish
 ### Terminal - Ghostty (from Hypercube COPR)
 dnf5 -y install ghostty
 
-### Editor - Neovim (from Hypercube COPR)
+### Editor - Neovim nightly (from agriffis COPR)
+dnf5 -y copr enable agriffis/neovim-nightly
 dnf5 -y install neovim python3-neovim
 
 ### Image/Media Viewers
