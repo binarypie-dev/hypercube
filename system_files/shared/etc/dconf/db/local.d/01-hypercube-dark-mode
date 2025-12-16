@@ -1,5 +1,5 @@
 # Hypercube Settings
-# System-wide defaults for GNOME desktop
+# System-wide defaults for GTK applications running under Hyprland
 
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'
@@ -7,9 +7,4 @@ gtk-theme='Tokyonight-Dark-BL'
 icon-theme='Tokyonight-Dark'
 cursor-theme='Adwaita'
 
-[org/gnome/desktop/wm/preferences]
-theme='Tokyonight-Dark-BL'
-
-[org/gnome/desktop/input-sources]
-# XKB options: Caps Lock as Ctrl, swap Alt and Super
-xkb-options=['caps:ctrl_modifier', 'altwin:swap_alt_win']
+# Note: XKB options are now configured in Hyprland (hyprland.conf)

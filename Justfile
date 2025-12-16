@@ -157,8 +157,10 @@ build-iso flavor="main": _titanoboa-setup
     fi
 
     # Build ISO with Titanoboa
+    # livesys=0 skips Fedora livesys scripts (we use Calamares instead)
+    # hook-post-rootfs sets up live user, Calamares, and auto-login
     cd _titanoboa
-    {{ SUDO }} just build "${IMAGE_FULL}"
+    {{ SUDO }} HOOK_POST_ROOTFS="${PWD}/../iso_files/configure_live_session.sh" just build "${IMAGE_FULL}" livesys=0
 
     # Fix ownership
     if [[ "${UID}" -gt 0 ]]; then
@@ -197,8 +199,10 @@ build-iso-ghcr flavor="main": _titanoboa-setup
 
     echo "Building ISO for ${IMAGE_FULL}..."
 
+    # livesys=0 skips Fedora livesys scripts (we use Calamares instead)
+    # hook-post-rootfs sets up live user, Calamares, and auto-login
     cd _titanoboa
-    {{ SUDO }} just build "${IMAGE_FULL}"
+    {{ SUDO }} HOOK_POST_ROOTFS="${PWD}/../iso_files/configure_live_session.sh" just build "${IMAGE_FULL}" livesys=0
 
     if [[ "${UID}" -gt 0 ]]; then
         {{ SUDO }} chown "${UID}:$(id -g)" -R "${PWD}"

@@ -9,7 +9,7 @@ IMAGE_NAME="${IMAGE_NAME:-hypercube}"
 IMAGE_VENDOR="${IMAGE_VENDOR:-binarypie-dev}"
 IMAGE_FLAVOR="${IMAGE_FLAVOR:-main}"
 FEDORA_VERSION="${FEDORA_VERSION:-$(rpm -E %fedora)}"
-BASE_IMAGE_NAME="${BASE_IMAGE_NAME:-bluefin-dx}"
+BASE_IMAGE_NAME="${BASE_IMAGE_NAME:-base-main}"
 
 # Create image-info.json
 mkdir -p /usr/share/hypercube
@@ -26,7 +26,7 @@ cat > /usr/share/hypercube/image-info.json << EOF
 EOF
 
 # Modify /usr/lib/os-release for Hypercube branding
-# Keep Bluefin as ID_LIKE since we inherit from it
+# No longer inheriting from Bluefin - built from base-main
 if [ -f /usr/lib/os-release ]; then
     # Set NAME to Hypercube
     sed -i "s/^NAME=.*/NAME=\"Hypercube\"/" /usr/lib/os-release
@@ -34,14 +34,14 @@ if [ -f /usr/lib/os-release ]; then
     # Update PRETTY_NAME
     sed -i "s/^PRETTY_NAME=.*/PRETTY_NAME=\"Hypercube ${FEDORA_VERSION} (Fedora-based)\"/" /usr/lib/os-release
 
-    # Set ID to hypercube, keep fedora and bluefin as ID_LIKE
+    # Set ID to hypercube, keep fedora as ID_LIKE
     sed -i "s/^ID=.*/ID=hypercube/" /usr/lib/os-release
 
-    # Update ID_LIKE to include both fedora and bluefin
+    # Update ID_LIKE to fedora (no longer inheriting from Bluefin)
     if grep -q "^ID_LIKE=" /usr/lib/os-release; then
-        sed -i "s/^ID_LIKE=.*/ID_LIKE=\"bluefin fedora\"/" /usr/lib/os-release
+        sed -i "s/^ID_LIKE=.*/ID_LIKE=\"fedora\"/" /usr/lib/os-release
     else
-        echo 'ID_LIKE="bluefin fedora"' >> /usr/lib/os-release
+        echo 'ID_LIKE="fedora"' >> /usr/lib/os-release
     fi
 
     # Set VARIANT_ID
@@ -100,11 +100,10 @@ if [ -d /usr/share/plymouth/themes/hypercube ]; then
     echo "Plymouth theme set to hypercube"
 fi
 
-### GDM Login Screen Branding
-# Compile dconf database for GDM logo
-if [ -d /etc/dconf/db/gdm.d ]; then
+### dconf database update (for any remaining dconf settings)
+if [ -d /etc/dconf/db ]; then
     dconf update
-    echo "GDM dconf database updated"
+    echo "dconf database updated"
 fi
 
 echo "Hypercube branding applied successfully"

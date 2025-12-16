@@ -1,12 +1,15 @@
-# Hypercube Container Build
-# Aligned with Bluefin patterns
+# Hypercube v2 Container Build
+# Built from ublue-os/base-main (pure Hyprland, no GNOME)
 
 # ============================================
 # Build Arguments
 # ============================================
-ARG BASE_IMAGE=ghcr.io/ublue-os/bluefin-dx:stable-daily
+ARG SOURCE_IMAGE="base"
+ARG SOURCE_SUFFIX="-main"
+ARG FEDORA_VERSION="43"
 ARG IMAGE_NAME=hypercube
 ARG IMAGE_VENDOR=binarypie-dev
+ARG IMAGE_FLAVOR="main"
 ARG SHA_HEAD_SHORT=""
 
 # ============================================
@@ -20,16 +23,20 @@ COPY build_files /build_files
 # ============================================
 # Stage 2: Main Build
 # ============================================
-FROM ${BASE_IMAGE}
+FROM ghcr.io/ublue-os/${SOURCE_IMAGE}${SOURCE_SUFFIX}:${FEDORA_VERSION}
 
 # Re-declare ARGs after FROM (they don't persist across stages)
 ARG IMAGE_NAME
 ARG IMAGE_VENDOR
+ARG IMAGE_FLAVOR
 ARG SHA_HEAD_SHORT
+ARG FEDORA_VERSION
 
 # Export build-time environment variables
 ENV IMAGE_NAME=${IMAGE_NAME}
 ENV IMAGE_VENDOR=${IMAGE_VENDOR}
+ENV IMAGE_FLAVOR=${IMAGE_FLAVOR}
+ENV FEDORA_VERSION=${FEDORA_VERSION}
 
 # Copy dot_files (config templates) into the image
 COPY dot_files /usr/share/hypercube/config
