@@ -1,13 +1,18 @@
 # NOTE: This package requires "Enable internet access during builds" in COPR settings
+# Building from main branch commit that supports zig 0.15.2 (Fedora 43)
+
+%global commit ab3a3805aa2db46eafc8c7a497df24665fa5e21b
+%global shortcommit %(c=%{commit}; echo ${c:0:7})
+%global commitdate 20251216
 
 Name:           ghostty
-Version:        1.2.3
+Version:        1.2.3^%{commitdate}git%{shortcommit}
 Release:        1%{?dist}
 Summary:        Fast, feature-rich, and cross-platform terminal emulator
 
 License:        MIT
 URL:            https://github.com/ghostty-org/ghostty
-Source0:        %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
+Source0:        %{url}/archive/%{commit}/%{name}-%{shortcommit}.tar.gz
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -44,11 +49,20 @@ Ghostty is a terminal emulator that differentiates itself by being both
 fast and feature-rich. It uses platform-native UI and GPU acceleration.
 
 %prep
-%setup -q -n %{name}-%{version}
+%setup -q -n %{name}-%{commit}
 
 %build
-DESTDIR=%{buildroot} zig build \
+zig build \
     --summary all \
+    --prefix "%{_prefix}" \
+    -Dversion-string=%{version}-%{release} \
+    -Doptimize=ReleaseFast \
+    -Dcpu=baseline \
+    -Dpie=true \
+    -Demit-docs
+
+%install
+DESTDIR=%{buildroot} zig build install \
     --prefix "%{_prefix}" \
     -Dversion-string=%{version}-%{release} \
     -Doptimize=ReleaseFast \
