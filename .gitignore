@@ -18,3 +18,4 @@ _vm_build/
 # ISO files
 *.iso
 result-iso/
+dot_files/nvim/lazy-lock.json
