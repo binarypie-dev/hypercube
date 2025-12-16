@@ -46,7 +46,8 @@ dnf5 -y install \
 ### Fish Shell (set as default)
 dnf5 -y install fish
 
-### Terminal - Ghostty (from Hypercube COPR)
+### Terminal - Ghostty (from scottames COPR)
+dnf5 -y copr enable scottames/ghostty
 dnf5 -y install ghostty
 
 ### Editor - Neovim nightly (from agriffis COPR)
