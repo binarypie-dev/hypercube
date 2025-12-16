@@ -10,7 +10,8 @@ echo "========================================"
 
 ### Rsync system files to root filesystem
 echo "Installing system files..."
-rsync -rlpvh --ignore-existing /ctx/system_files/shared/ /
+# Note: We don't use --ignore-existing so our files override base image files
+rsync -rlpvh /ctx/system_files/shared/ /
 
 ### Run hypercube build scripts in order
 echo "Running build scripts..."
