@@ -73,6 +73,7 @@ managers. It supports Hyprland, Sway, and other Wayland compositors.
 %license LICENSE LICENSE-GPL
 %doc README.md
 %{_bindir}/%{name}
+%{_bindir}/qs
 %{_datadir}/applications/org.quickshell.desktop
 %{_datadir}/icons/hicolor/scalable/apps/org.quickshell.svg
 
