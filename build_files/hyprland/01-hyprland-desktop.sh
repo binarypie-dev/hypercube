@@ -6,25 +6,20 @@ set -ouex pipefail
 
 echo "Installing Hyprland desktop stack..."
 
-### Compositor / Hyprland Stack
-dnf5 -y copr enable sdegler/hyprland
+### Enable Hypercube COPR (our self-maintained packages)
+dnf5 -y copr enable binarypie/hypercube
+
+### Compositor / Hyprland Stack (from Hypercube COPR)
 dnf5 -y install \
     hyprland \
-    hyprland-contrib \
-    hyprland-plugins \
-    hyprland-qtutils \
+    hyprland-uwsm \
     hyprpaper \
-    hyprpicker \
     hypridle \
-    hyprshot \
     hyprlock \
     hyprpolkitagent \
-    pyprland \
-    waybar-git \
     xdg-desktop-portal-hyprland
 
-### Quickshell - Application Launcher, Notifications, OSD
-dnf5 -y copr enable errornointernet/quickshell
+### Quickshell - Application Launcher, Notifications, OSD (from Hypercube COPR)
 dnf5 -y install quickshell
 
 ### CLI Tools - Official Fedora repos
@@ -42,36 +37,19 @@ dnf5 -y install \
     tmux \
     qt6ct
 
-### CLI Tools - From COPRs (not in official F43 repos)
-# eza - modern ls replacement
-dnf5 -y copr enable alternateved/eza
-dnf5 -y install eza
-
-# starship - cross-shell prompt
-dnf5 -y copr enable atim/starship
-dnf5 -y install starship
-
-# git-delta - better git diff
-dnf5 -y copr enable gourlaysama/git-delta || true
-dnf5 -y install git-delta || true
+### CLI Tools - From Hypercube COPR
+dnf5 -y install \
+    eza \
+    starship \
+    lazygit
 
 ### Fish Shell (set as default)
-# Note: fisher (plugin manager) removed - starship handles prompt, fish has good built-in completions
 dnf5 -y install fish
 
-### Lazygit from COPR
-dnf5 -y copr enable atim/lazygit
-dnf5 -y install lazygit
-
-### Terminals
-dnf5 -y copr enable wezfurlong/wezterm-nightly
-dnf5 -y install wezterm
-
-dnf5 -y copr enable scottames/ghostty
+### Terminal - Ghostty (from Hypercube COPR)
 dnf5 -y install ghostty
 
-### Editor
-dnf5 -y copr enable agriffis/neovim-nightly
+### Editor - Neovim (from Hypercube COPR)
 dnf5 -y install neovim python3-neovim
 
 ### Image/Media Viewers
@@ -79,7 +57,7 @@ dnf5 -y install \
     imv \
     mpv
 
-### Screenshot/Screen Recording (hyprshot handles most, but add deps)
+### Screenshot/Screen Recording
 dnf5 -y install \
     grim \
     slurp

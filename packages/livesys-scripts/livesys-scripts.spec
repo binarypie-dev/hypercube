@@ -4,8 +4,8 @@ Release:        1.hypercube%{?dist}
 Summary:        Scripts for auto-configuring live media during boot (with Hyprland support)
 
 License:        GPL-3.0-or-later
-URL:            https://pagure.io/fork/binarypie/livesys-scripts
-Source:         https://pagure.io/fork/binarypie/livesys-scripts/archive/main/%{name}-main.tar.gz
+URL:            https://github.com/binarypie-dev/livesys-scripts
+Source:         https://github.com/binarypie-dev/livesys-scripts/archive/refs/heads/main.tar.gz
 
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  make
