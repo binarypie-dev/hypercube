@@ -42,22 +42,6 @@ config-file = /usr/share/hypercube/config/ghostty/config
 # Your customizations below:
 EOF
 
-### Wezterm terminal - stub that sources system config
-# Users can customize by modifying the config table after dofile()
-mkdir -p /etc/skel/.config/wezterm
-cat > /etc/skel/.config/wezterm/wezterm.lua << 'EOF'
--- Hypercube Wezterm Configuration
--- System defaults are loaded below. Add your customizations after this line.
--- To replace defaults entirely, remove the dofile line and start fresh.
-
-local config = dofile("/usr/share/hypercube/config/wezterm/wezterm.lua")
-
--- Your customizations below:
--- Example: config.font_size = 14
-
-return config
-EOF
-
 ### GTK theme settings - install to /etc/xdg/ for system-wide defaults
 # Users can override by creating ~/.config/gtk-3.0/settings.ini
 install -Dm644 "${CONFIG_DIR}/gtk-3.0/settings.ini" /etc/xdg/gtk-3.0/settings.ini

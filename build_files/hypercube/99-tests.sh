@@ -17,7 +17,6 @@ REQUIRED_PACKAGES=(
   "hypridle"
   "quickshell"
   # Terminals
-  "wezterm"
   "ghostty"
   # Dev tools
   "neovim"

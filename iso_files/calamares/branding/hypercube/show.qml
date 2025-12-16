@@ -135,7 +135,7 @@ Presentation {
                     anchors.horizontalCenter: parent.horizontalCenter
                     spacing: 8
 
-                    Text { text: "• Ghostty & WezTerm terminals"; color: "#c0caf5"; font.pixelSize: 14 }
+                    Text { text: "• Ghostty terminal"; color: "#c0caf5"; font.pixelSize: 14 }
                     Text { text: "• Neovim with nightly builds"; color: "#c0caf5"; font.pixelSize: 14 }
                     Text { text: "• Fish shell with Starship prompt"; color: "#c0caf5"; font.pixelSize: 14 }
                     Text { text: "• Lazygit for git workflows"; color: "#c0caf5"; font.pixelSize: 14 }

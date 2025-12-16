@@ -21,8 +21,6 @@ if status is-interactive
     fish_add_path $HOME/Code/flutter/bin
     fish_add_path $HOME/go/bin
 
-    # Alias
-    alias wezterm 'flatpak run org.wezfurlong.wezterm'
 end
 
 ### bling.fish source start
