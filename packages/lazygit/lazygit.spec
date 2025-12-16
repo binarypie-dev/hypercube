@@ -1,3 +1,8 @@
+# NOTE: This package requires "Enable internet access during builds" in COPR settings
+# because go needs to download dependencies
+
+%global debug_package %{nil}
+
 Name:           lazygit
 Version:        0.57.0
 Release:        1%{?dist}
@@ -19,9 +24,7 @@ and more. It's designed to make git less painful.
 %autosetup -n %{name}-%{version}
 
 %build
-export GOFLAGS="-buildmode=pie -trimpath"
-export LDFLAGS="-X main.version=%{version} -X main.buildSource=rpm"
-go build -ldflags "${LDFLAGS}" -o %{name}
+go build -ldflags "-X main.version=%{version}" -o %{name}
 
 %install
 install -Dpm 0755 %{name} %{buildroot}%{_bindir}/%{name}
