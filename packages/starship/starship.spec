@@ -1,3 +1,5 @@
+%global debug_package %{nil}
+
 Name:           starship
 Version:        1.24.1
 Release:        1%{?dist}
