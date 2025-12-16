@@ -58,6 +58,7 @@ jobs:
           image-ref: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.variant.tag }}
           iso-dest: ${{ github.workspace }}/output.iso
           builder-distro: fedora
+          hook-pre-initramfs: ${{ github.workspace }}/iso_files/hide_hyprland_session.sh
 
       - name: Rename ISO and generate checksum
         id: rename
