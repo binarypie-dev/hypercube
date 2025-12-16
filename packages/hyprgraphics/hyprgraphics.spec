@@ -1,5 +1,5 @@
 Name:           hyprgraphics
-Version:        0.2.0
+Version:        0.4.0
 Release:        1%{?dist}
 Summary:        Hyprland graphics / resource utilities
 
@@ -51,7 +51,7 @@ Development files for %{name}.
 %files
 %license LICENSE
 %doc README.md
-%{_libdir}/lib%{name}.so.1
+%{_libdir}/lib%{name}.so.3
 %{_libdir}/lib%{name}.so.%{version}
 
 %files devel
@@ -60,5 +60,8 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.4.0-1
+- Update to 0.4.0
+
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.2.0-1
 - Initial package for Hypercube (based on sdegler/hyprland COPR)

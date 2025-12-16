@@ -1,5 +1,5 @@
 Name:           hyprutils
-Version:        0.10.0
+Version:        0.11.0
 Release:        1%{?dist}
 Summary:        Hyprland utilities library used across the ecosystem
 
@@ -40,7 +40,7 @@ Development files for %{name}.
 %license LICENSE
 %doc README.md
 %{_libdir}/lib%{name}.so.%{version}
-%{_libdir}/lib%{name}.so.9
+%{_libdir}/lib%{name}.so.10
 
 %files devel
 %{_includedir}/%{name}/
@@ -48,5 +48,8 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.11.0-1
+- Update to 0.11.0 (adds cli/Logger.hpp needed by aquamarine)
+
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.10.0-1
 - Initial package for Hypercube (based on sdegler/hyprland COPR)
