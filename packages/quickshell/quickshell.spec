@@ -70,9 +70,11 @@ managers. It supports Hyprland, Sway, and other Wayland compositors.
 %cmake_install
 
 %files
-%license LICENSE LICENSE.GPL
+%license LICENSE LICENSE-GPL
 %doc README.md
 %{_bindir}/%{name}
+%{_datadir}/applications/org.quickshell.desktop
+%{_datadir}/icons/hicolor/scalable/apps/org.quickshell.svg
 
 %changelog
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.2.1-1
