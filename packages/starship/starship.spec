@@ -7,12 +7,12 @@ License:        ISC
 URL:            https://github.com/starship/starship
 Source0:        %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
 
-BuildRequires:  cargo
-BuildRequires:  rust
+BuildRequires:  cargo >= 1.80
+BuildRequires:  rust >= 1.80
 BuildRequires:  gcc
-BuildRequires:  cmake
-BuildRequires:  openssl-devel
-BuildRequires:  zlib-devel
+BuildRequires:  cmake3
+BuildRequires:  pkgconfig(openssl)
+BuildRequires:  pkgconfig(zlib)
 
 %description
 Starship is the minimal, blazing-fast, and infinitely customizable prompt for
@@ -24,18 +24,24 @@ Ion, Elvish, Tcsh, Xonsh, Nushell, and Cmd.
 %autosetup -n %{name}-%{version}
 
 %build
-cargo build --release --locked
+# Build handled in install
 
 %install
-install -Dpm 0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
+export CARGO_PROFILE_RELEASE_BUILD_OVERRIDE_OPT_LEVEL=3
+export CMAKE=cmake3
+RUSTFLAGS='-C strip=symbols' cargo install --root=%{buildroot}%{_prefix} --path=.
 
 # Generate and install shell completions
 mkdir -p %{buildroot}%{_datadir}/bash-completion/completions
 mkdir -p %{buildroot}%{_datadir}/zsh/site-functions
 mkdir -p %{buildroot}%{_datadir}/fish/vendor_completions.d
-target/release/%{name} completions bash > %{buildroot}%{_datadir}/bash-completion/completions/%{name}
-target/release/%{name} completions zsh > %{buildroot}%{_datadir}/zsh/site-functions/_%{name}
-target/release/%{name} completions fish > %{buildroot}%{_datadir}/fish/vendor_completions.d/%{name}.fish
+%{buildroot}%{_bindir}/%{name} completions bash > %{buildroot}%{_datadir}/bash-completion/completions/%{name}
+%{buildroot}%{_bindir}/%{name} completions zsh > %{buildroot}%{_datadir}/zsh/site-functions/_%{name}
+%{buildroot}%{_bindir}/%{name} completions fish > %{buildroot}%{_datadir}/fish/vendor_completions.d/%{name}.fish
+
+# Remove .crates.toml and .crates2.json created by cargo install
+rm -f %{buildroot}%{_prefix}/.crates.toml
+rm -f %{buildroot}%{_prefix}/.crates2.json
 
 %files
 %license LICENSE
