@@ -24,7 +24,7 @@ BuildRequires:  pkgconfig(hyprlang)
 %autosetup -p1
 
 %build
-%cmake -DINSTALL_QMLDIR=%{_qt6_qmldir}
+%cmake -DINSTALL_QMLDIR=%{_qt6_qmldir} -DCMAKE_INSTALL_LIBDIR=%{_libdir}
 %cmake_build
 
 %install
