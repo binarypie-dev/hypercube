@@ -127,11 +127,23 @@ These must be built first as other packages depend on them.
 
 ---
 
+### 10. uwsm
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/uwsm` |
+| Spec File | `uwsm.spec` |
+| Version | 0.23.3 |
+| Dependencies | None (Python-based, uses system packages) |
+| Notes | Universal Wayland Session Manager, required by hyprland-uwsm subpackage |
+
+---
+
 ## Priority 2: Hyprland Compositor & Tools
 
 Build after core libraries are available.
 
-### 10. hyprland
+### 11. hyprland
 
 | Setting | Value |
 |---------|-------|
@@ -142,7 +154,7 @@ Build after core libraries are available.
 
 ---
 
-### 11. hyprlock
+### 12. hyprlock
 
 | Setting | Value |
 |---------|-------|
@@ -153,7 +165,7 @@ Build after core libraries are available.
 
 ---
 
-### 12. hypridle
+### 13. hypridle
 
 | Setting | Value |
 |---------|-------|
@@ -164,7 +176,7 @@ Build after core libraries are available.
 
 ---
 
-### 13. hyprpaper
+### 14. hyprpaper
 
 | Setting | Value |
 |---------|-------|
@@ -175,7 +187,7 @@ Build after core libraries are available.
 
 ---
 
-### 14. xdg-desktop-portal-hyprland
+### 15. xdg-desktop-portal-hyprland
 
 | Setting | Value |
 |---------|-------|
@@ -186,7 +198,7 @@ Build after core libraries are available.
 
 ---
 
-### 15. hyprpolkitagent
+### 16. hyprpolkitagent
 
 | Setting | Value |
 |---------|-------|
@@ -201,7 +213,7 @@ Build after core libraries are available.
 
 These have no hyprland dependencies and can be built in parallel.
 
-### 16. eza
+### 17. eza
 
 | Setting | Value |
 |---------|-------|
@@ -212,7 +224,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 17. starship
+### 18. starship
 
 | Setting | Value |
 |---------|-------|
@@ -223,7 +235,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 18. lazygit
+### 19. lazygit
 
 | Setting | Value |
 |---------|-------|
@@ -234,7 +246,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 19. ghostty
+### 20. ghostty
 
 | Setting | Value |
 |---------|-------|
@@ -246,7 +258,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 20. quickshell
+### 21. quickshell
 
 | Setting | Value |
 |---------|-------|
@@ -257,7 +269,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 21. livesys-scripts
+### 22. livesys-scripts
 
 | Setting | Value |
 |---------|-------|
@@ -278,12 +290,13 @@ To ensure dependencies are satisfied, build in this order:
 2. hyprwayland-scanner
 3. hyprland-protocols
 4. glaze
-5. eza
-6. starship
-7. lazygit
-8. ghostty
-9. quickshell
-10. livesys-scripts
+5. uwsm
+6. eza
+7. starship
+8. lazygit
+9. ghostty
+10. quickshell
+11. livesys-scripts
 
 **Batch 2** (depends on Batch 1):
 1. hyprlang (needs hyprutils)
@@ -317,15 +330,16 @@ To ensure dependencies are satisfied, build in this order:
 | 7 | aquamarine | `packages/aquamarine` | `aquamarine.spec` | 0.10.0 |
 | 8 | hyprland-qt-support | `packages/hyprland-qt-support` | `hyprland-qt-support.spec` | 0.1.0 |
 | 9 | glaze | `packages/glaze` | `glaze.spec` | 6.1.0 |
-| 10 | hyprland | `packages/hyprland` | `hyprland.spec` | 0.52.2 |
-| 11 | hyprlock | `packages/hyprlock` | `hyprlock.spec` | 0.9.2 |
-| 12 | hypridle | `packages/hypridle` | `hypridle.spec` | 0.1.7 |
-| 13 | hyprpaper | `packages/hyprpaper` | `hyprpaper.spec` | 0.7.6 |
-| 14 | xdg-desktop-portal-hyprland | `packages/xdg-desktop-portal-hyprland` | `xdg-desktop-portal-hyprland.spec` | 1.3.11 |
-| 15 | hyprpolkitagent | `packages/hyprpolkitagent` | `hyprpolkitagent.spec` | 0.1.3 |
-| 16 | eza | `packages/eza` | `eza.spec` | 0.20.21 |
-| 17 | starship | `packages/starship` | `starship.spec` | 1.24.1 |
-| 18 | lazygit | `packages/lazygit` | `lazygit.spec` | 0.57.0 |
-| 19 | ghostty | `packages/ghostty` | `ghostty.spec` | 1.2.3^git |
-| 20 | quickshell | `packages/quickshell` | `quickshell.spec` | 0.2.1 |
-| 21 | livesys-scripts | `packages/livesys-scripts` | `livesys-scripts.spec` | 0.9.1 |
+| 10 | uwsm | `packages/uwsm` | `uwsm.spec` | 0.23.3 |
+| 11 | hyprland | `packages/hyprland` | `hyprland.spec` | 0.52.2 |
+| 12 | hyprlock | `packages/hyprlock` | `hyprlock.spec` | 0.9.2 |
+| 13 | hypridle | `packages/hypridle` | `hypridle.spec` | 0.1.7 |
+| 14 | hyprpaper | `packages/hyprpaper` | `hyprpaper.spec` | 0.7.6 |
+| 15 | xdg-desktop-portal-hyprland | `packages/xdg-desktop-portal-hyprland` | `xdg-desktop-portal-hyprland.spec` | 1.3.11 |
+| 16 | hyprpolkitagent | `packages/hyprpolkitagent` | `hyprpolkitagent.spec` | 0.1.3 |
+| 17 | eza | `packages/eza` | `eza.spec` | 0.20.21 |
+| 18 | starship | `packages/starship` | `starship.spec` | 1.24.1 |
+| 19 | lazygit | `packages/lazygit` | `lazygit.spec` | 0.57.0 |
+| 20 | ghostty | `packages/ghostty` | `ghostty.spec` | 1.2.3^git |
+| 21 | quickshell | `packages/quickshell` | `quickshell.spec` | 0.2.1 |
+| 22 | livesys-scripts | `packages/livesys-scripts` | `livesys-scripts.spec` | 0.9.1 |
