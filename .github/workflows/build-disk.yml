@@ -71,7 +71,7 @@ jobs:
           echo "iso-name=$NEW_NAME" >> $GITHUB_OUTPUT
 
       - name: Upload ISO as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{ env.IMAGE_NAME }}-${{ matrix.variant.name }}-iso
           path: output/
