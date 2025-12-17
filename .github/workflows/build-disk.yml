@@ -53,13 +53,14 @@ jobs:
 
       - name: Build ISO
         id: build
-        uses: ublue-os/titanoboa@main
+        uses: binarypie-dev/titanoboa@main
         with:
           image-ref: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ matrix.variant.tag }}
           iso-dest: ${{ github.workspace }}/output.iso
           builder-distro: fedora
-          livesys: false
-          hook-post-rootfs: ${{ github.workspace }}/iso_files/configure_live_session.sh
+          livesys: true
+          livesys-repo: binarypie/hypercube
+          flatpaks-list: ${{ github.workspace }}/flatpaks/system-flatpaks.list
 
       - name: Rename ISO and generate checksum
         id: rename

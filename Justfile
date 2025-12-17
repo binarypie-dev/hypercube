@@ -1,11 +1,10 @@
 # Hypercube Build System
-# Aligned with Bluefin patterns for consistency
 
 # Configuration
 export repo_organization := env("REPO_ORGANIZATION", "binarypie-dev")
 export image_name := env("IMAGE_NAME", "hypercube")
-export base_image := env("BASE_IMAGE", "ghcr.io/ublue-os/bluefin-dx")
-export base_image_nvidia := env("BASE_IMAGE_NVIDIA", "ghcr.io/ublue-os/bluefin-dx-nvidia")
+export base_image := env("BASE_IMAGE", "ghcr.io/ublue-os/base-main")
+export base_image_nvidia := env("BASE_IMAGE_NVIDIA", "ghcr.io/ublue-os/base-nvidia")
 export default_tag := env("DEFAULT_TAG", "stable-daily")
 
 # Runtime detection
@@ -117,7 +116,7 @@ _titanoboa-setup:
         git -C _titanoboa pull --ff-only || true
     else
         echo "Cloning Titanoboa..."
-        git clone --depth 1 "https://github.com/ublue-os/titanoboa.git" _titanoboa
+        git clone --depth 1 "https://github.com/binarypie-dev/titanoboa.git" _titanoboa
     fi
     # Patch Titanoboa to use --policy=missing for local image builds
     sed -i 's/PODMAN }} pull /PODMAN }} pull --policy=missing /' _titanoboa/Justfile
@@ -157,10 +156,18 @@ build-iso flavor="main": _titanoboa-setup
     fi
 
     # Build ISO with Titanoboa
-    # livesys=0 skips Fedora livesys scripts (we use Calamares instead)
-    # hook-post-rootfs sets up live user, Calamares, and auto-login
+    # livesys=1 enables livesys-scripts from binarypie/hypercube COPR (includes Hyprland support)
+    # Parameters (positional): image livesys flatpaks_file compression extra_kargs container_image polkit livesys_repo
     cd _titanoboa
-    {{ SUDO }} HOOK_POST_ROOTFS="${PWD}/../iso_files/configure_live_session.sh" just build "${IMAGE_FULL}" livesys=0
+    {{ SUDO }} just build \
+        "${IMAGE_FULL}" \
+        1 \
+        "${PWD}/../flatpaks/system-flatpaks.list" \
+        squashfs \
+        NONE \
+        "${IMAGE_FULL}" \
+        1 \
+        binarypie/hypercube
 
     # Fix ownership
     if [[ "${UID}" -gt 0 ]]; then
@@ -199,10 +206,18 @@ build-iso-ghcr flavor="main": _titanoboa-setup
 
     echo "Building ISO for ${IMAGE_FULL}..."
 
-    # livesys=0 skips Fedora livesys scripts (we use Calamares instead)
-    # hook-post-rootfs sets up live user, Calamares, and auto-login
+    # livesys=1 enables livesys-scripts from binarypie/hypercube COPR (includes Hyprland support)
+    # Parameters (positional): image livesys flatpaks_file compression extra_kargs container_image polkit livesys_repo
     cd _titanoboa
-    {{ SUDO }} HOOK_POST_ROOTFS="${PWD}/../iso_files/configure_live_session.sh" just build "${IMAGE_FULL}" livesys=0
+    {{ SUDO }} just build \
+        "${IMAGE_FULL}" \
+        1 \
+        "${PWD}/../flatpaks/system-flatpaks.list" \
+        squashfs \
+        NONE \
+        "${IMAGE_FULL}" \
+        1 \
+        binarypie/hypercube
 
     if [[ "${UID}" -gt 0 ]]; then
         {{ SUDO }} chown "${UID}:$(id -g)" -R "${PWD}"
