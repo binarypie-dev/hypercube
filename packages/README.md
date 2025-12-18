@@ -209,11 +209,35 @@ Build after core libraries are available.
 
 ---
 
+### 17. hyprtoolkit
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/hyprtoolkit` |
+| Spec File | `hyprtoolkit.spec` |
+| Version | 0.4.1 |
+| Dependencies | aquamarine, hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner |
+| Notes | Modern C++ Wayland-native GUI toolkit for Hyprland utilities |
+
+---
+
+### 18. hyprland-guiutils
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/hyprland-guiutils` |
+| Spec File | `hyprland-guiutils.spec` |
+| Version | 0.2.0 |
+| Dependencies | aquamarine, hyprtoolkit, hyprlang, hyprutils |
+| Notes | Successor to hyprland-qtutils. Provides dialog, donate-screen, run, update-screen, welcome utilities |
+
+---
+
 ## Priority 3: CLI Tools
 
 These have no hyprland dependencies and can be built in parallel.
 
-### 17. eza
+### 19. eza
 
 | Setting | Value |
 |---------|-------|
@@ -224,7 +248,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 18. starship
+### 20. starship
 
 | Setting | Value |
 |---------|-------|
@@ -235,7 +259,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 19. lazygit
+### 21. lazygit
 
 | Setting | Value |
 |---------|-------|
@@ -246,7 +270,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 20. ghostty
+### 22. ghostty
 
 | Setting | Value |
 |---------|-------|
@@ -258,7 +282,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 21. quickshell
+### 23. quickshell
 
 | Setting | Value |
 |---------|-------|
@@ -269,7 +293,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 22. livesys-scripts
+### 24. livesys-scripts
 
 | Setting | Value |
 |---------|-------|
@@ -314,6 +338,10 @@ To ensure dependencies are satisfied, build in this order:
 4. hyprpaper (needs hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner)
 5. xdg-desktop-portal-hyprland (needs hyprland-protocols, hyprlang, hyprutils, hyprwayland-scanner)
 6. hyprpolkitagent (needs hyprutils, hyprland-qt-support)
+7. hyprtoolkit (needs aquamarine, hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner)
+
+**Batch 5** (depends on Batch 4):
+1. hyprland-guiutils (needs aquamarine, hyprtoolkit, hyprlang, hyprutils)
 
 ---
 
@@ -337,9 +365,11 @@ To ensure dependencies are satisfied, build in this order:
 | 14 | hyprpaper | `packages/hyprpaper` | `hyprpaper.spec` | 0.7.6 |
 | 15 | xdg-desktop-portal-hyprland | `packages/xdg-desktop-portal-hyprland` | `xdg-desktop-portal-hyprland.spec` | 1.3.11 |
 | 16 | hyprpolkitagent | `packages/hyprpolkitagent` | `hyprpolkitagent.spec` | 0.1.3 |
-| 17 | eza | `packages/eza` | `eza.spec` | 0.20.21 |
-| 18 | starship | `packages/starship` | `starship.spec` | 1.24.1 |
-| 19 | lazygit | `packages/lazygit` | `lazygit.spec` | 0.57.0 |
-| 20 | ghostty | `packages/ghostty` | `ghostty.spec` | 1.2.3^git |
-| 21 | quickshell | `packages/quickshell` | `quickshell.spec` | 0.2.1 |
-| 22 | livesys-scripts | `packages/livesys-scripts` | `livesys-scripts.spec` | 0.9.1 |
+| 17 | hyprtoolkit | `packages/hyprtoolkit` | `hyprtoolkit.spec` | 0.4.1 |
+| 18 | hyprland-guiutils | `packages/hyprland-guiutils` | `hyprland-guiutils.spec` | 0.2.0 |
+| 19 | eza | `packages/eza` | `eza.spec` | 0.20.21 |
+| 20 | starship | `packages/starship` | `starship.spec` | 1.24.1 |
+| 21 | lazygit | `packages/lazygit` | `lazygit.spec` | 0.57.0 |
+| 22 | ghostty | `packages/ghostty` | `ghostty.spec` | 1.2.3^git |
+| 23 | quickshell | `packages/quickshell` | `quickshell.spec` | 0.2.1 |
+| 24 | livesys-scripts | `packages/livesys-scripts` | `livesys-scripts.spec` | 0.9.1 |
