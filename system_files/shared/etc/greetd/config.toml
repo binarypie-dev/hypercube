@@ -1,0 +1,8 @@
+[terminal]
+# The VT to run the greeter on
+vt = 1
+
+[default_session]
+# Run tuigreet with Hyprland as the default session
+command = "tuigreet --remember --remember-session --time --greeting 'Welcome to Hypercube' --asterisks --cmd Hyprland"
+user = "greeter"

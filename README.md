@@ -32,7 +32,7 @@ Pre-configured and ready to use:
 - **Neovim** (nightly) with LazyVim, LSP, and language support
 - **Lazygit** for interactive Git operations
 - **Fish** shell with Starship prompt
-- **Ghostty** & **WezTerm** GPU-accelerated terminals
+- **Ghostty** GPU-accelerated terminal
 - **Quickshell** application launcher and system controls
 
 ### Consistent Theming
@@ -99,7 +99,7 @@ On top of Bluefin-DX, Hypercube adds:
 | Category | Packages |
 |----------|----------|
 | Compositor | Hyprland, Hyprlock, Hypridle, Hyprpaper, Hyprshot |
-| Terminals | Ghostty, WezTerm |
+| Terminals | Ghostty |
 | Editor | Neovim (nightly) |
 | Git Tools | Lazygit |
 | Launcher | Quickshell |
@@ -112,7 +112,7 @@ All configurations live in `/usr/share/hypercube/config/` and can be overridden 
 - Fish shell with vim mode and Starship prompt
 - Hyprland with vim-style navigation
 - Neovim with LazyVim distribution
-- Ghostty and WezTerm with Tokyo Night colors
+- Ghostty with Tokyo Night colors
 - GTK/Qt theming with dark mode
 
 ## Documentation

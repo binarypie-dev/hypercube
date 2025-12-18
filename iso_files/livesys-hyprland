@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# livesys-hyprland: hyprland specific setup for livesys
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+
+HYPRLAND_SESSION_FILE="hyprland.desktop"
+
+# set up autologin for user liveuser
+if [ -f /etc/greetd/config.toml ]; then
+    # Use greetd for Hyprland
+    cat > /etc/greetd/config.toml << GREETD_EOF
+[terminal]
+vt = 1
+
+[default_session]
+command = "Hyprland"
+user = "liveuser"
+GREETD_EOF
+elif [ -f /etc/sddm.conf ]; then
+    sed -i 's/^#User=.*/User=liveuser/' /etc/sddm.conf
+    sed -i "s/^#Session=.*/Session=${HYPRLAND_SESSION_FILE}/" /etc/sddm.conf
+else
+    cat > /etc/sddm.conf << SDDM_EOF
+[Autologin]
+User=liveuser
+Session=${HYPRLAND_SESSION_FILE}
+SDDM_EOF
+fi
+
+# Show harddisk install on the desktop
+if [ -f /usr/share/applications/liveinst.desktop ]; then
+    sed -i -e 's/NoDisplay=true/NoDisplay=false/' /usr/share/applications/liveinst.desktop
+fi
+mkdir -p /home/liveuser/Desktop
+
+# echoing type liveinst to start the installer
+echo "echo 'Please type liveinst and press Enter to start the installer'" >> /home/liveuser/.bashrc

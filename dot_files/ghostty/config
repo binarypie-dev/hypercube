@@ -1,4 +1,4 @@
-# Ghostty keybindings matching WezTerm config
+# Ghostty keybindings with tmux-style leader key
 # Leader key is CTRL+a (simulated via prefix since Linux doesn't support global leader)
 
 # ----------------------------------------------------------------
@@ -96,8 +96,7 @@ keybind = ctrl+a>w=toggle_tab_overview
 # Create a new tab
 keybind = ctrl+a>c=new_tab
 
-# Rename current tab (Ghostty doesn't support this natively, but we can use new_tab as closest)
-# Note: ctrl+a>, is for rename in WezTerm but Ghostty doesn't have direct rename support
+# Rename current tab
 
 # Move to next/previous tab
 keybind = ctrl+a>n=next_tab
@@ -142,8 +141,7 @@ keybind = ctrl+a>l=goto_split:right
 keybind = ctrl+a>k=goto_split:top
 keybind = ctrl+a>j=goto_split:bottom
 
-# Pane resizing (ctrl+a>r enters resize mode, then h/j/k/l to resize)
-# Note: Ghostty doesn't have key tables/modes like WezTerm, so we use direct bindings
+# Pane resizing (ctrl+a>r then h/j/k/l to resize)
 keybind = ctrl+a>r>h=resize_split:left,10
 keybind = ctrl+a>r>l=resize_split:right,10
 keybind = ctrl+a>r>k=resize_split:up,10

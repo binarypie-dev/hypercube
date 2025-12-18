@@ -37,8 +37,7 @@ hypercube/
 │   ├── nvim/                    # Neovim/LazyVim setup
 │   ├── qt6ct/                   # Qt6 theming
 │   ├── quickshell/              # App launcher
-│   ├── starship/                # Shell prompt
-│   └── wezterm/                 # WezTerm terminal
+│   └── starship/                # Shell prompt
 │
 ├── system_files/                # System-level files
 │   └── shared/

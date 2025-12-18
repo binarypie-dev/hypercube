@@ -14,7 +14,6 @@ hypercube-config-reset:
     echo ""
     echo "Configs that will be reset:"
     echo "  - Ghostty (~/.config/ghostty/)"
-    echo "  - Wezterm (~/.config/wezterm/)"
     echo ""
     echo "You can restore your old configs from the backup directory at any time."
     echo ""
@@ -49,7 +48,6 @@ hypercube-config-reset:
 
     # Backup existing configs
     backup_and_reset "ghostty" "Ghostty"
-    backup_and_reset "wezterm" "Wezterm"
 
     echo ""
     echo "Creating Hypercube config stubs..."
@@ -66,22 +64,6 @@ config-file = /usr/share/hypercube/config/ghostty/config
 # Your customizations below:
 EOF
     echo "  Created Ghostty config stub"
-
-    # Create Wezterm stub
-    mkdir -p "$HOME/.config/wezterm"
-    cat > "$HOME/.config/wezterm/wezterm.lua" << 'EOF'
--- Hypercube Wezterm Configuration
--- System defaults are loaded below. Add your customizations after this line.
--- To replace defaults entirely, remove the dofile line and start fresh.
-
-local config = dofile("/usr/share/hypercube/config/wezterm/wezterm.lua")
-
--- Your customizations below:
--- Example: config.font_size = 14
-
-return config
-EOF
-    echo "  Created Wezterm config stub"
 
     echo ""
     echo "Done! Your old configs have been backed up to:"

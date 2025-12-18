@@ -14,12 +14,13 @@ on:
   workflow_dispatch:
 
 env:
-  IMAGE_DESC: "Hypercube - A Hyprland-focused bootc image built on Bluefin-DX"
-  IMAGE_KEYWORDS: "bootc,ublue,universal-blue,hyprland,hypercube,wayland"
+  IMAGE_DESC: "Hypercube - A developer workstation with Hyprland built on Fedora Atomic"
+  IMAGE_KEYWORDS: "bootc,ublue,universal-blue,hyprland,hypercube,wayland,developer"
   IMAGE_LOGO_URL: "https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/main/branding/hypercube-logo.png"
   IMAGE_NAME: "${{ github.event.repository.name }}"
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
   DEFAULT_TAG: "latest"
+  FEDORA_VERSION: "43"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -40,10 +41,12 @@ jobs:
       matrix:
         variant:
           - flavor: "main"
-            base_image: "ghcr.io/ublue-os/bluefin-dx:stable-daily"
+            source_image: "base"
+            source_suffix: "-main"
             tag_suffix: ""
           - flavor: "nvidia"
-            base_image: "ghcr.io/ublue-os/bluefin-dx-nvidia:stable-daily"
+            source_image: "base"
+            source_suffix: "-nvidia"
             tag_suffix: "-nvidia"
 
     steps:
@@ -104,9 +107,12 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           build-args: |
-            BASE_IMAGE=${{ matrix.variant.base_image }}
+            SOURCE_IMAGE=${{ matrix.variant.source_image }}
+            SOURCE_SUFFIX=${{ matrix.variant.source_suffix }}
+            FEDORA_VERSION=${{ env.FEDORA_VERSION }}
             IMAGE_NAME=${{ env.IMAGE_NAME }}
             IMAGE_VENDOR=${{ github.repository_owner }}
+            IMAGE_FLAVOR=${{ matrix.variant.flavor }}
           oci: false
 
       - name: Login to GitHub Container Registry
