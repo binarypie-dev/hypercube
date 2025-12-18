@@ -12,6 +12,7 @@ ExcludeArch:    %{ix86}
 BuildRequires:  cmake
 BuildRequires:  gcc-c++
 BuildRequires:  pkgconfig(aquamarine)
+BuildRequires:  pkgconfig(hyprgraphics)
 BuildRequires:  pkgconfig(hyprlang)
 BuildRequires:  pkgconfig(hyprtoolkit)
 BuildRequires:  pkgconfig(hyprutils)
