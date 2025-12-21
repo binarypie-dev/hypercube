@@ -61,6 +61,7 @@ jobs:
           livesys: true
           livesys-repo: binarypie/hypercube
           flatpaks-list: ${{ github.workspace }}/flatpaks/system-flatpaks.list
+          hook-post-rootfs: ${{ github.workspace }}/iso_files/hook-post-rootfs.sh
 
       - name: Rename ISO and generate checksum
         id: rename

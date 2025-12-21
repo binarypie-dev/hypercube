@@ -12,6 +12,7 @@ dnf5 -y copr enable binarypie/hypercube
 ### Compositor / Hyprland Stack (from Hypercube COPR)
 dnf5 -y install \
     hyprland \
+    hyprland-guiutils \
     hyprland-uwsm \
     hyprpaper \
     hypridle \
