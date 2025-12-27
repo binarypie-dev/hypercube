@@ -40,20 +40,31 @@ if [[ -d /usr/share/plymouth/themes/hypercube ]]; then
     cp /usr/share/plymouth/themes/hypercube/animation-*.png /usr/share/anaconda/pixmaps/hypercube/ 2>/dev/null || true
 fi
 
-# Create live ISO hyprland config directory
-mkdir -p /usr/share/hypr/config.live.d/
+# Copy base image Hyprland configs for live environment
+# This gives users the full Hypercube experience to test before installing
+if [[ -d /usr/share/hypercube/config/hypr ]]; then
+    mkdir -p /usr/share/hypr/config.live.d/
+    cp /usr/share/hypercube/config/hypr/* /usr/share/hypr/config.live.d/
 
-# Copy Hyprland live configs (ensure readable by all users)
-install -m 0644 "${ISO_FILES}/hypr/hyprland-live.conf" /usr/share/hypr/config.live.d/hyprland.conf
-install -m 0644 "${ISO_FILES}/hypr/hyprpaper-live.conf" /usr/share/hypr/config.live.d/hyprpaper.conf
+    # Add liveinst autostart to launch the installer
+    cat >> /usr/share/hypr/config.live.d/hyprland.conf << 'EOF'
 
-# Copy background image for live ISO
-install -m 0644 "${ISO_FILES}/branding/background.png" /usr/share/hypr/config.live.d/background.png
+# Live ISO - Auto-launch installer
+exec-once = liveinst
+EOF
+fi
 
 # Configure livesys to use the hyprland session
 # The livesys-hyprland script is already provided by livesys-scripts from binarypie/hypercube COPR
 sed -i 's/^livesys_session=.*/livesys_session=hyprland/' /etc/sysconfig/livesys
 # If the line doesn't exist, add it
 grep -q '^livesys_session=' /etc/sysconfig/livesys || echo 'livesys_session=hyprland' >> /etc/sysconfig/livesys
+
+# Disable services that shouldn't run in live environment
+# These are update/setup services that don't make sense on live media
+systemctl disable rpm-ostree-countme.service || true
+systemctl disable bootloader-update.service || true
+systemctl disable rpm-ostreed-automatic.timer || true
+systemctl disable flatpak-preinstall.service || true
 
 echo "Hypercube post-rootfs hook completed successfully"

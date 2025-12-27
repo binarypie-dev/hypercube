@@ -265,11 +265,6 @@ build-iso-local flavor="main": _titanoboa-setup
         1 \
         binarypie/hypercube
 
-    # Fix ownership
-    if [[ "${UID}" -gt 0 ]]; then
-        {{ SUDO }} chown "${UID}:$(id -g)" -R "${PWD}"
-    fi
-
     # Stop registry before moving ISO (while sudo is still cached)
     cleanup
     trap - EXIT
