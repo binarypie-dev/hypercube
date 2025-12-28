@@ -105,7 +105,7 @@ run flavor="main":
 # VM Recipes
 # ============================================
 
-# Run ISO in local VM with virt-manager
+# Run ISO in local VM with virt-manager (persistent disk for testing installs)
 [group('VM')]
 run-iso-local iso_file:
     #!/usr/bin/bash
@@ -117,27 +117,68 @@ run-iso-local iso_file:
     fi
 
     ISO_PATH="$(realpath {{ iso_file }})"
-    VM_NAME="hypercube-test-$$"
+    VM_NAME="hypercube-test"
+    # Store disk in current directory to avoid libvirt permission issues
+    DISK_PATH="$(pwd)/.vm/${VM_NAME}.qcow2"
 
-    # Calculate RAM size (half of available, max 8G)
-    mem_free=$(awk '/MemAvailable/ { printf "%.0f\n", $2/1024/1024 }' /proc/meminfo)
-    ram_size=$(( mem_free > 16 ? 8 : (mem_free > 8 ? mem_free / 2 : 4) ))
+    # RAM: 16GB for ostreecontainer deployment (needs temp space in tmpfs)
+    # vCPUs: 8 cores for faster installation
+    ram_size=16
+    vcpus=8
 
-    echo "Starting VM: ${VM_NAME}"
-    echo "Close virt-manager window to destroy VM"
+    echo "VM: ${VM_NAME}"
+    echo "RAM: ${ram_size}GB, vCPUs: ${vcpus}"
+    echo "Disk: ${DISK_PATH}"
 
-    # Run with virt-install (transient VM, destroyed on shutdown)
+    # Check if VM already exists
+    if virsh dominfo "${VM_NAME}" &>/dev/null; then
+        echo "VM '${VM_NAME}' already exists."
+        echo "Starting existing VM (will boot from disk, not ISO)..."
+        virsh start "${VM_NAME}" || true
+        virt-manager --connect qemu:///system --show-domain-console "${VM_NAME}"
+        exit 0
+    fi
+
+    # Create disk directory and disk if needed
+    mkdir -p "$(dirname "${DISK_PATH}")"
+    if [[ ! -f "${DISK_PATH}" ]]; then
+        echo "Creating disk: ${DISK_PATH}"
+        qemu-img create -f qcow2 "${DISK_PATH}" 64G
+    fi
+
+    echo "Creating new VM with ISO..."
+    echo "After installation, run 'just run-iso-local <iso>' again to boot from disk"
+
+    # Create persistent VM
     virt-install \
         --name "${VM_NAME}" \
         --memory $(( ram_size * 1024 )) \
-        --vcpus $(( $(nproc) / 2 > 0 ? $(nproc) / 2 : 1 )) \
+        --vcpus ${vcpus} \
         --cdrom "${ISO_PATH}" \
-        --disk size=64,format=qcow2,bus=virtio \
+        --disk path="${DISK_PATH}",format=qcow2,bus=virtio \
         --os-variant fedora-unknown \
         --boot uefi \
-        --transient \
-        --destroy-on-exit \
         --autoconsole graphical
+
+# Delete the test VM and its disk
+[group('VM')]
+delete-test-vm:
+    #!/usr/bin/bash
+    set -euo pipefail
+    VM_NAME="hypercube-test"
+    DISK_PATH="$(pwd)/.vm/${VM_NAME}.qcow2"
+
+    echo "Stopping VM if running..."
+    virsh destroy "${VM_NAME}" 2>/dev/null || true
+
+    echo "Removing VM definition..."
+    virsh undefine "${VM_NAME}" --nvram 2>/dev/null || true
+
+    echo "Removing disk..."
+    rm -f "${DISK_PATH}"
+    rmdir "$(pwd)/.vm" 2>/dev/null || true
+
+    echo "Test VM deleted."
 
 # ============================================
 # ISO Recipes

@@ -12,16 +12,18 @@
 @define-color tokyo_cyan #7dcfff;
 @define-color tokyo_green #9ece6a;
 
-/* Sidebar - use solid color instead of image */
+/* Sidebar background with Tokyo Night dark */
 .logo-sidebar {
     background-image: none;
     background-color: @tokyo_bg;
     background-repeat: no-repeat;
 }
 
-/* Logo placeholder */
+/* Hypercube logo in sidebar */
 .logo {
-    background-image: none;
+    background-image: url('/usr/share/anaconda/pixmaps/hypercube/sidebar-logo.png');
+    background-position: 50% 20px;
+    background-repeat: no-repeat;
     background-color: transparent;
 }
 
@@ -31,7 +33,7 @@
     background-color: transparent;
 }
 
-/* Navigation bar */
+/* Navigation bar - Tokyo Night purple accent */
 AnacondaSpokeWindow #nav-box,
 AnacondaHubWindow #nav-box {
     background-color: @tokyo_purple;
@@ -40,20 +42,32 @@ AnacondaHubWindow #nav-box {
     color: white;
 }
 
-/* Main content area */
+/* Remove button shadow in nav-box */
+AnacondaSpokeWindow #nav-box GtkButton,
+AnacondaHubWindow #nav-box GtkButton {
+    box-shadow: none;
+}
+
+/* Main content area - dark background */
 AnacondaSpokeWindow,
 AnacondaHubWindow {
     background-color: @tokyo_bg_dark;
 }
 
-/* Buttons */
+/* Spoke buttons (main hub tiles) */
 .spoke-button {
     background-color: @tokyo_dark_purple;
     color: @tokyo_fg;
+    border-radius: 8px;
 }
 
 .spoke-button:hover {
     background-color: @tokyo_blue;
+    color: @tokyo_bg;
+}
+
+.spoke-button:focus {
+    border-color: @tokyo_cyan;
 }
 
 /* Selection highlights */
@@ -74,4 +88,62 @@ progressbar progress {
 
 progressbar trough {
     background-color: @tokyo_dark_purple;
+}
+
+/* Entry fields */
+entry {
+    background-color: @tokyo_bg;
+    color: @tokyo_fg;
+    border-color: @tokyo_dark_purple;
+}
+
+entry:focus {
+    border-color: @tokyo_blue;
+}
+
+/* Buttons */
+button {
+    background-color: @tokyo_dark_purple;
+    color: @tokyo_fg;
+}
+
+button:hover {
+    background-color: @tokyo_blue;
+    color: @tokyo_bg;
+}
+
+button:active {
+    background-color: @tokyo_purple;
+}
+
+/* Check buttons and radio buttons */
+checkbutton check,
+radiobutton radio {
+    background-color: @tokyo_bg;
+    border-color: @tokyo_dark_purple;
+}
+
+checkbutton check:checked,
+radiobutton radio:checked {
+    background-color: @tokyo_blue;
+}
+
+/* Lists and tree views */
+treeview {
+    background-color: @tokyo_bg;
+    color: @tokyo_fg;
+}
+
+treeview:selected {
+    background-color: @tokyo_blue;
+    color: @tokyo_bg;
+}
+
+/* Scrollbars */
+scrollbar slider {
+    background-color: @tokyo_dark_purple;
+}
+
+scrollbar slider:hover {
+    background-color: @tokyo_blue;
 }

@@ -1,0 +1,111 @@
+#!/bin/bash
+# Hypercube First Boot Wizard
+# Creates the initial user account on first boot
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+set -euo pipefail
+
+# Check if any regular users exist (UID >= 1000)
+if getent passwd | awk -F: '$3 >= 1000 && $3 < 65534 {exit 1}'; then
+    # No regular users exist, run the wizard
+    :
+else
+    # Users already exist, disable this service and exit
+    systemctl disable hypercube-first-boot.service
+    exit 0
+fi
+
+# Clear screen and show welcome
+clear
+echo ""
+echo "  ╔═══════════════════════════════════════════════════════════╗"
+echo "  ║                                                           ║"
+echo "  ║              Welcome to Hypercube                         ║"
+echo "  ║                                                           ║"
+echo "  ║      Let's set up your user account to get started.       ║"
+echo "  ║                                                           ║"
+echo "  ╚═══════════════════════════════════════════════════════════╝"
+echo ""
+echo ""
+
+# Get username
+while true; do
+    read -p "  Enter your username: " USERNAME
+
+    # Validate username
+    if [[ -z "$USERNAME" ]]; then
+        echo "  Username cannot be empty. Please try again."
+        continue
+    fi
+
+    if [[ ! "$USERNAME" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
+        echo "  Invalid username. Use lowercase letters, numbers, underscore, or hyphen."
+        echo "  Must start with a letter or underscore."
+        continue
+    fi
+
+    if [[ ${#USERNAME} -gt 32 ]]; then
+        echo "  Username too long. Maximum 32 characters."
+        continue
+    fi
+
+    break
+done
+
+echo ""
+
+# Get full name
+read -p "  Enter your full name (optional): " FULLNAME
+
+echo ""
+
+# Get password
+while true; do
+    read -s -p "  Enter password: " PASSWORD
+    echo ""
+
+    if [[ -z "$PASSWORD" ]]; then
+        echo "  Password cannot be empty. Please try again."
+        continue
+    fi
+
+    if [[ ${#PASSWORD} -lt 8 ]]; then
+        echo "  Password must be at least 8 characters. Please try again."
+        continue
+    fi
+
+    read -s -p "  Confirm password: " PASSWORD_CONFIRM
+    echo ""
+
+    if [[ "$PASSWORD" != "$PASSWORD_CONFIRM" ]]; then
+        echo "  Passwords do not match. Please try again."
+        echo ""
+        continue
+    fi
+
+    break
+done
+
+echo ""
+echo "  Creating user account..."
+
+# Create the user
+useradd -m -G wheel -c "${FULLNAME:-$USERNAME}" "$USERNAME"
+
+# Set the password
+echo "$USERNAME:$PASSWORD" | chpasswd
+
+# Clear password variables
+unset PASSWORD PASSWORD_CONFIRM
+
+echo "  User '$USERNAME' created successfully!"
+echo ""
+echo "  Your account has been added to the 'wheel' group for sudo access."
+echo ""
+echo "  Starting login screen..."
+sleep 2
+
+# Disable this service so it doesn't run again
+systemctl disable hypercube-first-boot.service
+
+exit 0

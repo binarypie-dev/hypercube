@@ -42,6 +42,22 @@ config-file = /usr/share/hypercube/config/ghostty/config
 # Your customizations below:
 EOF
 
+### Hyprland - stub that sources system config
+# Users can customize by adding settings after the source line
+# Hyprland parses linearly: system config first, then user customizations
+mkdir -p /etc/skel/.config/hypr
+cat > /etc/skel/.config/hypr/hyprland.conf << 'EOF'
+# Hypercube Hyprland Configuration
+# System defaults are sourced below. Add your customizations after this line.
+# Settings defined after source will override the defaults.
+# To replace defaults entirely, remove or comment out the source line.
+
+source = /usr/share/hypercube/config/hypr/hyprland.conf
+
+# Your customizations below:
+
+EOF
+
 ### GTK theme settings - install to /etc/xdg/ for system-wide defaults
 # Users can override by creating ~/.config/gtk-3.0/settings.ini
 install -Dm644 "${CONFIG_DIR}/gtk-3.0/settings.ini" /etc/xdg/gtk-3.0/settings.ini

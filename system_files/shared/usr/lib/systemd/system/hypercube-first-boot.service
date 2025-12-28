@@ -1,0 +1,19 @@
+[Unit]
+Description=Hypercube First Boot User Setup
+After=systemd-user-sessions.service plymouth-quit-wait.service
+Before=greetd.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/libexec/hypercube/first-boot-wizard
+StandardInput=tty
+StandardOutput=tty
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+TTYVTDisallocate=yes
+
+[Install]
+WantedBy=multi-user.target
+RequiredBy=greetd.service

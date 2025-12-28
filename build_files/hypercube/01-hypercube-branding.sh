@@ -32,7 +32,7 @@ if [ -f /usr/lib/os-release ]; then
     sed -i "s/^NAME=.*/NAME=\"Hypercube\"/" /usr/lib/os-release
 
     # Update PRETTY_NAME
-    sed -i "s/^PRETTY_NAME=.*/PRETTY_NAME=\"Hypercube ${FEDORA_VERSION} (Fedora-based)\"/" /usr/lib/os-release
+    sed -i "s/^PRETTY_NAME=.*/PRETTY_NAME=\"Hypercube ${FEDORA_VERSION}\"/" /usr/lib/os-release
 
     # Set ID to hypercube, keep fedora as ID_LIKE
     sed -i "s/^ID=.*/ID=hypercube/" /usr/lib/os-release

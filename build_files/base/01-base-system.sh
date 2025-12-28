@@ -90,6 +90,7 @@ systemctl enable greetd.service
 systemctl enable NetworkManager.service
 systemctl enable bluetooth.service
 systemctl enable power-profiles-daemon.service
+systemctl enable hypercube-first-boot.service
 
 ### Disable services we don't need
 systemctl disable gdm.service 2>/dev/null || true

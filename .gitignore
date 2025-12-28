@@ -15,6 +15,7 @@ podman_scp.*
 
 # VM testing
 _vm_build/
+.vm/
 
 # ISO files
 *.iso
