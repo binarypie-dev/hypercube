@@ -5,16 +5,16 @@ on:
     branches:
       - main
   schedule:
-    - cron: '05 10 * * *'  # 10:05am UTC everyday
+    - cron: "05 10 * * *" # 10:05am UTC everyday
   push:
     branches:
       - main
     paths-ignore:
-      - '**/README.md'
+      - "**/README.md"
   workflow_dispatch:
 
 env:
-  IMAGE_DESC: "Hypercube - A developer workstation with Hyprland built on Fedora Atomic"
+  IMAGE_DESC: "Hypercube - A developer workstation with Hyprland built on Universal Blue"
   IMAGE_KEYWORDS: "bootc,ublue,universal-blue,hyprland,hypercube,wayland,developer"
   IMAGE_LOGO_URL: "https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/main/branding/hypercube-logo.png"
   IMAGE_NAME: "${{ github.event.repository.name }}"

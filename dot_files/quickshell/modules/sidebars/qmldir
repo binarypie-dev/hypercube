@@ -1,0 +1,4 @@
+module sidebars
+
+SidebarLeft 1.0 SidebarLeft.qml
+SidebarRight 1.0 SidebarRight.qml

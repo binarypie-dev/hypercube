@@ -1,6 +1,6 @@
 #!/bin/bash
-# Hypercube First Boot Wizard
-# Creates the initial user account on first boot
+# Hypercube First Boot Wizard Launcher
+# Launches the graphical quickshell welcome wizard for user creation
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 set -euo pipefail
@@ -11,101 +11,64 @@ if getent passwd | awk -F: '$3 >= 1000 && $3 < 65534 {exit 1}'; then
     :
 else
     # Users already exist, disable this service and exit
-    systemctl disable hypercube-first-boot.service
+    systemctl disable hypercube-first-boot.service 2>/dev/null || true
     exit 0
 fi
 
-# Clear screen and show welcome
-clear
-echo ""
-echo "  ╔═══════════════════════════════════════════════════════════╗"
-echo "  ║                                                           ║"
-echo "  ║              Welcome to Hypercube                         ║"
-echo "  ║                                                           ║"
-echo "  ║      Let's set up your user account to get started.       ║"
-echo "  ║                                                           ║"
-echo "  ╚═══════════════════════════════════════════════════════════╝"
-echo ""
-echo ""
+# Start a minimal Hyprland session for the wizard
+# This runs before greetd, so we need to start our own compositor
 
-# Get username
-while true; do
-    read -p "  Enter your username: " USERNAME
+# Create a temporary Hyprland config for the wizard
+WIZARD_CONFIG=$(mktemp)
+cat > "$WIZARD_CONFIG" << 'EOF'
+# Minimal Hyprland config for first-boot wizard
+monitor=,preferred,auto,1
 
-    # Validate username
-    if [[ -z "$USERNAME" ]]; then
-        echo "  Username cannot be empty. Please try again."
-        continue
-    fi
+input {
+    kb_layout = us
+    follow_mouse = 1
+    touchpad {
+        natural_scroll = yes
+    }
+}
 
-    if [[ ! "$USERNAME" =~ ^[a-z_][a-z0-9_-]*$ ]]; then
-        echo "  Invalid username. Use lowercase letters, numbers, underscore, or hyphen."
-        echo "  Must start with a letter or underscore."
-        continue
-    fi
+general {
+    gaps_in = 0
+    gaps_out = 0
+    border_size = 0
+}
 
-    if [[ ${#USERNAME} -gt 32 ]]; then
-        echo "  Username too long. Maximum 32 characters."
-        continue
-    fi
+decoration {
+    rounding = 0
+    blur {
+        enabled = false
+    }
+}
 
-    break
-done
+animations {
+    enabled = no
+}
 
-echo ""
+# Start quickshell in welcome mode
+exec-once = quickshell -c /etc/hypercube/quickshell/welcome-mode.qml
 
-# Get full name
-read -p "  Enter your full name (optional): " FULLNAME
+# Auto-exit when wizard completes
+exec-once = sleep 1 && while pgrep -x quickshell > /dev/null; do sleep 1; done && hyprctl dispatch exit
+EOF
 
-echo ""
+# Set up the display
+export XDG_SESSION_TYPE=wayland
+export XDG_CURRENT_DESKTOP=Hyprland
+export XDG_SESSION_DESKTOP=Hyprland
 
-# Get password
-while true; do
-    read -s -p "  Enter password: " PASSWORD
-    echo ""
+# Run Hyprland with the wizard config
+# This will block until the wizard is complete
+Hyprland -c "$WIZARD_CONFIG" 2>/dev/null || true
 
-    if [[ -z "$PASSWORD" ]]; then
-        echo "  Password cannot be empty. Please try again."
-        continue
-    fi
-
-    if [[ ${#PASSWORD} -lt 8 ]]; then
-        echo "  Password must be at least 8 characters. Please try again."
-        continue
-    fi
-
-    read -s -p "  Confirm password: " PASSWORD_CONFIRM
-    echo ""
-
-    if [[ "$PASSWORD" != "$PASSWORD_CONFIRM" ]]; then
-        echo "  Passwords do not match. Please try again."
-        echo ""
-        continue
-    fi
-
-    break
-done
-
-echo ""
-echo "  Creating user account..."
-
-# Create the user
-useradd -m -G wheel -c "${FULLNAME:-$USERNAME}" "$USERNAME"
-
-# Set the password
-echo "$USERNAME:$PASSWORD" | chpasswd
-
-# Clear password variables
-unset PASSWORD PASSWORD_CONFIRM
-
-echo "  User '$USERNAME' created successfully!"
-echo ""
-echo "  Your account has been added to the 'wheel' group for sudo access."
-echo ""
-echo "  Starting login screen..."
-sleep 2
+# Clean up
+rm -f "$WIZARD_CONFIG"
 
 # Disable this service so it doesn't run again
-systemctl disable hypercube-first-boot.service
+systemctl disable hypercube-first-boot.service 2>/dev/null || true
 
 exit 0

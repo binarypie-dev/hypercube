@@ -1,18 +1,15 @@
 [Unit]
 Description=Hypercube First Boot User Setup
-After=systemd-user-sessions.service plymouth-quit-wait.service
+After=systemd-user-sessions.service plymouth-quit-wait.service graphical.target
 Before=greetd.service
 
 [Service]
 Type=oneshot
 RemainAfterExit=yes
 ExecStart=/usr/libexec/hypercube/first-boot-wizard
-StandardInput=tty
-StandardOutput=tty
-TTYPath=/dev/tty1
-TTYReset=yes
-TTYVHangup=yes
-TTYVTDisallocate=yes
+# Run as root but with display access
+Environment=XDG_RUNTIME_DIR=/run/user/0
+Environment=WAYLAND_DISPLAY=wayland-0
 
 [Install]
 WantedBy=multi-user.target

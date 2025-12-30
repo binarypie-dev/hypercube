@@ -1,0 +1,193 @@
+pragma Singleton
+
+import QtQuick
+import Quickshell
+import Quickshell.Io
+
+Singleton {
+    id: root
+
+    property bool available: false
+    property bool powered: false
+    property bool discovering: false
+    property bool connected: false
+    property string connectedDeviceName: ""
+
+    property var devices: []  // List of discovered/paired devices
+
+    // Bluetooth query script
+    readonly property string btQueryScript: "
+        if ! command -v bluetoothctl &>/dev/null; then
+            echo \"available=false\"
+            exit 0
+        fi
+
+        echo \"available=true\"
+
+        CTRL=$(bluetoothctl show 2>/dev/null)
+        if [ -z \"$CTRL\" ]; then
+            echo \"powered=false\"
+            exit 0
+        fi
+
+        if echo \"$CTRL\" | grep -q \"Powered: yes\"; then
+            echo \"powered=true\"
+        else
+            echo \"powered=false\"
+        fi
+
+        if echo \"$CTRL\" | grep -q \"Discovering: yes\"; then
+            echo \"discovering=true\"
+        else
+            echo \"discovering=false\"
+        fi
+
+        CONNECTED=$(bluetoothctl devices Connected 2>/dev/null)
+        if [ -n \"$CONNECTED\" ]; then
+            echo \"connected=true\"
+            FIRST_DEV=$(echo \"$CONNECTED\" | head -1 | sed 's/Device [^ ]* //')
+            echo \"connectedDeviceName=$FIRST_DEV\"
+        else
+            echo \"connected=false\"
+            echo \"connectedDeviceName=\"
+        fi
+
+        echo \"devices_start\"
+        bluetoothctl devices Paired 2>/dev/null | while read -r line; do
+            MAC=$(echo \"$line\" | awk '{print $2}')
+            NAME=$(echo \"$line\" | sed 's/Device [^ ]* //')
+            if bluetoothctl info \"$MAC\" 2>/dev/null | grep -q \"Connected: yes\"; then
+                echo \"device:$MAC:$NAME:connected\"
+            else
+                echo \"device:$MAC:$NAME:paired\"
+            fi
+        done
+        echo \"devices_end\"
+    "
+
+    Process {
+        id: btProcess
+        command: ["sh", "-c", root.btQueryScript]
+        running: true
+        onExited: root.parseOutput()
+    }
+
+    function parseOutput() {
+        const output = btProcess.stdout
+        if (!output) return
+        const lines = output.split("\n")
+        let parsingDevices = false
+        let newDevices = []
+
+        for (const line of lines) {
+            if (line === "devices_start") {
+                parsingDevices = true
+                continue
+            }
+            if (line === "devices_end") {
+                parsingDevices = false
+                devices = newDevices
+                continue
+            }
+
+            if (parsingDevices && line.startsWith("device:")) {
+                const parts = line.split(":")
+                if (parts.length >= 4) {
+                    newDevices.push({
+                        mac: parts[1],
+                        name: parts[2],
+                        status: parts[3]
+                    })
+                }
+                continue
+            }
+
+            const idx = line.indexOf("=")
+            if (idx === -1) continue
+
+            const key = line.substring(0, idx).trim()
+            const value = line.substring(idx + 1).trim()
+
+            switch (key) {
+                case "available":
+                    available = value === "true"
+                    break
+                case "powered":
+                    powered = value === "true"
+                    break
+                case "discovering":
+                    discovering = value === "true"
+                    break
+                case "connected":
+                    connected = value === "true"
+                    break
+                case "connectedDeviceName":
+                    connectedDeviceName = value
+                    break
+            }
+        }
+    }
+
+    // Update timer
+    Timer {
+        interval: 10000
+        running: true
+        repeat: true
+        onTriggered: btProcess.running = true
+    }
+
+    // Control processes
+    Process {
+        id: powerProcess
+        command: ["bluetoothctl", "power", "on"]
+        onExited: btProcess.running = true
+    }
+
+    Process {
+        id: scanProcess
+        command: ["bluetoothctl", "scan", "on"]
+    }
+
+    Process {
+        id: connectProcess
+        command: ["bluetoothctl", "connect", ""]
+        onExited: btProcess.running = true
+    }
+
+    Process {
+        id: disconnectProcess
+        command: ["bluetoothctl", "disconnect", ""]
+        onExited: btProcess.running = true
+    }
+
+    // Control functions
+    function setPower(on) {
+        powerProcess.command = ["bluetoothctl", "power", on ? "on" : "off"]
+        powerProcess.running = true
+        powered = on  // Optimistic update
+    }
+
+    function startDiscovery() {
+        scanProcess.command = ["bluetoothctl", "scan", "on"]
+        scanProcess.running = true
+    }
+
+    function stopDiscovery() {
+        scanProcess.command = ["bluetoothctl", "scan", "off"]
+        scanProcess.running = true
+    }
+
+    function connectDevice(mac) {
+        connectProcess.command = ["bluetoothctl", "connect", mac]
+        connectProcess.running = true
+    }
+
+    function disconnectDevice(mac) {
+        disconnectProcess.command = ["bluetoothctl", "disconnect", mac]
+        disconnectProcess.running = true
+    }
+
+    function refresh() {
+        btProcess.running = true
+    }
+}
