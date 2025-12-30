@@ -22,6 +22,10 @@ PanelWindow {
     implicitHeight: Common.Appearance.sizes.barHeight
     color: "transparent"
 
+    // Bar should be above click catchers so it's always clickable
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.namespace: "statusbar"
+
     // Bar button component
     component BarButton: MouseArea {
         id: button
@@ -260,7 +264,7 @@ PanelWindow {
                     : (Root.GlobalStates.unreadNotificationCount > 0
                         ? Root.GlobalStates.unreadNotificationCount + " notifications"
                         : "Notifications")
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen)
+                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "notifications")
                 textColor: Root.GlobalStates.doNotDisturb
                     ? Common.Appearance.m3colors.onSurfaceVariant
                     : (Root.GlobalStates.unreadNotificationCount > 0
@@ -273,7 +277,7 @@ PanelWindow {
                 id: clockButton
                 buttonText: Services.DateTime.dateString + "  " + Services.DateTime.timeString
                 tooltip: "Click to open calendar"
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen)
+                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "calendar")
 
                 Timer {
                     interval: 1000

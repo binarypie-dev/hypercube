@@ -42,7 +42,7 @@ ColumnLayout {
 
         Text {
             Layout.fillWidth: true
-            text: "Sound"
+            text: "Audio"
             font.family: Common.Appearance.fonts.main
             font.pixelSize: Common.Appearance.fontSize.headline
             font.weight: Font.Medium

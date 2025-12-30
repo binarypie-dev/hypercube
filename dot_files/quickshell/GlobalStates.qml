@@ -118,7 +118,7 @@ Singleton {
     property bool sidebarLeftOpen: false
     property bool sidebarRightOpen: false
 
-    // Right sidebar view mode: "default", "bluetooth", "audio"
+    // Right sidebar view mode: "default", "bluetooth", "audio", "calendar", "notifications"
     property string sidebarRightView: "default"
 
     // OSD (On-Screen Display) state
