@@ -12,6 +12,7 @@ import "modules/bar" as Bar
 import "modules/osd" as Osd
 import "modules/sidebars" as Sidebars
 import "modules/notifications" as NotificationsModule
+import "modules/switcher" as Switcher
 import "services" as Services
 
 ShellRoot {
@@ -86,6 +87,34 @@ ShellRoot {
         function closeAll() {
             GlobalStates.closeAll()
         }
+
+        function startAppSwitcher() {
+            Services.Windows.startSwitcher()
+        }
+
+        function nextWindow() {
+            if (Services.Windows.switcherActive) {
+                Services.Windows.nextWindow()
+            } else {
+                Services.Windows.startSwitcher()
+            }
+        }
+
+        function prevWindow() {
+            if (Services.Windows.switcherActive) {
+                Services.Windows.prevWindow()
+            } else {
+                Services.Windows.startSwitcher()
+            }
+        }
+
+        function selectWindow() {
+            Services.Windows.selectWindow()
+        }
+
+        function cancelSwitcher() {
+            Services.Windows.cancelSwitcher()
+        }
     }
 
     // Screen-specific components
@@ -142,6 +171,15 @@ ShellRoot {
                     active: GlobalStates.activeScreen === screenRoot.screen ||
                             (GlobalStates.activeScreen === null && screenRoot.screen === Quickshell.screens[0])
                     sourceComponent: NotificationsModule.NotificationPopup {
+                        targetScreen: screenRoot.screen
+                    }
+                }
+
+                // App switcher (on active screen only, or primary if none set)
+                Loader {
+                    active: GlobalStates.activeScreen === screenRoot.screen ||
+                            (GlobalStates.activeScreen === null && screenRoot.screen === Quickshell.screens[0])
+                    sourceComponent: Switcher.AppSwitcher {
                         targetScreen: screenRoot.screen
                     }
                 }

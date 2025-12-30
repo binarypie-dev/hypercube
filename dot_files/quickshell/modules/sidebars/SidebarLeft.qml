@@ -34,7 +34,9 @@ PanelWindow {
 
     // State for search results
     property var searchResults: []
+    property var allApps: []
     property string currentQuery: ""
+    property bool isSearching: false
 
     // Background
     Rectangle {
@@ -94,7 +96,12 @@ PanelWindow {
 
                     onTextChanged: {
                         root.currentQuery = text
-                        queryDebounceTimer.restart()
+                        root.isSearching = text.trim() !== ""
+                        if (root.isSearching) {
+                            queryDebounceTimer.restart()
+                        } else {
+                            searchResults = []
+                        }
                     }
 
                     Keys.onEscapePressed: {
@@ -109,7 +116,8 @@ PanelWindow {
                     Keys.onUpPressed: appListView.decrementCurrentIndex()
                     Keys.onReturnPressed: {
                         if (appListView.currentIndex >= 0 && appListView.currentIndex < appListView.count) {
-                            launchApp(searchResults[appListView.currentIndex])
+                            const apps = root.isSearching ? searchResults : allApps
+                            launchApp(apps[appListView.currentIndex])
                         }
                     }
                 }
@@ -141,7 +149,7 @@ PanelWindow {
             clip: true
             spacing: 2
 
-            model: searchResults
+            model: root.isSearching ? searchResults : allApps
 
             delegate: MouseArea {
                 id: appDelegate
@@ -248,7 +256,7 @@ PanelWindow {
             Text {
                 anchors.centerIn: parent
                 visible: appListView.count === 0
-                text: searchInput.text ? "No applications found" : "Type to search..."
+                text: root.isSearching ? "No applications found" : "Loading applications..."
                 font.family: Common.Appearance.fonts.main
                 font.pixelSize: Common.Appearance.fontSize.normal
                 color: Common.Appearance.m3colors.onSurfaceVariant
@@ -262,6 +270,60 @@ PanelWindow {
 
     // Track the query we're waiting for results from
     property string activeQueryId: ""
+
+    // Load all apps on startup
+    Component.onCompleted: {
+        allAppsQuery.running = true
+    }
+
+    // Query to get all applications sorted alphabetically
+    Process {
+        id: allAppsQuery
+        property var pendingApps: []
+        command: ["bash", "-lc", "datacube-cli query '' --json -m 500 -p applications"]
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => {
+                if (!data || data.trim() === "") return
+
+                try {
+                    const item = JSON.parse(data)
+                    const result = {
+                        id: item.id || "",
+                        type: "app",
+                        name: item.text || "",
+                        description: item.subtext || "",
+                        genericName: item.subtext || "",
+                        icon: getIconPath(item.icon),
+                        exec: item.exec || "",
+                        provider: item.provider || "",
+                        score: item.score || 0,
+                        _raw: item
+                    }
+                    allAppsQuery.pendingApps.push(result)
+                } catch (e) {
+                    console.log("Failed to parse app:", e, data)
+                }
+            }
+        }
+
+        onStarted: {
+            allAppsQuery.pendingApps = []
+        }
+
+        onExited: {
+            // Sort alphabetically by name
+            allAppsQuery.pendingApps.sort((a, b) => {
+                const nameA = (a.name || "").toLowerCase()
+                const nameB = (b.name || "").toLowerCase()
+                if (nameA < nameB) return -1
+                if (nameA > nameB) return 1
+                return 0
+            })
+            root.allApps = allAppsQuery.pendingApps
+        }
+    }
 
     // Debounce timer for search queries
     Timer {

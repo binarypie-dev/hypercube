@@ -5,9 +5,11 @@ singleton Battery 1.0 Battery.qml
 singleton BluetoothStatus 1.0 BluetoothStatus.qml
 singleton Brightness 1.0 Brightness.qml
 singleton DateTime 1.0 DateTime.qml
+singleton IconResolver 1.0 IconResolver.qml
 singleton Network 1.0 Network.qml
 singleton Notifications 1.0 Notifications.qml
 singleton Privacy 1.0 Privacy.qml
 singleton Updates 1.0 Updates.qml
 singleton SearchManager 1.0 SearchManager.qml
 singleton Weather 1.0 Weather.qml
+singleton Windows 1.0 Windows.qml
