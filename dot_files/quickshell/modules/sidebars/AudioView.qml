@@ -12,6 +12,9 @@ ColumnLayout {
     id: root
     spacing: Common.Appearance.spacing.large
 
+    // Refresh devices when view opens
+    Component.onCompleted: Services.Audio.refreshDevices()
+
     // Header with close button
     RowLayout {
         Layout.fillWidth: true
@@ -215,6 +218,16 @@ ColumnLayout {
                     color: Common.Appearance.m3colors.onSurfaceVariant
                 }
             }
+
+            // Output device selector
+            DeviceSelector {
+                Layout.fillWidth: true
+                label: "Output Device"
+                devices: Services.Audio.sinks
+                onDeviceSelected: function(name) {
+                    Services.Audio.setDefaultSink(name)
+                }
+            }
         }
     }
 
@@ -399,9 +412,146 @@ ColumnLayout {
                     color: Common.Appearance.m3colors.onSurfaceVariant
                 }
             }
+
+            // Input device selector
+            DeviceSelector {
+                Layout.fillWidth: true
+                label: "Input Device"
+                devices: Services.Audio.sources
+                onDeviceSelected: function(name) {
+                    Services.Audio.setDefaultSource(name)
+                }
+            }
         }
     }
 
     // Spacer
     Item { Layout.fillHeight: true }
+
+    // Device selector dropdown component
+    component DeviceSelector: ColumnLayout {
+        id: selector
+        property string label: ""
+        property var devices: []
+        property bool expanded: false
+
+        signal deviceSelected(string name)
+
+        spacing: Common.Appearance.spacing.small
+
+        // Current selection / dropdown trigger
+        MouseArea {
+            Layout.fillWidth: true
+            Layout.preferredHeight: 40
+            cursorShape: Qt.PointingHandCursor
+            hoverEnabled: true
+
+            onClicked: selector.expanded = !selector.expanded
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Common.Appearance.rounding.medium
+                color: parent.containsMouse ? Common.Appearance.surfaceLayer(2) : Common.Appearance.surfaceLayer(1)
+            }
+
+            RowLayout {
+                anchors.fill: parent
+                anchors.leftMargin: Common.Appearance.spacing.small
+                anchors.rightMargin: Common.Appearance.spacing.small
+                spacing: Common.Appearance.spacing.small
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 0
+
+                    Text {
+                        text: selector.label
+                        font.family: Common.Appearance.fonts.main
+                        font.pixelSize: Common.Appearance.fontSize.small
+                        color: Common.Appearance.m3colors.onSurfaceVariant
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: {
+                            for (let i = 0; i < selector.devices.length; i++) {
+                                if (selector.devices[i].isDefault) {
+                                    return selector.devices[i].description
+                                }
+                            }
+                            return "No device"
+                        }
+                        font.family: Common.Appearance.fonts.main
+                        font.pixelSize: Common.Appearance.fontSize.normal
+                        color: Common.Appearance.m3colors.onSurface
+                        elide: Text.ElideRight
+                    }
+                }
+
+                Text {
+                    text: selector.expanded ? Common.Icons.icons.expand : Common.Icons.icons.collapse
+                    font.family: Common.Appearance.fonts.icon
+                    font.pixelSize: Common.Appearance.sizes.iconSmall
+                    color: Common.Appearance.m3colors.onSurfaceVariant
+                }
+            }
+        }
+
+        // Dropdown list
+        ColumnLayout {
+            visible: selector.expanded
+            Layout.fillWidth: true
+            spacing: 2
+
+            Repeater {
+                model: selector.devices
+
+                MouseArea {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 36
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+
+                    onClicked: {
+                        selector.deviceSelected(modelData.name)
+                        selector.expanded = false
+                    }
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Common.Appearance.rounding.small
+                        color: modelData.isDefault
+                            ? Common.Appearance.m3colors.primaryContainer
+                            : (parent.containsMouse ? Common.Appearance.surfaceLayer(2) : "transparent")
+                    }
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: Common.Appearance.spacing.small
+                        anchors.rightMargin: Common.Appearance.spacing.small
+                        spacing: Common.Appearance.spacing.small
+
+                        Text {
+                            Layout.fillWidth: true
+                            text: modelData.description
+                            font.family: Common.Appearance.fonts.main
+                            font.pixelSize: Common.Appearance.fontSize.normal
+                            color: modelData.isDefault
+                                ? Common.Appearance.m3colors.onPrimaryContainer
+                                : Common.Appearance.m3colors.onSurface
+                            elide: Text.ElideRight
+                        }
+
+                        Text {
+                            visible: modelData.isDefault
+                            text: Common.Icons.icons.check
+                            font.family: Common.Appearance.fonts.icon
+                            font.pixelSize: Common.Appearance.sizes.iconSmall
+                            color: Common.Appearance.m3colors.onPrimaryContainer
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

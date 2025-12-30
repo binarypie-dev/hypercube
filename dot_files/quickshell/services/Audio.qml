@@ -13,15 +13,72 @@ Singleton {
     property bool muted: false
     property string sinkName: ""
     property string sinkDescription: ""
+    property int defaultSinkId: -1
 
     // Source (input) properties
     property real micVolume: 1.0
     property bool micMuted: false
     property string sourceName: ""
     property string sourceDescription: ""
+    property int defaultSourceId: -1
+
+    // Available devices
+    property var sinks: []      // [{id, name, description, isDefault}]
+    property var sources: []    // [{id, name, description, isDefault}]
 
     // Active streams
     property int activeStreams: 0
+
+    // Pending device lists during parsing
+    property var pendingSinks: []
+    property var pendingSources: []
+    property bool parsingSinks: false
+    property bool parsingSources: false
+
+    // Device list query script (using pactl for reliable parsing)
+    readonly property string deviceListScript: "
+        if command -v pactl &>/dev/null; then
+            # Get default sink and source names
+            DEFAULT_SINK=$(pactl get-default-sink 2>/dev/null)
+            DEFAULT_SOURCE=$(pactl get-default-source 2>/dev/null)
+
+            # List sinks
+            echo \"sinks_start\"
+            pactl list sinks 2>/dev/null | awk '
+                /^Sink #/ { id = substr($2, 2) }
+                /^\\tName:/ { name = $2 }
+                /^\\tDescription:/ {
+                    desc = substr($0, index($0, \":\")+2)
+                    print \"sink|\" id \"|\" name \"|\" desc
+                }
+            ' | while IFS='|' read -r type id name desc; do
+                IS_DEFAULT=\"false\"
+                if [ \"$name\" = \"$DEFAULT_SINK\" ]; then
+                    IS_DEFAULT=\"true\"
+                fi
+                echo \"sink|$id|$name|$desc|$IS_DEFAULT\"
+            done
+            echo \"sinks_end\"
+
+            # List sources (exclude monitors)
+            echo \"sources_start\"
+            pactl list sources 2>/dev/null | awk '
+                /^Source #/ { id = substr($2, 2) }
+                /^\\tName:/ { name = $2 }
+                /^\\tDescription:/ {
+                    desc = substr($0, index($0, \":\")+2)
+                    print \"source|\" id \"|\" name \"|\" desc
+                }
+            ' | grep -v \"Monitor of\" | while IFS='|' read -r type id name desc; do
+                IS_DEFAULT=\"false\"
+                if [ \"$name\" = \"$DEFAULT_SOURCE\" ]; then
+                    IS_DEFAULT=\"true\"
+                fi
+                echo \"source|$id|$name|$desc|$IS_DEFAULT\"
+            done
+            echo \"sources_end\"
+        fi
+    "
 
     // Audio query script
     readonly property string audioQueryScript: "
@@ -80,6 +137,11 @@ Singleton {
         fi
     "
 
+    // Run initial device query on startup
+    Component.onCompleted: {
+        deviceListProcess.running = true
+    }
+
     Process {
         id: audioProcess
         command: ["sh", "-c", root.audioQueryScript]
@@ -87,11 +149,35 @@ Singleton {
 
         stdout: SplitParser {
             splitMarker: "\n"
-            onRead: data => root.parseLine(data)
+            onRead: data => root.parseVolumeLine(data)
         }
     }
 
-    function parseLine(line) {
+    Process {
+        id: deviceListProcess
+        command: ["sh", "-c", root.deviceListScript]
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => root.parseDeviceLine(data)
+        }
+
+        onRunningChanged: {
+            if (running) {
+                root.pendingSinks = []
+                root.pendingSources = []
+                root.parsingSinks = false
+                root.parsingSources = false
+            }
+        }
+
+        onExited: {
+            root.sinks = root.pendingSinks
+            root.sources = root.pendingSources
+        }
+    }
+
+    function parseVolumeLine(line) {
         if (!line || line.trim() === "") return
 
         const idx = line.indexOf("=")
@@ -128,12 +214,88 @@ Singleton {
         }
     }
 
-    // Update timer
+    function parseDeviceLine(line) {
+        if (!line || line.trim() === "") return
+
+        // Parse device list markers
+        if (line === "sinks_start") {
+            parsingSinks = true
+            parsingSources = false
+            return
+        }
+        if (line === "sinks_end") {
+            parsingSinks = false
+            return
+        }
+        if (line === "sources_start") {
+            parsingSources = true
+            parsingSinks = false
+            return
+        }
+        if (line === "sources_end") {
+            parsingSources = false
+            return
+        }
+
+        // Parse sink entries: sink|id|name|description|isDefault
+        if (parsingSinks && line.startsWith("sink|")) {
+            const parts = line.split("|")
+            if (parts.length >= 5) {
+                pendingSinks.push({
+                    id: parseInt(parts[1]),
+                    name: parts[2],
+                    description: parts[3],
+                    isDefault: parts[4] === "true"
+                })
+            }
+            return
+        }
+
+        // Parse source entries: source|id|name|description|isDefault
+        if (parsingSources && line.startsWith("source|")) {
+            const parts = line.split("|")
+            if (parts.length >= 5) {
+                pendingSources.push({
+                    id: parseInt(parts[1]),
+                    name: parts[2],
+                    description: parts[3],
+                    isDefault: parts[4] === "true"
+                })
+            }
+            return
+        }
+
+        // Parse default IDs
+        const idx = line.indexOf("=")
+        if (idx === -1) return
+
+        const key = line.substring(0, idx).trim()
+        const value = line.substring(idx + 1).trim()
+
+        switch (key) {
+            case "defaultSinkId":
+                defaultSinkId = parseInt(value) || -1
+                break
+            case "defaultSourceId":
+                defaultSourceId = parseInt(value) || -1
+                break
+        }
+    }
+
+    // Update timer for volume (fast)
     Timer {
         interval: 1000
         running: true
         repeat: true
         onTriggered: audioProcess.running = true
+    }
+
+    // Update timer for device list (slower)
+    Timer {
+        interval: 5000
+        running: true
+        repeat: true
+        onTriggered: deviceListProcess.running = true
     }
 
     // Control functions
@@ -191,6 +353,32 @@ Singleton {
 
     function toggleMicMute() {
         setMicMuted(!micMuted)
+    }
+
+    function setDefaultSink(name) {
+        setSinkProcess.command = ["pactl", "set-default-sink", name]
+        setSinkProcess.running = true
+    }
+
+    Process {
+        id: setSinkProcess
+        command: ["true"]
+        onExited: deviceListProcess.running = true
+    }
+
+    function setDefaultSource(name) {
+        setSourceProcess.command = ["pactl", "set-default-source", name]
+        setSourceProcess.running = true
+    }
+
+    Process {
+        id: setSourceProcess
+        command: ["true"]
+        onExited: deviceListProcess.running = true
+    }
+
+    function refreshDevices() {
+        deviceListProcess.running = true
     }
 
     // Volume as percentage
