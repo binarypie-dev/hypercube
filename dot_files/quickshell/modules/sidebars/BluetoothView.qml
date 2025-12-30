@@ -12,6 +12,15 @@ ColumnLayout {
     id: root
     spacing: Common.Appearance.spacing.large
 
+    // Refresh device list when view opens
+    Component.onCompleted: Services.BluetoothStatus.refresh()
+
+    // Clear available devices when view closes
+    Component.onDestruction: {
+        Services.BluetoothStatus.stopDiscovery()
+        Services.BluetoothStatus.clearAvailableDevices()
+    }
+
     // Header with close button
     RowLayout {
         Layout.fillWidth: true
@@ -148,78 +157,24 @@ ColumnLayout {
         }
     }
 
-    // Scanning indicator / button
-    Rectangle {
-        visible: Services.BluetoothStatus.powered
-        Layout.fillWidth: true
-        Layout.preferredHeight: 44
-        radius: Common.Appearance.rounding.medium
-        color: Services.BluetoothStatus.discovering
-            ? Common.Appearance.m3colors.primaryContainer
-            : Common.Appearance.m3colors.surfaceVariant
-
-        MouseArea {
-            anchors.fill: parent
-            cursorShape: Qt.PointingHandCursor
-            onClicked: {
-                if (Services.BluetoothStatus.discovering) {
-                    Services.BluetoothStatus.stopDiscovery()
-                } else {
-                    Services.BluetoothStatus.startDiscovery()
-                }
-            }
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.leftMargin: Common.Appearance.spacing.medium
-                anchors.rightMargin: Common.Appearance.spacing.medium
-                spacing: Common.Appearance.spacing.small
-
-                Text {
-                    text: Common.Icons.icons.search
-                    font.family: Common.Appearance.fonts.icon
-                    font.pixelSize: Common.Appearance.sizes.iconMedium
-                    color: Services.BluetoothStatus.discovering
-                        ? Common.Appearance.m3colors.onPrimaryContainer
-                        : Common.Appearance.m3colors.onSurfaceVariant
-
-                    RotationAnimation on rotation {
-                        running: Services.BluetoothStatus.discovering
-                        from: 0
-                        to: 360
-                        duration: 2000
-                        loops: Animation.Infinite
-                    }
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: Services.BluetoothStatus.discovering ? "Scanning..." : "Scan for devices"
-                    font.family: Common.Appearance.fonts.main
-                    font.pixelSize: Common.Appearance.fontSize.normal
-                    color: Services.BluetoothStatus.discovering
-                        ? Common.Appearance.m3colors.onPrimaryContainer
-                        : Common.Appearance.m3colors.onSurface
-                }
-            }
-        }
-    }
-
-    // Paired devices section
+    // ===== SECTION 1: Known/Paired Devices =====
     ColumnLayout {
-        visible: Services.BluetoothStatus.powered && Services.BluetoothStatus.devices.length > 0
+        visible: Services.BluetoothStatus.powered
         Layout.fillWidth: true
         spacing: Common.Appearance.spacing.small
 
+        // Section header
         Text {
-            text: "Paired Devices"
+            text: "My Devices"
             font.family: Common.Appearance.fonts.main
             font.pixelSize: Common.Appearance.fontSize.small
             font.weight: Font.Medium
             color: Common.Appearance.m3colors.onSurfaceVariant
         }
 
+        // Paired devices list
         Rectangle {
+            visible: Services.BluetoothStatus.devices.length > 0
             Layout.fillWidth: true
             Layout.preferredHeight: pairedDevicesColumn.implicitHeight + Common.Appearance.spacing.medium * 2
             radius: Common.Appearance.rounding.large
@@ -234,36 +189,117 @@ ColumnLayout {
                 Repeater {
                     model: Services.BluetoothStatus.devices
 
-                    delegate: DeviceItem {
+                    delegate: PairedDeviceItem {
                         Layout.fillWidth: true
                         deviceName: modelData.name
                         deviceMac: modelData.mac
                         isConnected: modelData.status === "connected"
-                        isPaired: true
                         onConnectClicked: Services.BluetoothStatus.connectDevice(modelData.mac)
                         onDisconnectClicked: Services.BluetoothStatus.disconnectDevice(modelData.mac)
-                        onForgetClicked: Services.BluetoothStatus.forgetDevice(modelData.mac)
+                        onRemoveClicked: Services.BluetoothStatus.forgetDevice(modelData.mac)
                     }
                 }
             }
         }
+
+        // No paired devices message
+        Rectangle {
+            visible: Services.BluetoothStatus.devices.length === 0
+            Layout.fillWidth: true
+            Layout.preferredHeight: 60
+            radius: Common.Appearance.rounding.large
+            color: Common.Appearance.m3colors.surfaceVariant
+
+            Text {
+                anchors.centerIn: parent
+                text: "No paired devices"
+                font.family: Common.Appearance.fonts.main
+                font.pixelSize: Common.Appearance.fontSize.normal
+                color: Common.Appearance.m3colors.onSurfaceVariant
+            }
+        }
     }
 
-    // Available devices section
+    // ===== SECTION 2: Available/Discoverable Devices =====
     ColumnLayout {
-        visible: Services.BluetoothStatus.powered && Services.BluetoothStatus.discovering && Services.BluetoothStatus.availableDevices.length > 0
+        visible: Services.BluetoothStatus.powered
         Layout.fillWidth: true
         spacing: Common.Appearance.spacing.small
 
-        Text {
-            text: "Available Devices"
-            font.family: Common.Appearance.fonts.main
-            font.pixelSize: Common.Appearance.fontSize.small
-            font.weight: Font.Medium
-            color: Common.Appearance.m3colors.onSurfaceVariant
+        // Section header with scan button
+        RowLayout {
+            Layout.fillWidth: true
+
+            Text {
+                text: "Available Devices"
+                font.family: Common.Appearance.fonts.main
+                font.pixelSize: Common.Appearance.fontSize.small
+                font.weight: Font.Medium
+                color: Common.Appearance.m3colors.onSurfaceVariant
+            }
+
+            Item { Layout.fillWidth: true }
+
+            MouseArea {
+                Layout.preferredWidth: 24
+                Layout.preferredHeight: 24
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onClicked: {
+                    if (Services.BluetoothStatus.discovering) {
+                        Services.BluetoothStatus.stopDiscovery()
+                    } else {
+                        Services.BluetoothStatus.startDiscovery()
+                    }
+                }
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: Common.Appearance.rounding.small
+                    color: parent.containsMouse ? Common.Appearance.m3colors.surfaceVariant : "transparent"
+                }
+
+                Text {
+                    id: refreshIcon
+                    anchors.centerIn: parent
+                    text: Common.Icons.icons.refresh
+                    font.family: Common.Appearance.fonts.icon
+                    font.pixelSize: Common.Appearance.sizes.iconSmall
+                    color: Services.BluetoothStatus.discovering
+                        ? Common.Appearance.m3colors.primary
+                        : Common.Appearance.m3colors.onSurfaceVariant
+
+                    RotationAnimation on rotation {
+                        running: Services.BluetoothStatus.discovering
+                        from: 0
+                        to: 360
+                        duration: 1000
+                        loops: Animation.Infinite
+                    }
+                }
+            }
         }
 
+        // Scanning state
         Rectangle {
+            visible: Services.BluetoothStatus.discovering && Services.BluetoothStatus.availableDevices.length === 0
+            Layout.fillWidth: true
+            Layout.preferredHeight: 60
+            radius: Common.Appearance.rounding.large
+            color: Common.Appearance.m3colors.surfaceVariant
+
+            Text {
+                anchors.centerIn: parent
+                text: "Scanning for devices..."
+                font.family: Common.Appearance.fonts.main
+                font.pixelSize: Common.Appearance.fontSize.normal
+                color: Common.Appearance.m3colors.onSurfaceVariant
+            }
+        }
+
+        // Available devices list (only shown when discovering or has results)
+        Rectangle {
+            visible: Services.BluetoothStatus.availableDevices.length > 0
             Layout.fillWidth: true
             Layout.preferredHeight: availableDevicesColumn.implicitHeight + Common.Appearance.spacing.medium * 2
             radius: Common.Appearance.rounding.large
@@ -278,54 +314,29 @@ ColumnLayout {
                 Repeater {
                     model: Services.BluetoothStatus.availableDevices
 
-                    delegate: DeviceItem {
+                    delegate: AvailableDeviceItem {
                         Layout.fillWidth: true
                         deviceName: modelData.name
                         deviceMac: modelData.mac
-                        isConnected: false
-                        isPaired: false
-                        onConnectClicked: {
-                            Services.BluetoothStatus.pairDevice(modelData.mac)
-                        }
+                        onPairClicked: Services.BluetoothStatus.pairDevice(modelData.mac)
                     }
                 }
             }
         }
-    }
 
-    // Empty state when powered but no devices
-    Rectangle {
-        visible: Services.BluetoothStatus.powered && Services.BluetoothStatus.devices.length === 0 && !Services.BluetoothStatus.discovering
-        Layout.fillWidth: true
-        Layout.preferredHeight: 100
-        radius: Common.Appearance.rounding.large
-        color: Common.Appearance.m3colors.surfaceVariant
-
-        ColumnLayout {
-            anchors.centerIn: parent
-            spacing: Common.Appearance.spacing.small
+        // Idle state - prompt to scan
+        Rectangle {
+            visible: !Services.BluetoothStatus.discovering && Services.BluetoothStatus.availableDevices.length === 0
+            Layout.fillWidth: true
+            Layout.preferredHeight: 60
+            radius: Common.Appearance.rounding.large
+            color: Common.Appearance.m3colors.surfaceVariant
 
             Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: Common.Icons.icons.bluetoothOff
-                font.family: Common.Appearance.fonts.icon
-                font.pixelSize: 32
-                color: Common.Appearance.m3colors.onSurfaceVariant
-            }
-
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: "No paired devices"
+                anchors.centerIn: parent
+                text: "Tap refresh to scan"
                 font.family: Common.Appearance.fonts.main
                 font.pixelSize: Common.Appearance.fontSize.normal
-                color: Common.Appearance.m3colors.onSurfaceVariant
-            }
-
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: "Tap scan to find devices"
-                font.family: Common.Appearance.fonts.main
-                font.pixelSize: Common.Appearance.fontSize.small
                 color: Common.Appearance.m3colors.onSurfaceVariant
             }
         }
@@ -334,17 +345,16 @@ ColumnLayout {
     // Spacer
     Item { Layout.fillHeight: true }
 
-    // Device item component
-    component DeviceItem: MouseArea {
-        id: deviceItem
+    // ===== Paired Device Item Component =====
+    component PairedDeviceItem: MouseArea {
+        id: pairedItem
         property string deviceName: ""
         property string deviceMac: ""
         property bool isConnected: false
-        property bool isPaired: false
 
         signal connectClicked()
         signal disconnectClicked()
-        signal forgetClicked()
+        signal removeClicked()
 
         implicitHeight: 48
         hoverEnabled: true
@@ -352,7 +362,7 @@ ColumnLayout {
         Rectangle {
             anchors.fill: parent
             radius: Common.Appearance.rounding.medium
-            color: deviceItem.containsMouse ? Common.Appearance.surfaceLayer(2) : "transparent"
+            color: pairedItem.containsMouse ? Common.Appearance.surfaceLayer(2) : "transparent"
         }
 
         RowLayout {
@@ -361,10 +371,12 @@ ColumnLayout {
 
             // Device icon
             Text {
-                text: Common.Icons.icons.bluetoothConnected
+                text: pairedItem.isConnected
+                    ? Common.Icons.icons.bluetoothConnected
+                    : Common.Icons.icons.bluetooth
                 font.family: Common.Appearance.fonts.icon
                 font.pixelSize: Common.Appearance.sizes.iconMedium
-                color: deviceItem.isConnected
+                color: pairedItem.isConnected
                     ? Common.Appearance.m3colors.primary
                     : Common.Appearance.m3colors.onSurfaceVariant
             }
@@ -375,7 +387,7 @@ ColumnLayout {
                 spacing: 2
 
                 Text {
-                    text: deviceItem.deviceName || deviceItem.deviceMac
+                    text: pairedItem.deviceName || pairedItem.deviceMac
                     font.family: Common.Appearance.fonts.main
                     font.pixelSize: Common.Appearance.fontSize.normal
                     color: Common.Appearance.m3colors.onSurface
@@ -384,19 +396,18 @@ ColumnLayout {
                 }
 
                 Text {
-                    visible: deviceItem.isConnected || !deviceItem.isPaired
-                    text: deviceItem.isConnected ? "Connected" : "Tap to pair"
+                    text: pairedItem.isConnected ? "Connected" : "Not connected"
                     font.family: Common.Appearance.fonts.main
                     font.pixelSize: Common.Appearance.fontSize.small
-                    color: deviceItem.isConnected
+                    color: pairedItem.isConnected
                         ? Common.Appearance.m3colors.primary
                         : Common.Appearance.m3colors.onSurfaceVariant
                 }
             }
 
-            // Action buttons (visible on hover for paired devices)
+            // Action buttons (visible on hover)
             RowLayout {
-                visible: deviceItem.containsMouse && deviceItem.isPaired
+                visible: pairedItem.containsMouse
                 spacing: Common.Appearance.spacing.tiny
 
                 // Connect/Disconnect button
@@ -405,10 +416,10 @@ ColumnLayout {
                     Layout.preferredHeight: 28
                     cursorShape: Qt.PointingHandCursor
                     onClicked: {
-                        if (deviceItem.isConnected) {
-                            deviceItem.disconnectClicked()
+                        if (pairedItem.isConnected) {
+                            pairedItem.disconnectClicked()
                         } else {
-                            deviceItem.connectClicked()
+                            pairedItem.connectClicked()
                         }
                     }
 
@@ -422,7 +433,7 @@ ColumnLayout {
 
                     Text {
                         anchors.centerIn: parent
-                        text: deviceItem.isConnected
+                        text: pairedItem.isConnected
                             ? Common.Icons.icons.close
                             : Common.Icons.icons.bluetooth
                         font.family: Common.Appearance.fonts.icon
@@ -431,12 +442,12 @@ ColumnLayout {
                     }
                 }
 
-                // Forget button
+                // Remove/Forget button
                 MouseArea {
                     Layout.preferredWidth: 28
                     Layout.preferredHeight: 28
                     cursorShape: Qt.PointingHandCursor
-                    onClicked: deviceItem.forgetClicked()
+                    onClicked: pairedItem.removeClicked()
 
                     Rectangle {
                         anchors.fill: parent
@@ -451,18 +462,67 @@ ColumnLayout {
                         text: Common.Icons.icons.delete
                         font.family: Common.Appearance.fonts.icon
                         font.pixelSize: Common.Appearance.sizes.iconSmall
-                        color: parent.parent.containsMouse
+                        color: parent.containsMouse
                             ? Common.Appearance.m3colors.onErrorContainer
                             : Common.Appearance.m3colors.onSurfaceVariant
                     }
                 }
             }
         }
+    }
 
-        // Click to connect if not paired
-        onClicked: {
-            if (!isPaired) {
-                connectClicked()
+    // ===== Available Device Item Component =====
+    component AvailableDeviceItem: MouseArea {
+        id: availableItem
+        property string deviceName: ""
+        property string deviceMac: ""
+
+        signal pairClicked()
+
+        implicitHeight: 48
+        hoverEnabled: true
+        cursorShape: Qt.PointingHandCursor
+
+        onClicked: pairClicked()
+
+        Rectangle {
+            anchors.fill: parent
+            radius: Common.Appearance.rounding.medium
+            color: availableItem.containsMouse ? Common.Appearance.surfaceLayer(2) : "transparent"
+        }
+
+        RowLayout {
+            anchors.fill: parent
+            spacing: Common.Appearance.spacing.medium
+
+            // Device icon
+            Text {
+                text: Common.Icons.icons.bluetooth
+                font.family: Common.Appearance.fonts.icon
+                font.pixelSize: Common.Appearance.sizes.iconMedium
+                color: Common.Appearance.m3colors.onSurfaceVariant
+            }
+
+            // Device info
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+
+                Text {
+                    text: availableItem.deviceName || availableItem.deviceMac
+                    font.family: Common.Appearance.fonts.main
+                    font.pixelSize: Common.Appearance.fontSize.normal
+                    color: Common.Appearance.m3colors.onSurface
+                    elide: Text.ElideRight
+                    Layout.fillWidth: true
+                }
+
+                Text {
+                    text: "Tap to pair"
+                    font.family: Common.Appearance.fonts.main
+                    font.pixelSize: Common.Appearance.fontSize.small
+                    color: Common.Appearance.m3colors.onSurfaceVariant
+                }
             }
         }
     }

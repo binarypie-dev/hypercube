@@ -235,9 +235,11 @@ PanelWindow {
                         ? "Bluetooth: " + Services.BluetoothStatus.connectedDeviceName
                         : "Bluetooth: On")
                     : "Bluetooth: Off"
-                textColor: Services.BluetoothStatus.powered
-                    ? Common.Appearance.m3colors.onSurface
-                    : Common.Appearance.m3colors.onSurfaceVariant
+                textColor: Services.BluetoothStatus.connected
+                    ? Common.Appearance.m3colors.primary
+                    : (Services.BluetoothStatus.powered
+                        ? Common.Appearance.m3colors.onSurface
+                        : Common.Appearance.m3colors.onSurfaceVariant)
                 onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "bluetooth")
             }
 

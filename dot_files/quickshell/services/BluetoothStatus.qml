@@ -59,9 +59,9 @@ Singleton {
             MAC=$(echo \"$line\" | awk '{print $2}')
             NAME=$(echo \"$line\" | sed 's/Device [^ ]* //')
             if bluetoothctl info \"$MAC\" 2>/dev/null | grep -q \"Connected: yes\"; then
-                echo \"device:$MAC:$NAME:connected\"
+                echo \"device|$MAC|$NAME|connected\"
             else
-                echo \"device:$MAC:$NAME:paired\"
+                echo \"device|$MAC|$NAME|paired\"
             fi
         done
         echo \"devices_end\"
@@ -74,7 +74,7 @@ Singleton {
             NAME=$(echo \"$line\" | sed 's/Device [^ ]* //')
             # Skip if already paired
             if ! echo \"$PAIRED\" | grep -q \"$MAC\"; then
-                echo \"available:$MAC:$NAME\"
+                echo \"available|$MAC|$NAME\"
             fi
         done
         echo \"available_end\"
@@ -87,21 +87,28 @@ Singleton {
     property bool parsingDevices: false
     property bool parsingAvailableDevices: false
 
+    // Run initial query on startup
+    Component.onCompleted: {
+        btProcess.running = true
+    }
+
     Process {
         id: btProcess
         command: ["sh", "-c", root.btQueryScript]
-        running: true
 
         stdout: SplitParser {
             splitMarker: "\n"
             onRead: data => root.parseLine(data)
         }
 
-        onStarted: {
-            root.pendingDevices = []
-            root.pendingAvailable = []
-            root.parsingDevices = false
-            root.parsingAvailableDevices = false
+        onRunningChanged: {
+            if (running) {
+                // Reset state when process starts
+                root.pendingDevices = []
+                root.pendingAvailable = []
+                root.parsingDevices = false
+                root.parsingAvailableDevices = false
+            }
         }
 
         onExited: {
@@ -133,8 +140,8 @@ Singleton {
             return
         }
 
-        if (parsingDevices && line.startsWith("device:")) {
-            const parts = line.split(":")
+        if (parsingDevices && line.startsWith("device|")) {
+            const parts = line.split("|")
             if (parts.length >= 4) {
                 pendingDevices.push({
                     mac: parts[1],
@@ -145,8 +152,8 @@ Singleton {
             return
         }
 
-        if (parsingAvailableDevices && line.startsWith("available:")) {
-            const parts = line.split(":")
+        if (parsingAvailableDevices && line.startsWith("available|")) {
+            const parts = line.split("|")
             if (parts.length >= 3) {
                 pendingAvailable.push({
                     mac: parts[1],
@@ -181,9 +188,9 @@ Singleton {
         }
     }
 
-    // Update timer
+    // Update timer - faster when discovering
     Timer {
-        interval: 10000
+        interval: root.discovering ? 2000 : 10000
         running: true
         repeat: true
         onTriggered: btProcess.running = true
@@ -196,9 +203,18 @@ Singleton {
         onExited: btProcess.running = true
     }
 
+    // Scan process - runs continuously while discovering
     Process {
         id: scanProcess
-        command: ["bluetoothctl", "scan", "on"]
+        command: ["bluetoothctl", "--timeout", "30", "scan", "on"]
+
+        onExited: {
+            // Scan finished (timeout or stopped)
+            if (root.discovering) {
+                root.discovering = false
+                btProcess.running = true
+            }
+        }
     }
 
     Process {
@@ -233,13 +249,18 @@ Singleton {
     }
 
     function startDiscovery() {
-        scanProcess.command = ["bluetoothctl", "scan", "on"]
+        if (scanProcess.running) return  // Already scanning
+        scanProcess.command = ["bluetoothctl", "--timeout", "30", "scan", "on"]
         scanProcess.running = true
+        discovering = true  // Optimistic update
     }
 
     function stopDiscovery() {
-        scanProcess.command = ["bluetoothctl", "scan", "off"]
-        scanProcess.running = true
+        if (scanProcess.running) {
+            scanProcess.running = false  // Kill the scan process
+        }
+        discovering = false
+        btProcess.running = true  // Refresh state
     }
 
     function connectDevice(mac) {
@@ -258,8 +279,13 @@ Singleton {
     }
 
     function pairDevice(mac) {
-        pairProcess.command = ["bluetoothctl", "pair", mac]
+        // Enable pairable mode, then pair, then connect
+        pairProcess.command = ["sh", "-c", "bluetoothctl pairable on && bluetoothctl pair " + mac + " && bluetoothctl trust " + mac + " && bluetoothctl connect " + mac]
         pairProcess.running = true
+    }
+
+    function clearAvailableDevices() {
+        availableDevices = []
     }
 
     function refresh() {
