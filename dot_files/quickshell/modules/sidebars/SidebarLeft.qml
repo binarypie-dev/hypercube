@@ -36,7 +36,7 @@ PanelWindow {
     property var searchResults: []
     property string currentQuery: ""
 
-    // Background (slide animation applied to content instead of window)
+    // Background
     Rectangle {
         anchors.fill: parent
         color: Qt.rgba(
@@ -45,15 +45,6 @@ PanelWindow {
             Common.Appearance.m3colors.surface.b,
             Common.Appearance.panelOpacity
         )
-
-        // Right border
-        Rectangle {
-            anchors.right: parent.right
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: 1
-            color: Common.Appearance.m3colors.outlineVariant
-        }
     }
 
     // Content

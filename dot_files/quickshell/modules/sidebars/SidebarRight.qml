@@ -42,15 +42,6 @@ PanelWindow {
             Common.Appearance.m3colors.surface.b,
             Common.Appearance.panelOpacity
         )
-
-        // Left border
-        Rectangle {
-            anchors.left: parent.left
-            anchors.top: parent.top
-            anchors.bottom: parent.bottom
-            width: 1
-            color: Common.Appearance.m3colors.outlineVariant
-        }
     }
 
     // Bluetooth View (shown when sidebarRightView === "bluetooth")

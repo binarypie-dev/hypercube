@@ -112,19 +112,9 @@ ShellRoot {
                     }
                 }
 
-                // Click catcher for sidebars (on appropriate screens)
-                // Left sidebar click catcher (only on leftmost screen)
+                // Click catcher for sidebars (on ALL screens when any sidebar is open)
                 Loader {
-                    active: GlobalStates.isLeftmostScreen(screenRoot.screen) && GlobalStates.sidebarLeftOpen
-                    sourceComponent: Common.ClickCatcher {
-                        targetScreen: screenRoot.screen
-                        onClicked: GlobalStates.closeAll()
-                    }
-                }
-
-                // Right sidebar click catcher (only on rightmost screen)
-                Loader {
-                    active: GlobalStates.isRightmostScreen(screenRoot.screen) && GlobalStates.sidebarRightOpen
+                    active: GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen
                     sourceComponent: Common.ClickCatcher {
                         targetScreen: screenRoot.screen
                         onClicked: GlobalStates.closeAll()
