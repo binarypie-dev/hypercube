@@ -23,10 +23,19 @@ Flickable {
         width: parent.width
         spacing: Common.Appearance.spacing.large
 
-        // Header with back button
+        // Header with close button
         RowLayout {
             Layout.fillWidth: true
             spacing: Common.Appearance.spacing.small
+
+            Text {
+                Layout.fillWidth: true
+                text: "Calendar"
+                font.family: Common.Appearance.fonts.main
+                font.pixelSize: Common.Appearance.fontSize.headline
+                font.weight: Font.Medium
+                color: Common.Appearance.m3colors.onSurface
+            }
 
             MouseArea {
                 Layout.preferredWidth: 32
@@ -34,7 +43,7 @@ Flickable {
                 cursorShape: Qt.PointingHandCursor
                 hoverEnabled: true
 
-                onClicked: Root.GlobalStates.sidebarRightView = "default"
+                onClicked: Root.GlobalStates.sidebarRightOpen = false
 
                 Rectangle {
                     anchors.fill: parent
@@ -44,20 +53,11 @@ Flickable {
 
                 Text {
                     anchors.centerIn: parent
-                    text: Common.Icons.icons.back
+                    text: Common.Icons.icons.close
                     font.family: Common.Appearance.fonts.icon
                     font.pixelSize: Common.Appearance.sizes.iconMedium
                     color: Common.Appearance.m3colors.onSurface
                 }
-            }
-
-            Text {
-                Layout.fillWidth: true
-                text: "Calendar"
-                font.family: Common.Appearance.fonts.main
-                font.pixelSize: Common.Appearance.fontSize.headline
-                font.weight: Font.Medium
-                color: Common.Appearance.m3colors.onSurface
             }
         }
 

@@ -13,33 +13,10 @@ ColumnLayout {
     id: root
     spacing: Common.Appearance.spacing.large
 
-    // Header with back button and clear all
+    // Header with clear all and close button
     RowLayout {
         Layout.fillWidth: true
         spacing: Common.Appearance.spacing.small
-
-        MouseArea {
-            Layout.preferredWidth: 32
-            Layout.preferredHeight: 32
-            cursorShape: Qt.PointingHandCursor
-            hoverEnabled: true
-
-            onClicked: Root.GlobalStates.sidebarRightView = "default"
-
-            Rectangle {
-                anchors.fill: parent
-                radius: Common.Appearance.rounding.small
-                color: parent.containsMouse ? Common.Appearance.m3colors.surfaceVariant : "transparent"
-            }
-
-            Text {
-                anchors.centerIn: parent
-                text: Common.Icons.icons.back
-                font.family: Common.Appearance.fonts.icon
-                font.pixelSize: Common.Appearance.sizes.iconMedium
-                color: Common.Appearance.m3colors.onSurface
-            }
-        }
 
         Text {
             Layout.fillWidth: true
@@ -76,6 +53,29 @@ ColumnLayout {
                 color: Common.Appearance.m3colors.primary
             }
         }
+
+        MouseArea {
+            Layout.preferredWidth: 32
+            Layout.preferredHeight: 32
+            cursorShape: Qt.PointingHandCursor
+            hoverEnabled: true
+
+            onClicked: Root.GlobalStates.sidebarRightOpen = false
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Common.Appearance.rounding.small
+                color: parent.containsMouse ? Common.Appearance.m3colors.surfaceVariant : "transparent"
+            }
+
+            Text {
+                anchors.centerIn: parent
+                text: Common.Icons.icons.close
+                font.family: Common.Appearance.fonts.icon
+                font.pixelSize: Common.Appearance.sizes.iconMedium
+                color: Common.Appearance.m3colors.onSurface
+            }
+        }
     }
 
     // Do Not Disturb toggle card
@@ -103,7 +103,6 @@ ColumnLayout {
             }
 
             ColumnLayout {
-                Layout.fillWidth: true
                 spacing: 2
 
                 Text {
@@ -122,10 +121,13 @@ ColumnLayout {
                 }
             }
 
+            Item { Layout.fillWidth: true }
+
             // Modern rounded switch
             MouseArea {
                 Layout.preferredWidth: 52
                 Layout.preferredHeight: 32
+                Layout.alignment: Qt.AlignRight
                 cursorShape: Qt.PointingHandCursor
                 onClicked: Root.GlobalStates.doNotDisturb = !Root.GlobalStates.doNotDisturb
 

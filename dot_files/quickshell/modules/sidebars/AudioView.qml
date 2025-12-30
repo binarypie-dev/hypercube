@@ -12,10 +12,19 @@ ColumnLayout {
     id: root
     spacing: Common.Appearance.spacing.large
 
-    // Header with back button
+    // Header with close button
     RowLayout {
         Layout.fillWidth: true
         spacing: Common.Appearance.spacing.small
+
+        Text {
+            Layout.fillWidth: true
+            text: "Audio"
+            font.family: Common.Appearance.fonts.main
+            font.pixelSize: Common.Appearance.fontSize.headline
+            font.weight: Font.Medium
+            color: Common.Appearance.m3colors.onSurface
+        }
 
         MouseArea {
             Layout.preferredWidth: 32
@@ -23,7 +32,7 @@ ColumnLayout {
             cursorShape: Qt.PointingHandCursor
             hoverEnabled: true
 
-            onClicked: Root.GlobalStates.sidebarRightView = "default"
+            onClicked: Root.GlobalStates.sidebarRightOpen = false
 
             Rectangle {
                 anchors.fill: parent
@@ -33,20 +42,11 @@ ColumnLayout {
 
             Text {
                 anchors.centerIn: parent
-                text: Common.Icons.icons.back
+                text: Common.Icons.icons.close
                 font.family: Common.Appearance.fonts.icon
                 font.pixelSize: Common.Appearance.sizes.iconMedium
                 color: Common.Appearance.m3colors.onSurface
             }
-        }
-
-        Text {
-            Layout.fillWidth: true
-            text: "Audio"
-            font.family: Common.Appearance.fonts.main
-            font.pixelSize: Common.Appearance.fontSize.headline
-            font.weight: Font.Medium
-            color: Common.Appearance.m3colors.onSurface
         }
     }
 
@@ -80,7 +80,6 @@ ColumnLayout {
                 }
 
                 ColumnLayout {
-                    Layout.fillWidth: true
                     spacing: 2
 
                     Text {
@@ -101,10 +100,13 @@ ColumnLayout {
                     }
                 }
 
+                Item { Layout.fillWidth: true }
+
                 // Mute toggle switch
                 MouseArea {
                     Layout.preferredWidth: 52
                     Layout.preferredHeight: 32
+                    Layout.alignment: Qt.AlignRight
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Services.Audio.toggleMute()
 
@@ -248,7 +250,6 @@ ColumnLayout {
                 }
 
                 ColumnLayout {
-                    Layout.fillWidth: true
                     spacing: 2
 
                     Text {
@@ -279,10 +280,13 @@ ColumnLayout {
                     }
                 }
 
+                Item { Layout.fillWidth: true }
+
                 // Mute toggle switch
                 MouseArea {
                     Layout.preferredWidth: 52
                     Layout.preferredHeight: 32
+                    Layout.alignment: Qt.AlignRight
                     cursorShape: Qt.PointingHandCursor
                     onClicked: Services.Audio.toggleMicMute()
 
