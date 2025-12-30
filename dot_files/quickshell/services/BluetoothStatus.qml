@@ -13,7 +13,8 @@ Singleton {
     property bool connected: false
     property string connectedDeviceName: ""
 
-    property var devices: []  // List of discovered/paired devices
+    property var devices: []  // List of paired devices
+    property var availableDevices: []  // List of discovered (not paired) devices
 
     // Bluetooth query script
     readonly property string btQueryScript: "
@@ -52,6 +53,7 @@ Singleton {
             echo \"connectedDeviceName=\"
         fi
 
+        # Get paired devices
         echo \"devices_start\"
         bluetoothctl devices Paired 2>/dev/null | while read -r line; do
             MAC=$(echo \"$line\" | awk '{print $2}')
@@ -63,68 +65,119 @@ Singleton {
             fi
         done
         echo \"devices_end\"
+
+        # Get discovered but not paired devices
+        echo \"available_start\"
+        PAIRED=$(bluetoothctl devices Paired 2>/dev/null | awk '{print $2}')
+        bluetoothctl devices 2>/dev/null | while read -r line; do
+            MAC=$(echo \"$line\" | awk '{print $2}')
+            NAME=$(echo \"$line\" | sed 's/Device [^ ]* //')
+            # Skip if already paired
+            if ! echo \"$PAIRED\" | grep -q \"$MAC\"; then
+                echo \"available:$MAC:$NAME\"
+            fi
+        done
+        echo \"available_end\"
     "
+
+    // Accumulated output from the process
+    property string btOutput: ""
+    property var pendingDevices: []
+    property var pendingAvailable: []
+    property bool parsingDevices: false
+    property bool parsingAvailableDevices: false
 
     Process {
         id: btProcess
         command: ["sh", "-c", root.btQueryScript]
         running: true
-        onExited: root.parseOutput()
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => root.parseLine(data)
+        }
+
+        onStarted: {
+            root.pendingDevices = []
+            root.pendingAvailable = []
+            root.parsingDevices = false
+            root.parsingAvailableDevices = false
+        }
+
+        onExited: {
+            // Finalize device lists
+            root.devices = root.pendingDevices
+            root.availableDevices = root.pendingAvailable
+        }
     }
 
-    function parseOutput() {
-        const output = btProcess.stdout
-        if (!output) return
-        const lines = output.split("\n")
-        let parsingDevices = false
-        let newDevices = []
+    function parseLine(line) {
+        if (!line || line.trim() === "") return
 
-        for (const line of lines) {
-            if (line === "devices_start") {
-                parsingDevices = true
-                continue
+        if (line === "devices_start") {
+            parsingDevices = true
+            parsingAvailableDevices = false
+            return
+        }
+        if (line === "devices_end") {
+            parsingDevices = false
+            return
+        }
+        if (line === "available_start") {
+            parsingAvailableDevices = true
+            parsingDevices = false
+            return
+        }
+        if (line === "available_end") {
+            parsingAvailableDevices = false
+            return
+        }
+
+        if (parsingDevices && line.startsWith("device:")) {
+            const parts = line.split(":")
+            if (parts.length >= 4) {
+                pendingDevices.push({
+                    mac: parts[1],
+                    name: parts[2],
+                    status: parts[3]
+                })
             }
-            if (line === "devices_end") {
-                parsingDevices = false
-                devices = newDevices
-                continue
+            return
+        }
+
+        if (parsingAvailableDevices && line.startsWith("available:")) {
+            const parts = line.split(":")
+            if (parts.length >= 3) {
+                pendingAvailable.push({
+                    mac: parts[1],
+                    name: parts[2]
+                })
             }
+            return
+        }
 
-            if (parsingDevices && line.startsWith("device:")) {
-                const parts = line.split(":")
-                if (parts.length >= 4) {
-                    newDevices.push({
-                        mac: parts[1],
-                        name: parts[2],
-                        status: parts[3]
-                    })
-                }
-                continue
-            }
+        const idx = line.indexOf("=")
+        if (idx === -1) return
 
-            const idx = line.indexOf("=")
-            if (idx === -1) continue
+        const key = line.substring(0, idx).trim()
+        const value = line.substring(idx + 1).trim()
 
-            const key = line.substring(0, idx).trim()
-            const value = line.substring(idx + 1).trim()
-
-            switch (key) {
-                case "available":
-                    available = value === "true"
-                    break
-                case "powered":
-                    powered = value === "true"
-                    break
-                case "discovering":
-                    discovering = value === "true"
-                    break
-                case "connected":
-                    connected = value === "true"
-                    break
-                case "connectedDeviceName":
-                    connectedDeviceName = value
-                    break
-            }
+        switch (key) {
+            case "available":
+                available = value === "true"
+                break
+            case "powered":
+                powered = value === "true"
+                break
+            case "discovering":
+                discovering = value === "true"
+                break
+            case "connected":
+                connected = value === "true"
+                break
+            case "connectedDeviceName":
+                connectedDeviceName = value
+                break
         }
     }
 
@@ -160,6 +213,18 @@ Singleton {
         onExited: btProcess.running = true
     }
 
+    Process {
+        id: forgetProcess
+        command: ["bluetoothctl", "remove", ""]
+        onExited: btProcess.running = true
+    }
+
+    Process {
+        id: pairProcess
+        command: ["bluetoothctl", "pair", ""]
+        onExited: btProcess.running = true
+    }
+
     // Control functions
     function setPower(on) {
         powerProcess.command = ["bluetoothctl", "power", on ? "on" : "off"]
@@ -185,6 +250,16 @@ Singleton {
     function disconnectDevice(mac) {
         disconnectProcess.command = ["bluetoothctl", "disconnect", mac]
         disconnectProcess.running = true
+    }
+
+    function forgetDevice(mac) {
+        forgetProcess.command = ["bluetoothctl", "remove", mac]
+        forgetProcess.running = true
+    }
+
+    function pairDevice(mac) {
+        pairProcess.command = ["bluetoothctl", "pair", mac]
+        pairProcess.running = true
     }
 
     function refresh() {

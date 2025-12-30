@@ -275,8 +275,25 @@ PanelWindow {
         }
     }
 
-    // Content
+    // Bluetooth View (shown when sidebarRightView === "bluetooth")
+    Loader {
+        anchors.fill: parent
+        anchors.margins: Common.Appearance.spacing.medium
+        active: Root.GlobalStates.sidebarRightView === "bluetooth"
+        source: "BluetoothView.qml"
+    }
+
+    // Audio View (shown when sidebarRightView === "audio")
+    Loader {
+        anchors.fill: parent
+        anchors.margins: Common.Appearance.spacing.medium
+        active: Root.GlobalStates.sidebarRightView === "audio"
+        source: "AudioView.qml"
+    }
+
+    // Default Content (shown when sidebarRightView === "default")
     Flickable {
+        visible: Root.GlobalStates.sidebarRightView === "default"
         anchors.fill: parent
         anchors.margins: Common.Appearance.spacing.medium
         contentHeight: contentColumn.height
@@ -331,53 +348,19 @@ PanelWindow {
                             }
                         }
 
-                        QuickToggle {
-                            icon: Services.BluetoothStatus.powered
-                                ? Common.Icons.icons.bluetooth
-                                : Common.Icons.icons.bluetoothOff
-                            label: "Bluetooth"
-                            active: Services.BluetoothStatus.powered
-                            onClicked: Services.BluetoothStatus.setPower(!Services.BluetoothStatus.powered)
-                        }
-
-                        QuickToggle {
-                            icon: Root.GlobalStates.doNotDisturb
-                                ? Common.Icons.icons.doNotDisturb
-                                : Common.Icons.icons.notification
-                            label: "DND"
-                            active: Root.GlobalStates.doNotDisturb
-                            onClicked: Root.GlobalStates.doNotDisturb = !Root.GlobalStates.doNotDisturb
-                        }
                     }
 
-                    // Volume slider
-                    SliderControl {
+                    // Do Not Disturb toggle
+                    SwitchToggle {
                         Layout.fillWidth: true
-                        icon: Services.Audio.muted
-                            ? Common.Icons.icons.volumeOff
-                            : (Services.Audio.volume > 0.5
-                                ? Common.Icons.icons.volumeHigh
-                                : Common.Icons.icons.volumeLow)
-                        label: "Volume"
-                        value: Services.Audio.volume
-                        onUserValueChanged: function(newValue) {
-                            Services.Audio.setVolume(newValue)
-                        }
+                        icon: Root.GlobalStates.doNotDisturb
+                            ? Common.Icons.icons.doNotDisturb
+                            : Common.Icons.icons.notification
+                        label: "Do Not Disturb"
+                        active: Root.GlobalStates.doNotDisturb
+                        onToggled: Root.GlobalStates.doNotDisturb = !Root.GlobalStates.doNotDisturb
                     }
 
-                    // Brightness slider (only show if brightness control is available)
-                    SliderControl {
-                        visible: Services.Brightness.available
-                        Layout.fillWidth: true
-                        icon: Services.Brightness.brightness > 0.5
-                            ? Common.Icons.icons.brightnessHigh
-                            : Common.Icons.icons.brightnessLow
-                        label: "Brightness"
-                        value: Services.Brightness.brightness
-                        onUserValueChanged: function(newValue) {
-                            Services.Brightness.setBrightness(newValue)
-                        }
-                    }
                 }
             }
 
@@ -591,6 +574,105 @@ PanelWindow {
                     color: active
                         ? Common.Appearance.m3colors.onPrimaryContainer
                         : Common.Appearance.m3colors.onSurfaceVariant
+                }
+            }
+        }
+    }
+
+    // Toggle with switch (matches Bluetooth style)
+    component SwitchToggle: Rectangle {
+        id: switchToggle
+        property string icon: ""
+        property string label: ""
+        property string sublabel: ""
+        property bool active: false
+        signal toggled()
+
+        Layout.fillWidth: true
+        Layout.preferredHeight: 56
+        radius: Common.Appearance.rounding.large
+        color: Common.Appearance.m3colors.surfaceVariant
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Common.Appearance.spacing.medium
+            anchors.rightMargin: Common.Appearance.spacing.medium
+            spacing: Common.Appearance.spacing.medium
+
+            Text {
+                text: switchToggle.icon
+                font.family: Common.Appearance.fonts.icon
+                font.pixelSize: Common.Appearance.sizes.iconLarge
+                color: switchToggle.active
+                    ? Common.Appearance.m3colors.primary
+                    : Common.Appearance.m3colors.onSurfaceVariant
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: 2
+
+                Text {
+                    text: switchToggle.label
+                    font.family: Common.Appearance.fonts.main
+                    font.pixelSize: Common.Appearance.fontSize.normal
+                    font.weight: Font.Medium
+                    color: Common.Appearance.m3colors.onSurface
+                }
+
+                Text {
+                    text: switchToggle.sublabel || (switchToggle.active ? "On" : "Off")
+                    font.family: Common.Appearance.fonts.main
+                    font.pixelSize: Common.Appearance.fontSize.small
+                    color: Common.Appearance.m3colors.onSurfaceVariant
+                }
+            }
+
+            // Modern rounded switch
+            MouseArea {
+                Layout.preferredWidth: 52
+                Layout.preferredHeight: 32
+                cursorShape: Qt.PointingHandCursor
+                onClicked: switchToggle.toggled()
+
+                Rectangle {
+                    id: switchTrack
+                    anchors.fill: parent
+                    radius: height / 2
+                    color: switchToggle.active
+                        ? Common.Appearance.m3colors.primary
+                        : Common.Appearance.m3colors.surfaceVariant
+                    border.width: switchToggle.active ? 0 : 2
+                    border.color: Common.Appearance.m3colors.outline
+
+                    Behavior on color {
+                        ColorAnimation { duration: 150 }
+                    }
+
+                    Rectangle {
+                        id: switchThumb
+                        width: switchToggle.active ? 24 : 16
+                        height: switchToggle.active ? 24 : 16
+                        radius: height / 2
+                        anchors.verticalCenter: parent.verticalCenter
+                        x: switchToggle.active ? parent.width - width - 4 : 4
+                        color: switchToggle.active
+                            ? Common.Appearance.m3colors.onPrimary
+                            : Common.Appearance.m3colors.outline
+
+                        Behavior on x {
+                            NumberAnimation { duration: 150; easing.type: Easing.InOutQuad }
+                        }
+                        Behavior on width {
+                            NumberAnimation { duration: 150 }
+                        }
+                        Behavior on height {
+                            NumberAnimation { duration: 150 }
+                        }
+                        Behavior on color {
+                            ColorAnimation { duration: 150 }
+                        }
+                    }
                 }
             }
         }

@@ -85,46 +85,46 @@ Singleton {
         command: ["sh", "-c", root.audioQueryScript]
         running: true
 
-        onExited: root.parseOutput(this.stdout)
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => root.parseLine(data)
+        }
     }
 
-    function parseOutput(output) {
-        if (!output) return
-        const lines = output.split("\n")
+    function parseLine(line) {
+        if (!line || line.trim() === "") return
 
-        for (const line of lines) {
-            const idx = line.indexOf("=")
-            if (idx === -1) continue
+        const idx = line.indexOf("=")
+        if (idx === -1) return
 
-            const key = line.substring(0, idx).trim()
-            const value = line.substring(idx + 1).trim()
+        const key = line.substring(0, idx).trim()
+        const value = line.substring(idx + 1).trim()
 
-            switch (key) {
-                case "volume":
-                    volume = parseFloat(value) || 0.75
-                    break
-                case "muted":
-                    muted = value === "true"
-                    break
-                case "micVolume":
-                    micVolume = parseFloat(value) || 1.0
-                    break
-                case "micMuted":
-                    micMuted = value === "true"
-                    break
-                case "sinkName":
-                    sinkName = value
-                    break
-                case "sinkDescription":
-                    sinkDescription = value
-                    break
-                case "sourceName":
-                    sourceName = value
-                    break
-                case "sourceDescription":
-                    sourceDescription = value
-                    break
-            }
+        switch (key) {
+            case "volume":
+                volume = parseFloat(value) || 0.75
+                break
+            case "muted":
+                muted = value === "true"
+                break
+            case "micVolume":
+                micVolume = parseFloat(value) || 1.0
+                break
+            case "micMuted":
+                micMuted = value === "true"
+                break
+            case "sinkName":
+                sinkName = value
+                break
+            case "sinkDescription":
+                sinkDescription = value
+                break
+            case "sourceName":
+                sourceName = value
+                break
+            case "sourceDescription":
+                sourceDescription = value
+                break
         }
     }
 

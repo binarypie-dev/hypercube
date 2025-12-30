@@ -118,6 +118,9 @@ Singleton {
     property bool sidebarLeftOpen: false
     property bool sidebarRightOpen: false
 
+    // Right sidebar view mode: "default", "bluetooth", "audio"
+    property string sidebarRightView: "default"
+
     // OSD (On-Screen Display) state
     property bool osdVisible: false
     property string osdType: "volume" // "volume", "brightness", "mic"
@@ -188,11 +191,14 @@ Singleton {
         }
     }
 
-    function toggleSidebarRight(screen) {
-        if (sidebarRightOpen && activeScreen === screen) {
+    function toggleSidebarRight(screen, view) {
+        const targetView = view || "default"
+        if (sidebarRightOpen && activeScreen === screen && sidebarRightView === targetView) {
             sidebarRightOpen = false
+            sidebarRightView = "default"
         } else {
             activeScreen = screen
+            sidebarRightView = targetView
             sidebarRightOpen = true
         }
     }
@@ -200,6 +206,7 @@ Singleton {
     function closeAll() {
         sidebarLeftOpen = false
         sidebarRightOpen = false
+        sidebarRightView = "default"
         settingsOpen = false
     }
 }

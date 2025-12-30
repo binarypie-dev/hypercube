@@ -33,7 +33,10 @@ PanelWindow {
         property color textColor: Common.Appearance.m3colors.onSurface
 
         Layout.preferredHeight: 28
-        Layout.preferredWidth: Math.max(buttonContent.implicitWidth + Common.Appearance.spacing.medium * 2, 28)
+        // Icon-only buttons get minimal padding, buttons with text get more
+        Layout.preferredWidth: button.buttonText === ""
+            ? 28
+            : buttonContent.implicitWidth + Common.Appearance.spacing.small * 2
 
         hoverEnabled: true
         cursorShape: Qt.PointingHandCursor
@@ -107,14 +110,6 @@ PanelWindow {
             Common.Appearance.panelOpacity
         )
 
-        // Bottom border
-        Rectangle {
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            height: 1
-            color: Common.Appearance.m3colors.outlineVariant
-        }
     }
 
     // Helper properties for screen position (reactive to screen changes)
@@ -152,7 +147,7 @@ PanelWindow {
         // Right section - System indicators (only on rightmost screen)
         RowLayout {
             visible: root.isRightmost
-            spacing: Common.Appearance.spacing.tiny
+            spacing: 2
 
             // Weather (if enabled)
             BarButton {
@@ -163,17 +158,10 @@ PanelWindow {
             }
 
             // Privacy indicators
-            BarIndicator {
-                visible: Services.Privacy.micInUse
-                icon: Common.Icons.icons.mic
-                iconColor: Common.Appearance.m3colors.error
-                tooltip: "Microphone in use"
-            }
-
-            BarIndicator {
+            BarButton {
                 visible: Services.Privacy.cameraInUse
                 icon: Common.Icons.icons.camera
-                iconColor: Common.Appearance.m3colors.error
+                textColor: Common.Appearance.m3colors.error
                 tooltip: "Camera in use"
             }
 
@@ -194,15 +182,59 @@ PanelWindow {
                     : "Disconnected"
             }
 
+            // Audio output
+            BarButton {
+                icon: Services.Audio.muted
+                    ? Common.Icons.icons.volumeOff
+                    : Common.Icons.volumeIcon(Services.Audio.volume * 100, false)
+                tooltip: Services.Audio.muted
+                    ? "Volume: Muted"
+                    : "Volume: " + Math.round(Services.Audio.volume * 100) + "%"
+                textColor: Services.Audio.muted
+                    ? Common.Appearance.m3colors.onSurfaceVariant
+                    : Common.Appearance.m3colors.onSurface
+                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "audio")
+            }
+
+            // Microphone
+            BarButton {
+                icon: Services.Audio.micMuted
+                    ? Common.Icons.icons.micOff
+                    : Common.Icons.icons.mic
+                tooltip: {
+                    if (Services.Audio.micMuted && Services.Privacy.micInUse) {
+                        return "Microphone: Muted (in use)"
+                    } else if (Services.Audio.micMuted) {
+                        return "Microphone: Muted"
+                    } else if (Services.Privacy.micInUse) {
+                        return "Microphone: In use"
+                    } else {
+                        return "Microphone: " + Math.round(Services.Audio.micVolume * 100) + "%"
+                    }
+                }
+                textColor: Services.Privacy.micInUse
+                    ? Common.Appearance.m3colors.error
+                    : Common.Appearance.m3colors.onSurfaceVariant
+                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "audio")
+            }
+
             // Bluetooth
-            BarIndicator {
-                visible: Services.BluetoothStatus.available && Services.BluetoothStatus.powered
-                icon: Services.BluetoothStatus.connected
-                    ? Common.Icons.icons.bluetoothConnected
-                    : Common.Icons.icons.bluetooth
-                tooltip: Services.BluetoothStatus.connected
-                    ? "Bluetooth: Connected"
-                    : "Bluetooth: On"
+            BarButton {
+                visible: Services.BluetoothStatus.available
+                icon: Services.BluetoothStatus.powered
+                    ? (Services.BluetoothStatus.connected
+                        ? Common.Icons.icons.bluetoothConnected
+                        : Common.Icons.icons.bluetooth)
+                    : Common.Icons.icons.bluetoothOff
+                tooltip: Services.BluetoothStatus.powered
+                    ? (Services.BluetoothStatus.connected
+                        ? "Bluetooth: " + Services.BluetoothStatus.connectedDeviceName
+                        : "Bluetooth: On")
+                    : "Bluetooth: Off"
+                textColor: Services.BluetoothStatus.powered
+                    ? Common.Appearance.m3colors.onSurface
+                    : Common.Appearance.m3colors.onSurfaceVariant
+                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "bluetooth")
             }
 
             // Battery (if present)
