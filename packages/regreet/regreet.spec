@@ -48,7 +48,7 @@ install -Dpm 0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
 install -dm 0755 %{buildroot}%{_localstatedir}/cache/%{name}
 
 %files
-%license LICENSE.md
+%license LICENSE
 %doc README.md
 %{_bindir}/%{name}
 %dir %{_localstatedir}/cache/%{name}
