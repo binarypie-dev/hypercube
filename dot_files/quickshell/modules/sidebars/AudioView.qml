@@ -43,11 +43,10 @@ ColumnLayout {
                 color: parent.containsMouse ? Common.Appearance.m3colors.surfaceVariant : "transparent"
             }
 
-            Text {
+            Common.Icon {
                 anchors.centerIn: parent
-                text: Common.Icons.icons.close
-                font.family: Common.Appearance.fonts.icon
-                font.pixelSize: Common.Appearance.sizes.iconMedium
+                name: Common.Icons.icons.close
+                size: Common.Appearance.sizes.iconMedium
                 color: Common.Appearance.m3colors.onSurface
             }
         }
@@ -71,12 +70,11 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: Common.Appearance.spacing.medium
 
-                Text {
-                    text: Services.Audio.muted
+                Common.Icon {
+                    name: Services.Audio.muted
                         ? Common.Icons.icons.volumeOff
                         : Common.Icons.volumeIcon(Services.Audio.volume * 100, false)
-                    font.family: Common.Appearance.fonts.icon
-                    font.pixelSize: Common.Appearance.sizes.iconLarge
+                    size: Common.Appearance.sizes.iconLarge
                     color: Services.Audio.muted
                         ? Common.Appearance.m3colors.onSurfaceVariant
                         : Common.Appearance.m3colors.primary
@@ -158,10 +156,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: Common.Appearance.spacing.small
 
-                Text {
-                    text: Common.Icons.icons.volumeLow
-                    font.family: Common.Appearance.fonts.icon
-                    font.pixelSize: Common.Appearance.sizes.iconSmall
+                Common.Icon {
+                    name: Common.Icons.icons.volumeLow
+                    size: Common.Appearance.sizes.iconSmall
                     color: Common.Appearance.m3colors.onSurfaceVariant
                 }
 
@@ -211,10 +208,9 @@ ColumnLayout {
                     }
                 }
 
-                Text {
-                    text: Common.Icons.icons.volumeHigh
-                    font.family: Common.Appearance.fonts.icon
-                    font.pixelSize: Common.Appearance.sizes.iconSmall
+                Common.Icon {
+                    name: Common.Icons.icons.volumeHigh
+                    size: Common.Appearance.sizes.iconSmall
                     color: Common.Appearance.m3colors.onSurfaceVariant
                 }
             }
@@ -249,12 +245,11 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: Common.Appearance.spacing.medium
 
-                Text {
-                    text: Services.Audio.micMuted
+                Common.Icon {
+                    name: Services.Audio.micMuted
                         ? Common.Icons.icons.micOff
                         : Common.Icons.icons.mic
-                    font.family: Common.Appearance.fonts.icon
-                    font.pixelSize: Common.Appearance.sizes.iconLarge
+                    size: Common.Appearance.sizes.iconLarge
                     color: Services.Privacy.micInUse
                         ? Common.Appearance.m3colors.error
                         : (Services.Audio.micMuted
@@ -348,10 +343,9 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: Common.Appearance.spacing.small
 
-                Text {
-                    text: Common.Icons.icons.micOff
-                    font.family: Common.Appearance.fonts.icon
-                    font.pixelSize: Common.Appearance.sizes.iconSmall
+                Common.Icon {
+                    name: Common.Icons.icons.micOff
+                    size: Common.Appearance.sizes.iconSmall
                     color: Common.Appearance.m3colors.onSurfaceVariant
                 }
 
@@ -405,10 +399,9 @@ ColumnLayout {
                     }
                 }
 
-                Text {
-                    text: Common.Icons.icons.mic
-                    font.family: Common.Appearance.fonts.icon
-                    font.pixelSize: Common.Appearance.sizes.iconSmall
+                Common.Icon {
+                    name: Common.Icons.icons.mic
+                    size: Common.Appearance.sizes.iconSmall
                     color: Common.Appearance.m3colors.onSurfaceVariant
                 }
             }
@@ -488,10 +481,9 @@ ColumnLayout {
                     }
                 }
 
-                Text {
-                    text: selector.expanded ? Common.Icons.icons.expand : Common.Icons.icons.collapse
-                    font.family: Common.Appearance.fonts.icon
-                    font.pixelSize: Common.Appearance.sizes.iconSmall
+                Common.Icon {
+                    name: selector.expanded ? Common.Icons.icons.expand : Common.Icons.icons.collapse
+                    size: Common.Appearance.sizes.iconSmall
                     color: Common.Appearance.m3colors.onSurfaceVariant
                 }
             }
@@ -542,11 +534,10 @@ ColumnLayout {
                             elide: Text.ElideRight
                         }
 
-                        Text {
+                        Common.Icon {
                             visible: modelData.isDefault
-                            text: Common.Icons.icons.check
-                            font.family: Common.Appearance.fonts.icon
-                            font.pixelSize: Common.Appearance.sizes.iconSmall
+                            name: Common.Icons.icons.check
+                            size: Common.Appearance.sizes.iconSmall
                             color: Common.Appearance.m3colors.onPrimaryContainer
                         }
                     }

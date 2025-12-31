@@ -157,10 +157,9 @@ QtObject {
 
     // Typography
     readonly property var fonts: ({
-        main: "Inter",
-        title: "Inter",
-        mono: "JetBrains Mono",
-        icon: "Symbols Nerd Font Mono"
+        main: "JetBrains Mono",
+        title: "JetBrains Mono",
+        mono: "JetBrains Mono"
     })
 
     readonly property var fontSize: ({

@@ -2,164 +2,165 @@ pragma Singleton
 
 import QtQuick
 
-// Icon mappings using Nerd Font icons
+// Icon name mappings for Lucide SVG icons
+// Icons are stored in assets/icons/ as SVG files
+// Use with the Icon component: Common.Icon { name: Common.Icons.icons.settings }
 QtObject {
     id: root
 
-    // Nerd Font icon codes
     readonly property var icons: ({
         // System
-        settings: "\uf013",      //
-        power: "\uf011",         //
-        restart: "\uf01e",       //
-        logout: "\uf2f5",        //
-        lock: "\uf023",          //
-        sleep: "\uf186",         //
+        settings: "settings",
+        power: "power",
+        restart: "refresh-cw",
+        logout: "log-out",
+        lock: "lock",
+        sleep: "moon",
 
         // Audio
-        volumeHigh: "\uf028",    //
-        volumeMedium: "\uf027",  //
-        volumeLow: "\uf026",     //
-        volumeMute: "\uf6a9",    //
-        volumeOff: "\uf6a9",     // (alias for mute)
-        mic: "\uf130",           //
-        micOff: "\uf131",        //
-        headphones: "\uf025",    //
-        speaker: "\uf028",       //
+        volumeHigh: "volume-2",
+        volumeMedium: "volume-1",
+        volumeLow: "volume",
+        volumeMute: "volume-x",
+        volumeOff: "volume-x",
+        mic: "mic",
+        micOff: "mic-off",
+        headphones: "headphones",
+        speaker: "speaker",
 
         // Brightness
-        brightnessHigh: "\uf185", //
-        brightnessMedium: "\uf111", //
-        brightnessLow: "\uf0eb",  //
+        brightnessHigh: "sun",
+        brightnessMedium: "sun-medium",
+        brightnessLow: "sun-dim",
 
         // Network
-        wifi: "\uf1eb",          //
-        wifiOff: "\uf1eb",       //  (with color change)
-        wifiWeak: "\uf1eb",      //
-        wifiMedium: "\uf1eb",    //
-        wifiStrong: "\uf1eb",    //
-        ethernet: "\uf6ff",      //
-        ethernetOff: "\uf6ff",   //
-        vpn: "\uf084",           //
-        airplane: "\uf072",      //
+        wifi: "wifi",
+        wifiOff: "wifi-off",
+        wifiWeak: "wifi",
+        wifiMedium: "wifi",
+        wifiStrong: "wifi",
+        ethernet: "ethernet-port",
+        ethernetOff: "ethernet-port",
+        vpn: "key",
+        airplane: "plane",
 
         // Bluetooth
-        bluetooth: "\uf294",     //
-        bluetoothOff: "\uf294",  //
-        bluetoothConnected: "\uf294", //
-        bluetoothSearching: "\uf294", //
+        bluetooth: "bluetooth",
+        bluetoothOff: "bluetooth-off",
+        bluetoothConnected: "bluetooth-connected",
+        bluetoothSearching: "bluetooth-searching",
 
         // Battery
-        battery: "\uf240",       //
-        battery90: "\uf241",     //
-        battery80: "\uf241",     //
-        battery60: "\uf242",     //
-        battery40: "\uf243",     //
-        battery20: "\uf244",     //
-        battery10: "\uf244",     //
-        batteryEmpty: "\uf244",  //
-        batteryCharging: "\uf0e7", //
-        batteryAlert: "\uf071",  //
+        battery: "battery-full",
+        battery90: "battery-full",
+        battery80: "battery-medium",
+        battery60: "battery-medium",
+        battery40: "battery-low",
+        battery20: "battery-low",
+        battery10: "battery-warning",
+        batteryEmpty: "battery-warning",
+        batteryCharging: "battery-charging",
+        batteryAlert: "battery-warning",
 
         // Notifications
-        notification: "\uf0f3",  //
-        notificationOff: "\uf1f6", //
-        notificationActive: "\uf0f3", //
-        notificationNone: "\uf0a2", //
-        doNotDisturb: "\uf05e",  //
+        notification: "bell",
+        notificationOff: "bell-off",
+        notificationActive: "bell-ring",
+        notificationNone: "bell-minus",
+        doNotDisturb: "bell-off",
 
         // Privacy
-        camera: "\uf03d",        //
-        cameraOff: "\uf03d",     //
-        screenShare: "\uf108",   //
-        screenShareOff: "\uf108", //
+        camera: "camera",
+        cameraOff: "camera-off",
+        screenShare: "monitor",
+        screenShareOff: "monitor-off",
 
         // Time & Calendar
-        clock: "\uf017",         //
-        calendar: "\uf073",      //
-        today: "\uf073",         //
-        event: "\uf073",         //
-        alarm: "\uf0f3",         //
-        timer: "\uf2f2",         //
+        clock: "clock",
+        calendar: "calendar",
+        today: "calendar-days",
+        event: "calendar-days",
+        alarm: "alarm-clock",
+        timer: "timer",
 
         // Weather
-        sunny: "\uf185",         //
-        partlyCloudy: "\uf6c4",  //
-        cloudy: "\uf0c2",        //
-        rain: "\uf043",          //
-        heavyRain: "\uf0e9",     //
-        snow: "\uf2dc",          //
-        fog: "\uf75f",           //
-        wind: "\uf72e",          //
-        night: "\uf186",         //
-        nightCloudy: "\uf6c3",   //
+        sunny: "sun",
+        partlyCloudy: "cloud-sun",
+        cloudy: "cloud",
+        rain: "cloud-rain",
+        heavyRain: "cloud-lightning",
+        snow: "cloud-snow",
+        fog: "cloud-fog",
+        wind: "wind",
+        night: "moon",
+        nightCloudy: "cloud-moon",
 
         // Navigation
-        menu: "\uf0c9",          //
-        close: "\uf00d",         //
-        back: "\uf060",          //
-        forward: "\uf061",       //
-        up: "\uf062",            //
-        down: "\uf063",          //
-        expand: "\uf078",        //
-        collapse: "\uf077",      //
-        search: "\uf002",        //
-        filter: "\uf0b0",        //
+        menu: "menu",
+        close: "x",
+        back: "arrow-left",
+        forward: "arrow-right",
+        up: "arrow-up",
+        down: "arrow-down",
+        expand: "chevron-down",
+        collapse: "chevron-up",
+        search: "search",
+        filter: "filter",
 
         // Actions
-        add: "\uf067",           //
-        remove: "\uf068",        //
-        delete: "\uf1f8",        //
-        edit: "\uf044",          //
-        copy: "\uf0c5",          //
-        paste: "\uf0ea",         //
-        refresh: "\uf021",       //
-        check: "\uf00c",         //
-        checkCircle: "\uf058",   //
-        error: "\uf057",         //
-        warning: "\uf071",       //
-        info: "\uf05a",          //
-        help: "\uf059",          //
+        add: "plus",
+        remove: "minus",
+        delete: "trash-2",
+        edit: "pencil",
+        copy: "copy",
+        paste: "clipboard-paste",
+        refresh: "rotate-cw",
+        check: "check",
+        checkCircle: "check-circle",
+        error: "x-circle",
+        warning: "alert-triangle",
+        info: "info",
+        help: "help-circle",
 
         // Apps & Categories
-        apps: "\uf009",          //
-        grid: "\uf00a",          //
-        list: "\uf03a",          //
-        folder: "\uf07b",        //
-        file: "\uf15b",          //
-        image: "\uf03e",         //
-        video: "\uf03d",         //
-        music: "\uf001",         //
-        download: "\uf019",      //
-        upload: "\uf093",        //
+        apps: "layout-grid",
+        grid: "layout-grid",
+        list: "list",
+        folder: "folder",
+        file: "file",
+        image: "image",
+        video: "video",
+        music: "music",
+        download: "download",
+        upload: "upload",
 
         // User & Account
-        person: "\uf007",        //
-        personAdd: "\uf234",     //
-        group: "\uf0c0",         //
-        account: "\uf2bd",       //
+        person: "user",
+        personAdd: "user-plus",
+        group: "users",
+        account: "circle-user",
 
         // Media controls
-        play: "\uf04b",          //
-        pause: "\uf04c",         //
-        stop: "\uf04d",          //
-        skipPrevious: "\uf048",  //
-        skipNext: "\uf051",      //
-        shuffle: "\uf074",       //
-        repeat: "\uf01e",        //
-        repeatOne: "\uf01e",     //
+        play: "play",
+        pause: "pause",
+        stop: "square",
+        skipPrevious: "skip-back",
+        skipNext: "skip-forward",
+        shuffle: "shuffle",
+        repeat: "repeat",
+        repeatOne: "repeat-1",
 
         // Misc
-        star: "\uf005",          //
-        starOutline: "\uf006",   //
-        heart: "\uf004",         //
-        heartOutline: "\uf08a",  //
-        pin: "\uf08d",           //
-        link: "\uf0c1",          //
-        code: "\uf121",          //
-        terminal: "\uf120",      //
-        update: "\uf021",        //
-        sync: "\uf021"           //
+        star: "star",
+        starOutline: "star",
+        heart: "heart",
+        heartOutline: "heart",
+        pin: "pin",
+        link: "link",
+        code: "code",
+        terminal: "terminal",
+        update: "refresh-cw",
+        sync: "refresh-ccw"
     })
 
     // Get icon for battery level

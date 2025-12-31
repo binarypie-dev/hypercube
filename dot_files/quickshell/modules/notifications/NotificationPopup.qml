@@ -228,11 +228,10 @@ PanelWindow {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: dismissed()
 
-                    Text {
+                    Common.Icon {
                         anchors.centerIn: parent
-                        text: Common.Icons.icons.close
-                        font.family: Common.Appearance.fonts.icon
-                        font.pixelSize: Common.Appearance.sizes.iconSmall
+                        name: Common.Icons.icons.close
+                        size: Common.Appearance.sizes.iconSmall
                         color: Common.Appearance.m3colors.onSurfaceVariant
                     }
                 }

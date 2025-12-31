@@ -68,10 +68,9 @@ PanelWindow {
                 anchors.rightMargin: Common.Appearance.spacing.medium
                 spacing: Common.Appearance.spacing.small
 
-                Text {
-                    text: Common.Icons.icons.search
-                    font.family: Common.Appearance.fonts.icon
-                    font.pixelSize: Common.Appearance.sizes.iconMedium
+                Common.Icon {
+                    name: Common.Icons.icons.search
+                    size: Common.Appearance.sizes.iconMedium
                     color: Common.Appearance.m3colors.onSurfaceVariant
                 }
 
@@ -130,11 +129,10 @@ PanelWindow {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: searchInput.text = ""
 
-                    Text {
+                    Common.Icon {
                         anchors.centerIn: parent
-                        text: Common.Icons.icons.close
-                        font.family: Common.Appearance.fonts.icon
-                        font.pixelSize: Common.Appearance.sizes.iconSmall
+                        name: Common.Icons.icons.close
+                        size: Common.Appearance.sizes.iconSmall
                         color: Common.Appearance.m3colors.onSurfaceVariant
                     }
                 }

@@ -22,7 +22,7 @@ Singleton {
     property real panelOpacity: 0.85
 
     // Font settings
-    property string fontFamily: "Inter"
+    property string fontFamily: "JetBrains Mono"
     property string monoFontFamily: "JetBrains Mono"
     property int fontSize: 14
 

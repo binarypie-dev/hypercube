@@ -360,11 +360,10 @@ PanelWindow {
                                 visible: selectedAccent === modelData.id
                                 color: "white"
 
-                                Text {
+                                Common.Icon {
                                     anchors.centerIn: parent
-                                    text: Common.Icons.icons.check
-                                    font.family: Common.Appearance.fonts.icon
-                                    font.pixelSize: 14
+                                    name: Common.Icons.icons.check
+                                    size: 14
                                     color: modelData.color
                                 }
                             }
@@ -501,11 +500,10 @@ PanelWindow {
                 anchors.centerIn: parent
                 spacing: Common.Appearance.spacing.small
 
-                Text {
+                Common.Icon {
                     Layout.alignment: Qt.AlignHCenter
-                    text: icon
-                    font.family: Common.Appearance.fonts.icon
-                    font.pixelSize: Common.Appearance.sizes.iconXLarge
+                    name: icon
+                    size: Common.Appearance.sizes.iconXLarge
                     color: selected
                         ? Common.Appearance.m3colors.onPrimaryContainer
                         : Common.Appearance.m3colors.onSurface

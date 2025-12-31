@@ -49,11 +49,10 @@ ColumnLayout {
                 color: parent.containsMouse ? Common.Appearance.m3colors.surfaceVariant : "transparent"
             }
 
-            Text {
+            Common.Icon {
                 anchors.centerIn: parent
-                text: Common.Icons.icons.close
-                font.family: Common.Appearance.fonts.icon
-                font.pixelSize: Common.Appearance.sizes.iconMedium
+                name: Common.Icons.icons.close
+                size: Common.Appearance.sizes.iconMedium
                 color: Common.Appearance.m3colors.onSurface
             }
         }
@@ -72,10 +71,9 @@ ColumnLayout {
             anchors.rightMargin: Common.Appearance.spacing.medium
             spacing: Common.Appearance.spacing.medium
 
-            Text {
-                text: Common.Icons.icons.bluetooth
-                font.family: Common.Appearance.fonts.icon
-                font.pixelSize: Common.Appearance.sizes.iconLarge
+            Common.Icon {
+                name: Common.Icons.icons.bluetooth
+                size: Common.Appearance.sizes.iconLarge
                 color: Services.BluetoothStatus.powered
                     ? Common.Appearance.m3colors.primary
                     : Common.Appearance.m3colors.onSurfaceVariant
@@ -259,12 +257,11 @@ ColumnLayout {
                     color: parent.containsMouse ? Common.Appearance.m3colors.surfaceVariant : "transparent"
                 }
 
-                Text {
+                Common.Icon {
                     id: refreshIcon
                     anchors.centerIn: parent
-                    text: Common.Icons.icons.refresh
-                    font.family: Common.Appearance.fonts.icon
-                    font.pixelSize: Common.Appearance.sizes.iconSmall
+                    name: Common.Icons.icons.refresh
+                    size: Common.Appearance.sizes.iconSmall
                     color: Services.BluetoothStatus.discovering
                         ? Common.Appearance.m3colors.primary
                         : Common.Appearance.m3colors.onSurfaceVariant
@@ -370,12 +367,11 @@ ColumnLayout {
             spacing: Common.Appearance.spacing.medium
 
             // Device icon
-            Text {
-                text: pairedItem.isConnected
+            Common.Icon {
+                name: pairedItem.isConnected
                     ? Common.Icons.icons.bluetoothConnected
                     : Common.Icons.icons.bluetooth
-                font.family: Common.Appearance.fonts.icon
-                font.pixelSize: Common.Appearance.sizes.iconMedium
+                size: Common.Appearance.sizes.iconMedium
                 color: pairedItem.isConnected
                     ? Common.Appearance.m3colors.primary
                     : Common.Appearance.m3colors.onSurfaceVariant
@@ -431,13 +427,12 @@ ColumnLayout {
                             : "transparent"
                     }
 
-                    Text {
+                    Common.Icon {
                         anchors.centerIn: parent
-                        text: pairedItem.isConnected
+                        name: pairedItem.isConnected
                             ? Common.Icons.icons.close
                             : Common.Icons.icons.bluetooth
-                        font.family: Common.Appearance.fonts.icon
-                        font.pixelSize: Common.Appearance.sizes.iconSmall
+                        size: Common.Appearance.sizes.iconSmall
                         color: Common.Appearance.m3colors.onSurface
                     }
                 }
@@ -457,11 +452,10 @@ ColumnLayout {
                             : "transparent"
                     }
 
-                    Text {
+                    Common.Icon {
                         anchors.centerIn: parent
-                        text: Common.Icons.icons.delete
-                        font.family: Common.Appearance.fonts.icon
-                        font.pixelSize: Common.Appearance.sizes.iconSmall
+                        name: Common.Icons.icons.delete
+                        size: Common.Appearance.sizes.iconSmall
                         color: parent.containsMouse
                             ? Common.Appearance.m3colors.onErrorContainer
                             : Common.Appearance.m3colors.onSurfaceVariant
@@ -496,10 +490,9 @@ ColumnLayout {
             spacing: Common.Appearance.spacing.medium
 
             // Device icon
-            Text {
-                text: Common.Icons.icons.bluetooth
-                font.family: Common.Appearance.fonts.icon
-                font.pixelSize: Common.Appearance.sizes.iconMedium
+            Common.Icon {
+                name: Common.Icons.icons.bluetooth
+                size: Common.Appearance.sizes.iconMedium
                 color: Common.Appearance.m3colors.onSurfaceVariant
             }
 

@@ -103,10 +103,9 @@ PanelWindow {
                             anchors.rightMargin: Common.Appearance.spacing.small
                             spacing: Common.Appearance.spacing.small
 
-                            Text {
-                                text: modelData.icon
-                                font.family: Common.Appearance.fonts.icon
-                                font.pixelSize: Common.Appearance.sizes.iconMedium
+                            Common.Icon {
+                                name: modelData.icon
+                                size: Common.Appearance.sizes.iconMedium
                                 color: currentSection === modelData.id
                                     ? Common.Appearance.m3colors.onPrimaryContainer
                                     : Common.Appearance.m3colors.onSurface
@@ -146,10 +145,9 @@ PanelWindow {
                         anchors.centerIn: parent
                         spacing: Common.Appearance.spacing.small
 
-                        Text {
-                            text: Common.Icons.icons.close
-                            font.family: Common.Appearance.fonts.icon
-                            font.pixelSize: Common.Appearance.sizes.iconMedium
+                        Common.Icon {
+                            name: Common.Icons.icons.close
+                            size: Common.Appearance.sizes.iconMedium
                             color: Common.Appearance.m3colors.error
                         }
 

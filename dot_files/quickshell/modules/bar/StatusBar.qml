@@ -34,7 +34,7 @@ PanelWindow {
         property string buttonText: ""
         property string tooltip: ""
         property bool highlighted: false
-        property color textColor: Common.Appearance.m3colors.onSurface
+        property color textColor: Common.Appearance.m3colors.onSurfaceVariant
 
         Layout.preferredHeight: 28
         // Icon-only buttons get minimal padding, buttons with text get more
@@ -64,11 +64,10 @@ PanelWindow {
             anchors.centerIn: parent
             spacing: Common.Appearance.spacing.tiny
 
-            Text {
+            Common.Icon {
                 visible: button.icon !== ""
-                text: button.icon
-                font.family: Common.Appearance.fonts.icon
-                font.pixelSize: Common.Appearance.sizes.iconMedium
+                name: button.icon
+                size: Common.Appearance.sizes.iconMedium
                 color: button.highlighted
                     ? Common.Appearance.m3colors.onPrimaryContainer
                     : button.textColor
@@ -90,16 +89,15 @@ PanelWindow {
     component BarIndicator: Item {
         property string icon: ""
         property string tooltip: ""
-        property color iconColor: Common.Appearance.m3colors.onSurface
+        property color iconColor: Common.Appearance.m3colors.onSurfaceVariant
 
         Layout.preferredHeight: 28
         Layout.preferredWidth: 28
 
-        Text {
+        Common.Icon {
             anchors.centerIn: parent
-            text: parent.icon
-            font.family: Common.Appearance.fonts.icon
-            font.pixelSize: Common.Appearance.sizes.iconMedium
+            name: parent.icon
+            size: Common.Appearance.sizes.iconMedium
             color: parent.iconColor
         }
     }
@@ -194,9 +192,6 @@ PanelWindow {
                 tooltip: Services.Audio.muted
                     ? "Volume: Muted"
                     : "Volume: " + Math.round(Services.Audio.volume * 100) + "%"
-                textColor: Services.Audio.muted
-                    ? Common.Appearance.m3colors.onSurfaceVariant
-                    : Common.Appearance.m3colors.onSurface
                 onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "audio")
             }
 
@@ -237,9 +232,7 @@ PanelWindow {
                     : "Bluetooth: Off"
                 textColor: Services.BluetoothStatus.connected
                     ? Common.Appearance.m3colors.primary
-                    : (Services.BluetoothStatus.powered
-                        ? Common.Appearance.m3colors.onSurface
-                        : Common.Appearance.m3colors.onSurfaceVariant)
+                    : Common.Appearance.m3colors.onSurfaceVariant
                 onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "bluetooth")
             }
 
@@ -253,7 +246,7 @@ PanelWindow {
                     : "Battery: " + Services.Battery.percent + "%"
                 textColor: Services.Battery.percent <= 20 && !Services.Battery.charging
                     ? Common.Appearance.m3colors.error
-                    : Common.Appearance.m3colors.onSurface
+                    : Common.Appearance.m3colors.onSurfaceVariant
             }
 
             // Notifications bell
@@ -267,11 +260,9 @@ PanelWindow {
                         ? Root.GlobalStates.unreadNotificationCount + " notifications"
                         : "Notifications")
                 onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "notifications")
-                textColor: Root.GlobalStates.doNotDisturb
-                    ? Common.Appearance.m3colors.onSurfaceVariant
-                    : (Root.GlobalStates.unreadNotificationCount > 0
-                        ? Common.Appearance.m3colors.onSurface
-                        : Common.Appearance.m3colors.onSurfaceVariant)
+                textColor: Root.GlobalStates.unreadNotificationCount > 0 && !Root.GlobalStates.doNotDisturb
+                    ? Common.Appearance.m3colors.orange
+                    : Common.Appearance.m3colors.onSurfaceVariant
             }
 
             // Date and Time - rightmost item

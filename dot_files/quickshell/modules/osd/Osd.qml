@@ -57,11 +57,10 @@ PanelWindow {
         spacing: Common.Appearance.spacing.medium
 
         // Icon
-        Text {
+        Common.Icon {
             id: osdIcon
-            text: getIcon()
-            font.family: Common.Appearance.fonts.icon
-            font.pixelSize: Common.Appearance.sizes.iconXLarge
+            name: getIcon()
+            size: Common.Appearance.sizes.iconXLarge
             color: getIconColor()
 
             function getIcon() {

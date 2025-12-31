@@ -68,11 +68,10 @@ ColumnLayout {
                 color: parent.containsMouse ? Common.Appearance.m3colors.surfaceVariant : "transparent"
             }
 
-            Text {
+            Common.Icon {
                 anchors.centerIn: parent
-                text: Common.Icons.icons.close
-                font.family: Common.Appearance.fonts.icon
-                font.pixelSize: Common.Appearance.sizes.iconMedium
+                name: Common.Icons.icons.close
+                size: Common.Appearance.sizes.iconMedium
                 color: Common.Appearance.m3colors.onSurface
             }
         }
@@ -91,12 +90,11 @@ ColumnLayout {
             anchors.margins: Common.Appearance.spacing.medium
             spacing: Common.Appearance.spacing.medium
 
-            Text {
-                text: Root.GlobalStates.doNotDisturb
+            Common.Icon {
+                name: Root.GlobalStates.doNotDisturb
                     ? Common.Icons.icons.doNotDisturb
                     : Common.Icons.icons.notification
-                font.family: Common.Appearance.fonts.icon
-                font.pixelSize: Common.Appearance.sizes.iconLarge
+                size: Common.Appearance.sizes.iconLarge
                 color: Root.GlobalStates.doNotDisturb
                     ? Common.Appearance.m3colors.primary
                     : Common.Appearance.m3colors.onSurfaceVariant
@@ -201,11 +199,10 @@ ColumnLayout {
                     anchors.centerIn: parent
                     spacing: Common.Appearance.spacing.small
 
-                    Text {
+                    Common.Icon {
                         Layout.alignment: Qt.AlignHCenter
-                        text: Common.Icons.icons.notification
-                        font.family: Common.Appearance.fonts.icon
-                        font.pixelSize: 32
+                        name: Common.Icons.icons.notification
+                        size: 32
                         color: Common.Appearance.m3colors.onSurfaceVariant
                     }
 
@@ -432,11 +429,10 @@ ColumnLayout {
                     cursorShape: Qt.PointingHandCursor
                     onClicked: notifItem.dismissed()
 
-                    Text {
+                    Common.Icon {
                         anchors.centerIn: parent
-                        text: Common.Icons.icons.close
-                        font.family: Common.Appearance.fonts.icon
-                        font.pixelSize: Common.Appearance.sizes.iconSmall
+                        name: Common.Icons.icons.close
+                        size: Common.Appearance.sizes.iconSmall
                         color: Common.Appearance.m3colors.onSurfaceVariant
                     }
                 }

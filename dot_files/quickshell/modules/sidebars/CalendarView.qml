@@ -51,11 +51,10 @@ Flickable {
                     color: parent.containsMouse ? Common.Appearance.m3colors.surfaceVariant : "transparent"
                 }
 
-                Text {
+                Common.Icon {
                     anchors.centerIn: parent
-                    text: Common.Icons.icons.close
-                    font.family: Common.Appearance.fonts.icon
-                    font.pixelSize: Common.Appearance.sizes.iconMedium
+                    name: Common.Icons.icons.close
+                    size: Common.Appearance.sizes.iconMedium
                     color: Common.Appearance.m3colors.onSurface
                 }
             }
@@ -103,11 +102,10 @@ Flickable {
                             color: parent.containsMouse ? Common.Appearance.m3colors.surface : "transparent"
                         }
 
-                        Text {
+                        Common.Icon {
                             anchors.centerIn: parent
-                            text: Common.Icons.icons.back
-                            font.family: Common.Appearance.fonts.icon
-                            font.pixelSize: Common.Appearance.sizes.iconMedium
+                            name: Common.Icons.icons.back
+                            size: Common.Appearance.sizes.iconMedium
                             color: Common.Appearance.m3colors.onSurface
                         }
                     }
@@ -148,11 +146,10 @@ Flickable {
                             color: parent.containsMouse ? Common.Appearance.m3colors.surface : "transparent"
                         }
 
-                        Text {
+                        Common.Icon {
                             anchors.centerIn: parent
-                            text: Common.Icons.icons.forward
-                            font.family: Common.Appearance.fonts.icon
-                            font.pixelSize: Common.Appearance.sizes.iconMedium
+                            name: Common.Icons.icons.forward
+                            size: Common.Appearance.sizes.iconMedium
                             color: Common.Appearance.m3colors.onSurface
                         }
                     }
