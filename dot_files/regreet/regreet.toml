@@ -1,0 +1,13 @@
+# ReGreet configuration for Hypercube
+# See https://github.com/rharish101/ReGreet for full options
+
+[background]
+path = "/usr/share/backgrounds/hypercube-background.png"
+fit = "Cover"
+
+[GTK]
+application_prefer_dark_theme = true
+cursor_theme_name = "Adwaita"
+icon_theme_name = "Tokyonight-Dark"
+theme_name = "Tokyonight-Dark"
+font_name = "JetBrains Mono 11"

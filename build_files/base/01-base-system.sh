@@ -9,13 +9,14 @@ echo "Installing Hypercube base system..."
 # Clean DNF cache first
 dnf5 -y clean all
 
-### Display Manager: greetd + tuigreet
-# Both are in official Fedora repos
-# Note: Can switch to regreet (GTK greeter) when F43 COPR is available
+### Display Manager: greetd + regreet
+# greetd is in official Fedora repos, regreet from binarypie/hypercube COPR
+# cage is a minimal Wayland compositor to host regreet
 dnf5 -y install \
     greetd \
     greetd-selinux \
-    tuigreet
+    cage \
+    regreet
 
 ### Desktop Portals & Integration
 dnf5 -y install \

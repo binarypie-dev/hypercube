@@ -72,4 +72,7 @@ install -Dm644 "${CONFIG_DIR}/gtk-4.0/settings.ini" /etc/xdg/gtk-4.0/settings.in
 install -Dm644 "${CONFIG_DIR}/qt6ct/qt6ct.conf" /etc/xdg/qt6ct/qt6ct.conf
 install -Dm644 "${CONFIG_DIR}/qt6ct/colors/TokyoNight.conf" /usr/share/qt6ct/colors/TokyoNight.conf
 
+### ReGreet login greeter configuration (Tokyo Night themed)
+install -Dm644 "${CONFIG_DIR}/regreet/regreet.toml" /etc/greetd/regreet.toml
+
 echo "Hypercube configurations installed successfully"

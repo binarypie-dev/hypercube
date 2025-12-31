@@ -388,13 +388,6 @@ PanelWindow {
         }
     }
 
-    // Datacube activate process
-    Process {
-        id: datacubeActivate
-        property string itemJson: ""
-        command: ["bash", "-lc", "echo '" + itemJson + "' | datacube-cli activate --json"]
-    }
-
     function getIconPath(iconName) {
         if (!iconName) return ""
         if (iconName.startsWith("/")) return "file://" + iconName
@@ -416,22 +409,17 @@ PanelWindow {
     }
 
     function launchApp(app) {
-        if (!app) return
+        if (!app || !app.exec) return
 
-        if (app._raw) {
-            const itemJson = JSON.stringify(app._raw).replace(/'/g, "'\\''")
-            datacubeActivate.itemJson = itemJson
-            datacubeActivate.running = true
-        } else if (app.exec) {
-            appLaunchProcess.command = ["sh", "-c", app.exec]
-            appLaunchProcess.running = true
-        }
+        // Use hyprctl dispatch exec to inherit Hyprland's environment
+        appLaunchProcess.command = ["hyprctl", "dispatch", "exec", app.exec]
+        appLaunchProcess.running = true
 
         Root.GlobalStates.sidebarLeftOpen = false
         searchInput.text = ""
     }
 
-    // Fallback app launcher process
+    // App launcher process - uses hyprctl to inherit compositor environment
     Process {
         id: appLaunchProcess
         command: ["true"]

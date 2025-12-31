@@ -88,12 +88,8 @@ windowrule = tile, class:^(liveinst)$
 windowrule = noinitialfocus, class:^(anaconda)$
 windowrule = noinitialfocus, class:^(liveinst)$
 
-# Auto-launch terminal and network applet for live environment
-exec-once = nm-applet --indicator
-exec-once = $terminal
-
-# Live ISO - Auto-launch installer (after terminal so it doesn't grab focus first)
-exec-once = sleep 1 && liveinst
+# Live ISO - Auto-launch installer
+exec-once = liveinst
 EOF
 fi
 
@@ -114,5 +110,6 @@ systemctl disable hypercube-first-boot.service || true
 # Disable services that fail in live environment
 systemctl disable mcelog.service || true
 systemctl disable ublue-nvctk-cdi.service || true
+systemctl disable systemd-modules-load.service || true
 
 echo "Hypercube post-rootfs hook completed successfully"

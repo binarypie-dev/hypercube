@@ -3,6 +3,6 @@
 vt = 1
 
 [default_session]
-# Run tuigreet with Hyprland as the default session
-command = "tuigreet --remember --remember-session --time --greeting 'Welcome to Hypercube' --asterisks --cmd Hyprland"
+# Run regreet in cage (minimal Wayland compositor)
+command = "cage -s -- regreet"
 user = "greeter"

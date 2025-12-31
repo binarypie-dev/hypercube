@@ -16,10 +16,6 @@ dnf5 -y install \
     buildah \
     skopeo
 
-### Podman Desktop - GUI for containers and Kubernetes
-# Installed via Flatpak for automatic updates
-flatpak install -y flathub io.podman_desktop.PodmanDesktop
-
 ### Additional dev utilities
 dnf5 -y install \
     just \
