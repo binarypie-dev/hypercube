@@ -109,5 +109,10 @@ systemctl disable rpm-ostree-countme.service || true
 systemctl disable bootloader-update.service || true
 systemctl disable rpm-ostreed-automatic.timer || true
 systemctl disable flatpak-preinstall.service || true
+systemctl disable hypercube-first-boot.service || true
+
+# Disable services that fail in live environment
+systemctl disable mcelog.service || true
+systemctl disable ublue-nvctk-cdi.service || true
 
 echo "Hypercube post-rootfs hook completed successfully"

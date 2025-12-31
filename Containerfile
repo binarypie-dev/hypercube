@@ -1,16 +1,15 @@
-# Hypercube v2 Container Build
-# Built from ublue-os/base-main (pure Hyprland, no GNOME)
+# Hypercube Container Build
+# Built from ublue-os/base-main with NVIDIA support included
+# Single unified image for all hardware configurations
 
 # ============================================
 # Build Arguments
 # ============================================
-ARG SOURCE_IMAGE="base"
-ARG SOURCE_SUFFIX="-main"
 ARG FEDORA_VERSION="43"
 ARG IMAGE_NAME=hypercube
 ARG IMAGE_VENDOR=binarypie-dev
-ARG IMAGE_FLAVOR="main"
 ARG SHA_HEAD_SHORT=""
+ARG AKMODS_FLAVOR="coreos-stable"
 
 # ============================================
 # Stage 1: Context Aggregation
@@ -23,20 +22,20 @@ COPY build_files /build_files
 # ============================================
 # Stage 2: Main Build
 # ============================================
-FROM ghcr.io/ublue-os/${SOURCE_IMAGE}${SOURCE_SUFFIX}:${FEDORA_VERSION}
+FROM ghcr.io/ublue-os/base-main:${FEDORA_VERSION}
 
 # Re-declare ARGs after FROM (they don't persist across stages)
 ARG IMAGE_NAME
 ARG IMAGE_VENDOR
-ARG IMAGE_FLAVOR
 ARG SHA_HEAD_SHORT
 ARG FEDORA_VERSION
+ARG AKMODS_FLAVOR
 
 # Export build-time environment variables
 ENV IMAGE_NAME=${IMAGE_NAME}
 ENV IMAGE_VENDOR=${IMAGE_VENDOR}
-ENV IMAGE_FLAVOR=${IMAGE_FLAVOR}
 ENV FEDORA_VERSION=${FEDORA_VERSION}
+ENV AKMODS_FLAVOR=${AKMODS_FLAVOR}
 
 # Copy dot_files (config templates) into the image
 COPY dot_files /usr/share/hypercube/config

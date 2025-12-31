@@ -7,20 +7,17 @@ set -ouex pipefail
 # Variables (can be overridden via build args)
 IMAGE_NAME="${IMAGE_NAME:-hypercube}"
 IMAGE_VENDOR="${IMAGE_VENDOR:-binarypie-dev}"
-IMAGE_FLAVOR="${IMAGE_FLAVOR:-main}"
 FEDORA_VERSION="${FEDORA_VERSION:-$(rpm -E %fedora)}"
-BASE_IMAGE_NAME="${BASE_IMAGE_NAME:-base-main}"
 
 # Create image-info.json
 mkdir -p /usr/share/hypercube
 cat > /usr/share/hypercube/image-info.json << EOF
 {
   "image-name": "${IMAGE_NAME}",
-  "image-flavor": "${IMAGE_FLAVOR}",
   "image-vendor": "${IMAGE_VENDOR}",
   "image-ref": "ostree-image-signed:docker://ghcr.io/${IMAGE_VENDOR}/${IMAGE_NAME}",
   "image-tag": "${IMAGE_TAG:-latest}",
-  "base-image-name": "${BASE_IMAGE_NAME}",
+  "base-image-name": "base-main",
   "fedora-version": "${FEDORA_VERSION}"
 }
 EOF

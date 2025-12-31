@@ -1,11 +1,11 @@
 # Hypercube Build System
+# Single unified image with NVIDIA support included
 
 # Configuration
 export repo_organization := env("REPO_ORGANIZATION", "binarypie-dev")
 export image_name := env("IMAGE_NAME", "hypercube")
-export base_image := env("BASE_IMAGE", "ghcr.io/ublue-os/base-main")
-export base_image_nvidia := env("BASE_IMAGE_NVIDIA", "ghcr.io/ublue-os/base-nvidia")
-export default_tag := env("DEFAULT_TAG", "stable-daily")
+export fedora_version := env("FEDORA_VERSION", "43")
+export akmods_flavor := env("AKMODS_FLAVOR", "coreos-stable")
 
 # Runtime detection
 export SUDO := if `id -u` == "0" { "" } else { "sudo" }
@@ -21,30 +21,22 @@ default:
 
 # Build container image
 [group('Build')]
-build flavor="main" ghcr="0":
+build ghcr="0":
     #!/usr/bin/env bash
     set -euo pipefail
 
-    # Determine base image based on flavor
-    if [[ "{{ flavor }}" == "nvidia" ]]; then
-        BASE="{{ base_image_nvidia }}:{{ default_tag }}"
-        TAG="{{ default_tag }}-nvidia"
-    else
-        BASE="{{ base_image }}:{{ default_tag }}"
-        TAG="{{ default_tag }}"
-    fi
-
-    IMAGE_FULL="{{ image_name }}:${TAG}"
+    IMAGE_FULL="{{ image_name }}:{{ fedora_version }}"
 
     echo "========================================"
     echo "Building: ${IMAGE_FULL}"
-    echo "Base:     ${BASE}"
+    echo "Base:     ghcr.io/ublue-os/base-main:{{ fedora_version }}"
     echo "========================================"
 
     BUILD_ARGS=()
-    BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE}")
+    BUILD_ARGS+=("--build-arg" "FEDORA_VERSION={{ fedora_version }}")
     BUILD_ARGS+=("--build-arg" "IMAGE_NAME={{ image_name }}")
     BUILD_ARGS+=("--build-arg" "IMAGE_VENDOR={{ repo_organization }}")
+    BUILD_ARGS+=("--build-arg" "AKMODS_FLAVOR={{ akmods_flavor }}")
 
     if [[ -z "$(git status -s)" ]]; then
         BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
@@ -72,33 +64,18 @@ build flavor="main" ghcr="0":
 
 # Build for GHCR push (rootful)
 [group('Build')]
-build-ghcr flavor="main":
-    @just build {{ flavor }} 1
-
-# Build both flavors
-[group('Build')]
-build-all:
-    @echo "Building main flavor..."
-    @just build main
-    @echo ""
-    @echo "Building nvidia flavor..."
-    @just build nvidia
+build-ghcr:
+    @just build 1
 
 # Run container interactively for testing
 [group('Build')]
-run flavor="main":
+run:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    if [[ "{{ flavor }}" == "nvidia" ]]; then
-        TAG="{{ default_tag }}-nvidia"
-    else
-        TAG="{{ default_tag }}"
-    fi
-
     {{ PODMAN }} run -it --rm \
         --privileged \
-        "localhost/{{ image_name }}:${TAG}" \
+        "localhost/{{ image_name }}:{{ fedora_version }}" \
         /bin/bash
 
 # ============================================
@@ -205,21 +182,14 @@ _titanoboa-setup:
 
 # Build ISO from local image using a temporary local registry
 [group('ISO')]
-build-iso-local flavor="main": _titanoboa-setup
+build-iso-local: _titanoboa-setup
     #!/usr/bin/bash
     set -euo pipefail
 
     REGISTRY_PORT=5000
     REGISTRY_NAME="hypercube-registry"
-
-    if [[ "{{ flavor }}" == "nvidia" ]]; then
-        TAG="{{ default_tag }}-nvidia"
-        ISO_NAME="{{ image_name }}-nvidia.iso"
-    else
-        TAG="{{ default_tag }}"
-        ISO_NAME="{{ image_name }}.iso"
-    fi
-
+    TAG="{{ fedora_version }}"
+    ISO_NAME="{{ image_name }}.iso"
     LOCAL_IMAGE="localhost/{{ image_name }}:${TAG}"
 
     # Get the host IP address that the chroot can reach
@@ -237,7 +207,7 @@ build-iso-local flavor="main": _titanoboa-setup
     # Check if image exists in user storage
     ID=$({{ PODMAN }} images --filter reference="${LOCAL_IMAGE}" --format "{{{{.ID}}}}")
     if [[ -z "$ID" ]]; then
-        echo "Error: Image ${LOCAL_IMAGE} not found. Run 'just build {{ flavor }}' first."
+        echo "Error: Image ${LOCAL_IMAGE} not found. Run 'just build' first."
         exit 1
     fi
 
@@ -324,21 +294,12 @@ build-iso-local flavor="main": _titanoboa-setup
 
 # Build ISO from GHCR image
 [group('ISO')]
-build-iso-ghcr flavor="main": _titanoboa-setup
+build-iso-ghcr: _titanoboa-setup
     #!/usr/bin/bash
     set -euo pipefail
 
-    REGISTRY="ghcr.io/{{ repo_organization }}"
-
-    if [[ "{{ flavor }}" == "nvidia" ]]; then
-        TAG="latest-nvidia"
-        ISO_NAME="{{ image_name }}-nvidia.iso"
-    else
-        TAG="latest"
-        ISO_NAME="{{ image_name }}.iso"
-    fi
-
-    IMAGE_FULL="${REGISTRY}/{{ image_name }}:${TAG}"
+    IMAGE_FULL="ghcr.io/{{ repo_organization }}/{{ image_name }}:latest"
+    ISO_NAME="{{ image_name }}.iso"
 
     echo "Building ISO for ${IMAGE_FULL}..."
 

@@ -11,38 +11,46 @@ dnf5 -y copr enable binarypie/hypercube
 
 ### Compositor / Hyprland Stack (from Hypercube COPR)
 dnf5 -y install \
-    hyprland \
-    hyprland-guiutils \
-    hyprland-uwsm \
-    hyprpaper \
-    hypridle \
-    hyprlock \
-    hyprpolkitagent \
-    xdg-desktop-portal-hyprland
+  hyprland \
+  hyprland-guiutils \
+  hyprland-uwsm \
+  hyprpaper \
+  hypridle \
+  hyprlock \
+  hyprpolkitagent \
+  xdg-desktop-portal-hyprland
 
 ### Quickshell - Application Launcher, Notifications, OSD (from Hypercube COPR)
 dnf5 -y install quickshell
 
+### Datacube - System management CLI (from Hypercube COPR)
+dnf5 -y install --refresh datacube
+
+# Enable datacube user service for all users
+# Creates symlink so service auto-starts on user login
+mkdir -p /etc/systemd/user/default.target.wants
+ln -sf /usr/lib/systemd/user/datacube.service /etc/systemd/user/default.target.wants/datacube.service
+
 ### CLI Tools - Official Fedora repos
 dnf5 -y install \
-    fd-find \
-    fzf \
-    ripgrep \
-    bat \
-    zoxide \
-    htop \
-    btop \
-    git \
-    jq \
-    yq \
-    tmux \
-    qt6ct
+  fd-find \
+  fzf \
+  ripgrep \
+  bat \
+  zoxide \
+  htop \
+  btop \
+  git \
+  jq \
+  yq \
+  tmux \
+  qt6ct
 
 ### CLI Tools - From Hypercube COPR
 dnf5 -y install \
-    eza \
-    starship \
-    lazygit
+  eza \
+  starship \
+  lazygit
 
 ### Fish Shell (set as default)
 dnf5 -y install fish
@@ -57,12 +65,12 @@ dnf5 -y install neovim python3-neovim
 
 ### Image/Media Viewers
 dnf5 -y install \
-    imv \
-    mpv
+  imv \
+  mpv
 
 ### Screenshot/Screen Recording
 dnf5 -y install \
-    grim \
-    slurp
+  grim \
+  slurp
 
 echo "Hyprland desktop stack installed successfully"
