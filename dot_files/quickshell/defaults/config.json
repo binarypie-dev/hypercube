@@ -15,7 +15,8 @@
     "showBattery": true,
     "showNetwork": true,
     "showTray": true,
-    "showClock": true
+    "showClock": true,
+    "use24Hour": true
   },
   "notifications": {
     "timeout": 5000,

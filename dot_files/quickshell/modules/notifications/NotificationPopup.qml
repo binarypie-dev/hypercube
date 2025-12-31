@@ -113,15 +113,22 @@ PanelWindow {
             onTriggered: dismissed()
         }
 
-        // Pause timer on hover
+        // Click to invoke default action, hover to pause timer
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
+            cursorShape: notification.actions && notification.actions.length === 1 ? Qt.PointingHandCursor : Qt.ArrowCursor
             onContainsMouseChanged: {
                 if (containsMouse) {
                     dismissTimer.stop()
                 } else {
                     dismissTimer.restart()
+                }
+            }
+            onClicked: {
+                // If there's exactly one action, clicking the notification invokes it
+                if (notification.actions && notification.actions.length === 1) {
+                    actionInvoked(notification.actions[0].identifier || "")
                 }
             }
         }
@@ -284,9 +291,9 @@ PanelWindow {
                 }
             }
 
-            // Actions row
+            // Actions row - only show if multiple actions (single action is triggered by clicking notification)
             RowLayout {
-                visible: notification.actions && notification.actions.length > 0
+                visible: notification.actions && notification.actions.length > 1
                 Layout.fillWidth: true
                 spacing: Common.Appearance.spacing.small
 

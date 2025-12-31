@@ -44,6 +44,14 @@ PanelWindow {
         )
     }
 
+    // Network View (shown when sidebarRightView === "network")
+    Loader {
+        anchors.fill: parent
+        anchors.margins: Common.Appearance.spacing.medium
+        active: Root.GlobalStates.sidebarRightView === "network"
+        source: "NetworkView.qml"
+    }
+
     // Bluetooth View (shown when sidebarRightView === "bluetooth")
     Loader {
         anchors.fill: parent

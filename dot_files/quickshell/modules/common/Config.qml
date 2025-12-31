@@ -32,6 +32,7 @@ Singleton {
     property bool showNetwork: true
     property bool showTray: true
     property bool showClock: true
+    property bool use24Hour: true
 
     // Notification settings
     property int notificationTimeout: 5000
@@ -127,6 +128,7 @@ Singleton {
                 showNetwork = config.bar.showNetwork ?? showNetwork
                 showTray = config.bar.showTray ?? showTray
                 showClock = config.bar.showClock ?? showClock
+                use24Hour = config.bar.use24Hour ?? use24Hour
             }
 
             // Notifications
@@ -190,7 +192,8 @@ Singleton {
                 showBattery: showBattery,
                 showNetwork: showNetwork,
                 showTray: showTray,
-                showClock: showClock
+                showClock: showClock,
+                use24Hour: use24Hour
             },
             notifications: {
                 timeout: notificationTimeout,

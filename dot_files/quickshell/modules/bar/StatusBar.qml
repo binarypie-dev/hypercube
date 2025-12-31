@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Layouts
 import Quickshell
 import Quickshell.Wayland
+import Quickshell.Services.SystemTray
 
 import "../common" as Common
 import "../../services" as Services
@@ -151,6 +152,119 @@ PanelWindow {
             visible: root.isRightmost
             spacing: 2
 
+            // System tray icons
+            Repeater {
+                model: SystemTray.items
+
+                delegate: MouseArea {
+                    id: trayItemArea
+                    required property var modelData
+
+                    Layout.preferredHeight: 28
+                    Layout.preferredWidth: 28
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+
+                    // Check if icon has unsupported custom path (e.g. "icon_name?path=/some/path")
+                    property bool hasCustomPath: modelData.icon && modelData.icon.includes("?path=")
+
+                    // Resolve icon source - handle paths, icon names, skip unsupported custom paths
+                    property string iconSource: {
+                        const icon = modelData.icon
+                        if (!icon || icon === "") return ""
+                        // Skip icons with custom paths - Quickshell doesn't support them
+                        if (icon.includes("?path=")) return ""
+                        // Already a full path or URL
+                        if (icon.startsWith("/")) return "file://" + icon
+                        if (icon.startsWith("file://") || icon.startsWith("image://")) return icon
+                        // Icon name - try Qt icon provider
+                        return "image://icon/" + icon
+                    }
+
+                    // Datacube fallback lookup using app title
+                    property string datacubeIcon: Services.IconResolver.getIcon(modelData.title)
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Common.Appearance.rounding.small
+                        color: trayItemArea.containsMouse
+                            ? Common.Appearance.m3colors.surfaceVariant
+                            : "transparent"
+
+                        Behavior on color {
+                            ColorAnimation { duration: 150 }
+                        }
+                    }
+
+                    // Track if primary icon failed (Error, Null status, or has unsupported custom path)
+                    property bool primaryFailed: trayItemArea.hasCustomPath || primaryTrayIcon.status === Image.Error || primaryTrayIcon.status === Image.Null || trayItemArea.iconSource === ""
+
+                    // Primary icon from tray item
+                    Image {
+                        id: primaryTrayIcon
+                        anchors.centerIn: parent
+                        width: Common.Appearance.sizes.iconMedium
+                        height: Common.Appearance.sizes.iconMedium
+                        sourceSize: Qt.size(Common.Appearance.sizes.iconMedium, Common.Appearance.sizes.iconMedium)
+                        source: trayItemArea.iconSource
+                        smooth: true
+                        visible: status === Image.Ready
+                    }
+
+                    // Datacube fallback icon
+                    Image {
+                        id: fallbackTrayIcon
+                        anchors.centerIn: parent
+                        width: Common.Appearance.sizes.iconMedium
+                        height: Common.Appearance.sizes.iconMedium
+                        sourceSize: Qt.size(Common.Appearance.sizes.iconMedium, Common.Appearance.sizes.iconMedium)
+                        source: trayItemArea.primaryFailed ? trayItemArea.datacubeIcon : ""
+                        smooth: true
+                        visible: trayItemArea.primaryFailed && status === Image.Ready
+                    }
+
+                    // Last resort: letter icon
+                    Rectangle {
+                        anchors.centerIn: parent
+                        width: Common.Appearance.sizes.iconMedium
+                        height: Common.Appearance.sizes.iconMedium
+                        radius: Common.Appearance.rounding.small
+                        color: Common.Appearance.m3colors.primaryContainer
+                        visible: trayItemArea.primaryFailed && fallbackTrayIcon.status !== Image.Ready
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: trayItemArea.modelData.title ? trayItemArea.modelData.title.charAt(0).toUpperCase() : "?"
+                            font.pixelSize: 10
+                            font.bold: true
+                            color: Common.Appearance.m3colors.onPrimaryContainer
+                        }
+                    }
+
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton | Qt.MiddleButton
+
+                    onClicked: (mouse) => {
+                        if (mouse.button === Qt.RightButton || (trayItemArea.modelData.onlyMenu && trayItemArea.modelData.hasMenu)) {
+                            // Right click or menu-only item: show menu
+                            if (trayItemArea.modelData.hasMenu) {
+                                // Map coordinates to window
+                                const pos = trayItemArea.mapToItem(null, 0, trayItemArea.height)
+                                trayItemArea.modelData.display(root, pos.x, pos.y)
+                            }
+                        } else if (mouse.button === Qt.MiddleButton) {
+                            trayItemArea.modelData.secondaryActivate()
+                        } else {
+                            // Left click: activate
+                            trayItemArea.modelData.activate()
+                        }
+                    }
+
+                    onWheel: (wheel) => {
+                        trayItemArea.modelData.scroll(wheel.angleDelta.y, false)
+                    }
+                }
+            }
+
             // Weather (if enabled)
             BarButton {
                 visible: Common.Config.showWeather && Services.Weather.ready
@@ -167,9 +281,9 @@ PanelWindow {
                 tooltip: "Camera in use"
             }
 
-            // Network - only show if wifi available (for wifi) or ethernet connected
-            BarIndicator {
-                visible: Common.Config.showNetwork && (Services.Network.wifiAvailable || (Services.Network.connected && Services.Network.type === "ethernet"))
+            // Network
+            BarButton {
+                visible: Common.Config.showNetwork
                 icon: {
                     if (!Services.Network.connected) {
                         return Services.Network.wifiAvailable ? Common.Icons.icons.wifiOff : Common.Icons.icons.ethernetOff
@@ -182,6 +296,7 @@ PanelWindow {
                 tooltip: Services.Network.connected
                     ? Services.Network.name
                     : "Disconnected"
+                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "network")
             }
 
             // Audio output

@@ -247,9 +247,20 @@ ColumnLayout {
         signal dismissed()
         signal actionClicked(string actionId)
 
+        // Check if notification has exactly one action (clicking notification will invoke it)
+        property bool hasSingleAction: notification.actions && notification.actions.length === 1
+
         Layout.fillWidth: true
         Layout.preferredHeight: notifContent.implicitHeight + Common.Appearance.spacing.medium * 2
         hoverEnabled: true
+        cursorShape: hasSingleAction ? Qt.PointingHandCursor : Qt.ArrowCursor
+
+        onClicked: {
+            // If there's exactly one action, clicking the notification invokes it
+            if (hasSingleAction) {
+                actionClicked(notification.actions[0].identifier || "")
+            }
+        }
 
         Rectangle {
             anchors.fill: parent
@@ -385,9 +396,9 @@ ColumnLayout {
                         elide: Text.ElideRight
                     }
 
-                    // Actions
+                    // Actions - only show if multiple actions (single action is triggered by clicking notification)
                     RowLayout {
-                        visible: notification.actions && notification.actions.length > 0
+                        visible: notification.actions && notification.actions.length > 1
                         Layout.fillWidth: true
                         spacing: Common.Appearance.spacing.small
 

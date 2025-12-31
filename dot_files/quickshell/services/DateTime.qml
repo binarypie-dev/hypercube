@@ -3,6 +3,8 @@ pragma Singleton
 import QtQuick
 import Quickshell
 
+import "../modules/common" as Common
+
 Singleton {
     id: root
 
@@ -32,14 +34,20 @@ Singleton {
         year = now.getFullYear()
         dayOfWeek = now.getDay()
 
-        // Format time string (24-hour format)
-        timeString = pad(hour) + ":" + pad(minute)
+        // Format time string based on 12/24 hour preference
+        if (Common.Config.use24Hour) {
+            timeString = pad(hour) + ":" + pad(minute)
+        } else {
+            const hour12 = hour % 12 || 12
+            const ampm = hour < 12 ? "AM" : "PM"
+            timeString = pad(hour12) + ":" + pad(minute) + " " + ampm
+        }
 
-        // Format date string
-        dateString = dayNames[dayOfWeek] + ", " + monthNames[month - 1] + " " + day
+        // Format date string: YYYY.MM.DD
+        dateString = year + "." + pad(month) + "." + pad(day)
 
         // Full date time
-        fullDateTime = dateString + " " + year + " " + timeString
+        fullDateTime = dateString + " " + timeString
     }
 
     function pad(num: int): string {
