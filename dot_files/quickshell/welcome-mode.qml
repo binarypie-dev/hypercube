@@ -4,52 +4,24 @@
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls
+import QtQuick.Window
 import Quickshell
-import Quickshell.Wayland
 import Quickshell.Io
 
 ShellRoot {
     id: root
 
-    // Welcome wizard runs on all screens, full screen
-    Variants {
-        model: Quickshell.screens
+    // Simple fullscreen window for cage compositor
+    Window {
+        id: welcomeWindow
+        visible: true
+        visibility: Window.FullScreen
+        color: "#1a1b26"  // Tokyonight background
+        title: "Hypercube Setup"
 
-        delegate: Component {
-            PanelWindow {
-                id: welcomeWindow
-                required property var modelData
-                property var screen: modelData
-
-                anchors.fill: true
-                color: "#1a1b26"  // Tokyonight background
-
-                // Only show wizard on primary screen
-                property bool isPrimary: screen === Quickshell.screens[0]
-
-                // Background for non-primary screens
-                Rectangle {
-                    anchors.fill: parent
-                    visible: !isPrimary
-                    color: "#1a1b26"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Hypercube"
-                        font.pixelSize: 48
-                        font.weight: Font.Medium
-                        color: "#7aa2f7"
-                        opacity: 0.3
-                    }
-                }
-
-                // Wizard on primary screen
-                Loader {
-                    anchors.fill: parent
-                    active: isPrimary
-                    sourceComponent: WelcomeWizard {}
-                }
-            }
+        // Wizard content
+        WelcomeWizard {
+            anchors.fill: parent
         }
     }
 
@@ -662,29 +634,51 @@ ShellRoot {
             }
         }
 
+        property bool isCreating: false
+
         function createUser() {
+            if (isCreating) return
+            isCreating = true
             errorMessage = ""
             userCreateProcess.running = true
         }
 
+        // Escape single quotes in strings for shell safety
+        function shellEscape(str: string): string {
+            return str.replace(/'/g, "'\\''")
+        }
+
         Process {
             id: userCreateProcess
+            // Runs as root via greetd initial_session
             command: ["sh", "-c",
-                "useradd -m -G wheel -c '" + (fullName || username) + "' '" + username + "' && " +
-                "echo '" + username + ":" + password + "' | chpasswd && " +
+                "useradd -m -G wheel -c '" + shellEscape(fullName || username) + "' '" + shellEscape(username) + "' && " +
+                "echo '" + shellEscape(username) + ":" + shellEscape(password) + "' | chpasswd && " +
                 // Save theme config for the new user
-                "mkdir -p /home/" + username + "/.config/hypercube && " +
-                "echo '{\"appearance\":{\"darkMode\":" + (selectedDarkMode ? "true" : "false") + ",\"accentColor\":\"" + selectedAccent + "\"}}' > /home/" + username + "/.config/hypercube/shell.json && " +
-                "chown -R " + username + ":" + username + " /home/" + username + "/.config"
+                "mkdir -p '/home/" + shellEscape(username) + "/.config/hypercube' && " +
+                "echo '{\"appearance\":{\"darkMode\":" + (selectedDarkMode ? "true" : "false") + ",\"accentColor\":\"" + selectedAccent + "\"}}' > '/home/" + shellEscape(username) + "/.config/hypercube/shell.json' && " +
+                "chown -R '" + shellEscape(username) + "':'" + shellEscape(username) + "' '/home/" + shellEscape(username) + "/.config'"
             ]
 
             running: false
-            onExited: {
-                if (exitCode === 0) {
-                    // Exit quickshell, which will cause Hyprland to exit
+            onExited: (code, status) => {
+                isCreating = false
+                if (code === 0) {
+                    // Success - exit quickshell to return to greetd
                     Qt.quit()
                 } else {
-                    errorMessage = "Failed to create user. Exit code: " + exitCode
+                    errorMessage = "Failed to create user (error " + code + "). Please try again."
+                }
+            }
+        }
+
+        // Allow exiting with Escape key
+        Shortcut {
+            sequence: "Escape"
+            onActivated: {
+                if (!isCreating) {
+                    // Exit without creating user - greetd will show regreet
+                    Qt.quit()
                 }
             }
         }

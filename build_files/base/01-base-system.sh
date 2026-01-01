@@ -9,9 +9,12 @@ echo "Installing Hypercube base system..."
 # Clean DNF cache first
 dnf5 -y clean all
 
+### Enable Hypercube COPR for custom packages
+dnf5 -y copr enable binarypie/hypercube
+
 ### Display Manager: greetd + regreet
-# greetd is in official Fedora repos, regreet from binarypie/hypercube COPR
-# cage is a minimal Wayland compositor to host regreet
+# regreet from binarypie/hypercube COPR
+# cage is a minimal Wayland compositor to host regreet and the first-boot wizard
 dnf5 -y install \
     greetd \
     greetd-selinux \
@@ -91,7 +94,8 @@ systemctl enable greetd.service
 systemctl enable NetworkManager.service
 systemctl enable bluetooth.service
 systemctl enable power-profiles-daemon.service
-systemctl enable hypercube-first-boot.service
+# TODO: Re-enable once first-boot wizard is properly tested
+# systemctl enable hypercube-first-boot.service
 
 ### Disable services we don't need
 systemctl disable gdm.service 2>/dev/null || true

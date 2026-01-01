@@ -4,5 +4,11 @@ vt = 1
 
 [default_session]
 # Run regreet in cage (minimal Wayland compositor)
-command = "cage -s -- regreet"
+command = "/usr/sbin/cage -s -- /usr/sbin/regreet"
 user = "greeter"
+
+[initial_session]
+# First boot wizard - runs once as root, then exits to show regreet
+# Set XDG_RUNTIME_DIR for quickshell/Qt to work properly as root
+command = "sh -c 'mkdir -p /run/user/0 && export XDG_RUNTIME_DIR=/run/user/0; /usr/sbin/cage -s -- /usr/sbin/quickshell -p /usr/share/hypercube/config/quickshell/welcome-mode.qml'"
+user = "root"

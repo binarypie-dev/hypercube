@@ -5,7 +5,7 @@
 export repo_organization := env("REPO_ORGANIZATION", "binarypie-dev")
 export image_name := env("IMAGE_NAME", "hypercube")
 export fedora_version := env("FEDORA_VERSION", "43")
-export akmods_flavor := env("AKMODS_FLAVOR", "coreos-stable")
+export akmods_flavor := env("AKMODS_FLAVOR", "main")
 
 # Runtime detection
 export SUDO := if `id -u` == "0" { "" } else { "sudo" }
@@ -136,6 +136,23 @@ run-iso-local iso_file:
         --os-variant fedora-unknown \
         --boot uefi \
         --autoconsole graphical
+
+# Restart the test VM and connect to console
+[group('VM')]
+restart-vm:
+    #!/usr/bin/bash
+    set -euo pipefail
+    VM_NAME="hypercube-test"
+
+    echo "Stopping VM..."
+    virsh destroy "${VM_NAME}" 2>/dev/null || true
+    sleep 1
+
+    echo "Starting VM..."
+    virsh start "${VM_NAME}"
+
+    echo "Connecting to console..."
+    virt-viewer "${VM_NAME}"
 
 # Delete the test VM and its disk
 [group('VM')]

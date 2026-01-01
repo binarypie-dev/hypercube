@@ -8,14 +8,13 @@ set -eoux pipefail
 echo "Installing kernel, akmods, and NVIDIA drivers..."
 
 FEDORA_VERSION="$(rpm -E %fedora)"
-AKMODS_FLAVOR="${AKMODS_FLAVOR:-coreos-stable}"
+AKMODS_FLAVOR="${AKMODS_FLAVOR:-main}"
 
-# Remove existing kernel packages
-for pkg in kernel kernel-core kernel-modules kernel-modules-core kernel-modules-extra; do
-    rpm --erase "$pkg" --nodeps || true
-done
+# Get current kernel version from base image (don't replace it)
+KERNEL_VERSION=$(rpm -q kernel-core --queryformat "%{VERSION}-%{RELEASE}.%{ARCH}" | tail -n 1)
+echo "Using base image kernel: ${KERNEL_VERSION}"
 
-# Fetch akmods container (contains kernel RPMs and kmods)
+# Fetch akmods container (contains kmods for this kernel)
 skopeo copy --retry-times 3 \
     docker://ghcr.io/ublue-os/akmods:"${AKMODS_FLAVOR}"-"${FEDORA_VERSION}" \
     dir:/tmp/akmods
@@ -23,24 +22,6 @@ skopeo copy --retry-times 3 \
 AKMODS_TARGZ=$(jq -r '.layers[].digest' </tmp/akmods/manifest.json | cut -d : -f 2)
 tar -xvzf /tmp/akmods/"$AKMODS_TARGZ" -C /tmp/
 mv /tmp/rpms/* /tmp/akmods/
-
-# Install kernel from akmods cache
-# Use rpm directly to skip scriptlets that try to run dracut (fails in container builds)
-rpm -ivh --nodeps --noscripts \
-    /tmp/kernel-rpms/kernel-[0-9]*.rpm \
-    /tmp/kernel-rpms/kernel-core-*.rpm \
-    /tmp/kernel-rpms/kernel-modules-*.rpm \
-    /tmp/kernel-rpms/kernel-modules-core-*.rpm \
-    /tmp/kernel-rpms/kernel-modules-extra-*.rpm
-
-rpm -ivh --nodeps --noscripts /tmp/kernel-rpms/kernel-devel-*.rpm
-
-# Lock kernel version to prevent mismatches
-dnf5 versionlock add kernel kernel-devel kernel-devel-matched kernel-core kernel-modules kernel-modules-core kernel-modules-extra
-
-# Get installed kernel version for nvidia akmods
-KERNEL_VERSION=$(rpm -q kernel-core --queryformat "%{VERSION}-%{RELEASE}.%{ARCH}" | tail -n 1)
-echo "Installed kernel: ${KERNEL_VERSION}"
 
 # Enable ublue-os akmods COPR
 sed -i 's@enabled=0@enabled=1@g' /etc/yum.repos.d/_copr_ublue-os-akmods.repo
@@ -94,6 +75,6 @@ kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-dr
 EOF
 
 # Cleanup
-rm -rf /tmp/akmods /tmp/akmods-nvidia /tmp/akmods-rpms /tmp/kernel-rpms /tmp/rpms /tmp/nvidia-install.sh
+rm -rf /tmp/akmods /tmp/akmods-nvidia /tmp/akmods-rpms /tmp/rpms /tmp/nvidia-install.sh
 
-echo "Kernel and NVIDIA drivers installed successfully"
+echo "NVIDIA drivers installed successfully for kernel ${KERNEL_VERSION}"

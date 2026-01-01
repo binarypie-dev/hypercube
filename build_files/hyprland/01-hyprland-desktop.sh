@@ -6,10 +6,7 @@ set -ouex pipefail
 
 echo "Installing Hyprland desktop stack..."
 
-### Enable Hypercube COPR (our self-maintained packages)
-dnf5 -y copr enable binarypie/hypercube
-
-### Compositor / Hyprland Stack (from Hypercube COPR)
+### Compositor / Hyprland Stack 
 dnf5 -y install \
   hyprland \
   hyprland-guiutils \
