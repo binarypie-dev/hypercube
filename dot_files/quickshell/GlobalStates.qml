@@ -123,9 +123,10 @@ Singleton {
 
     // OSD (On-Screen Display) state
     property bool osdVisible: false
-    property string osdType: "volume" // "volume", "brightness", "mic"
+    property string osdType: "volume" // "volume", "brightness", "mic", "tooltip"
     property real osdValue: 0.0
     property bool osdMuted: false
+    property string osdTooltipText: ""  // For tooltip mode
 
     // Notification states
     property int unreadNotificationCount: 0

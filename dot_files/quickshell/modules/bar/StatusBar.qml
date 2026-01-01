@@ -359,12 +359,26 @@ PanelWindow {
                     : Common.Appearance.m3colors.onSurfaceVariant
             }
 
-            // Date and Time
+            // Calendar / Date-Time
             BarButton {
                 id: clockButton
-                buttonText: Services.DateTime.dateString + "  " + Services.DateTime.timeString
-                tooltip: "Click to open calendar"
+                icon: Common.Icons.icons.calendar
+                tooltip: Services.DateTime.fullDateTimeString
+
                 onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "calendar")
+
+                // Show tooltip OSD on hover
+                onContainsMouseChanged: {
+                    if (containsMouse) {
+                        Root.GlobalStates.osdType = "tooltip"
+                        Root.GlobalStates.osdTooltipText = Services.DateTime.fullDateTimeString
+                        Root.GlobalStates.osdVisible = true
+                    } else {
+                        if (Root.GlobalStates.osdType === "tooltip") {
+                            Root.GlobalStates.osdVisible = false
+                        }
+                    }
+                }
 
                 Timer {
                     interval: 1000

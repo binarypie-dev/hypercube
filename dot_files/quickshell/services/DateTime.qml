@@ -11,6 +11,7 @@ Singleton {
     property string timeString: "00:00"
     property string dateString: ""
     property string fullDateTime: ""
+    property string fullDateTimeString: ""  // Human-readable format for tooltips
 
     property int hour: 0
     property int minute: 0
@@ -48,6 +49,9 @@ Singleton {
 
         // Full date time
         fullDateTime = dateString + " " + timeString
+
+        // Human-readable full date time for tooltips: "Wednesday, January 1, 2026  12:45 PM"
+        fullDateTimeString = dayNames[dayOfWeek] + ", " + monthNames[month - 1] + " " + day + ", " + year + "  " + timeString
     }
 
     function pad(num: int): string {

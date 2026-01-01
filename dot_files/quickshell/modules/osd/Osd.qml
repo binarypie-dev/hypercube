@@ -12,14 +12,18 @@ PanelWindow {
     required property var targetScreen
     screen: targetScreen
 
-    // Center at the bottom of the screen
-    anchors.bottom: true
+    // Position at top right, below status bar
+    anchors.top: true
+    anchors.right: true
 
-    // Use margins to center horizontally
-    margins.bottom: 100
+    margins.top: Common.Appearance.sizes.barHeight + Common.Appearance.spacing.medium
+    margins.right: Common.Appearance.spacing.medium
 
-    implicitWidth: Common.Appearance.sizes.osdWidth
-    implicitHeight: Common.Appearance.sizes.osdHeight + Common.Appearance.spacing.large
+    // Tooltip mode uses auto-sizing, progress mode uses fixed width
+    property bool isTooltip: Root.GlobalStates.osdType === "tooltip"
+
+    implicitWidth: isTooltip ? tooltipContent.implicitWidth + Common.Appearance.spacing.large * 2 : Common.Appearance.sizes.osdWidth
+    implicitHeight: isTooltip ? tooltipContent.implicitHeight + Common.Appearance.spacing.medium * 2 : Common.Appearance.sizes.osdHeight + Common.Appearance.spacing.large
     color: "transparent"
 
     // Float on top of windows without reserving space
@@ -55,8 +59,20 @@ PanelWindow {
         border.color: Common.Appearance.m3colors.outlineVariant
     }
 
-    // OSD content
+    // Tooltip content (for tooltip mode)
+    Text {
+        id: tooltipContent
+        visible: root.isTooltip
+        anchors.centerIn: parent
+        text: Root.GlobalStates.osdTooltipText
+        font.family: Common.Appearance.fonts.main
+        font.pixelSize: Common.Appearance.fontSize.normal
+        color: Common.Appearance.m3colors.onSurface
+    }
+
+    // Progress OSD content (for volume/brightness/mic)
     RowLayout {
+        visible: !root.isTooltip
         anchors.fill: parent
         anchors.margins: Common.Appearance.spacing.medium
         spacing: Common.Appearance.spacing.medium

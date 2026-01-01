@@ -60,6 +60,43 @@ Flickable {
             }
         }
 
+        // Current date and time display
+        Rectangle {
+            Layout.fillWidth: true
+            Layout.preferredHeight: dateTimeColumn.implicitHeight + Common.Appearance.spacing.medium * 2
+            radius: Common.Appearance.rounding.large
+            color: Common.Appearance.m3colors.primaryContainer
+
+            ColumnLayout {
+                id: dateTimeColumn
+                anchors.fill: parent
+                anchors.margins: Common.Appearance.spacing.medium
+                spacing: Common.Appearance.spacing.tiny
+
+                Text {
+                    Layout.fillWidth: true
+                    text: Services.DateTime.timeString
+                    font.family: Common.Appearance.fonts.main
+                    font.pixelSize: Common.Appearance.fontSize.display
+                    font.weight: Font.Medium
+                    color: Common.Appearance.m3colors.onPrimaryContainer
+                    horizontalAlignment: Text.AlignHCenter
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: Services.DateTime.dayNames[Services.DateTime.dayOfWeek] + ", " +
+                          Services.DateTime.monthNames[Services.DateTime.month - 1] + " " +
+                          Services.DateTime.day + ", " + Services.DateTime.year
+                    font.family: Common.Appearance.fonts.main
+                    font.pixelSize: Common.Appearance.fontSize.normal
+                    color: Common.Appearance.m3colors.onPrimaryContainer
+                    horizontalAlignment: Text.AlignHCenter
+                    opacity: 0.8
+                }
+            }
+        }
+
         // Calendar card
         Rectangle {
             Layout.fillWidth: true
