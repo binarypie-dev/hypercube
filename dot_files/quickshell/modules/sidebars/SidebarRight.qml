@@ -84,6 +84,14 @@ PanelWindow {
         source: "NotificationsView.qml"
     }
 
+    // Power View (shown when sidebarRightView === "power")
+    Loader {
+        anchors.fill: parent
+        anchors.margins: Common.Appearance.spacing.medium
+        active: Root.GlobalStates.sidebarRightView === "power"
+        source: "PowerView.qml"
+    }
+
     // Default Content (shown when sidebarRightView === "default")
     Loader {
         anchors.fill: parent

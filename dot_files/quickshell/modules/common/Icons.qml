@@ -61,6 +61,12 @@ QtObject {
         batteryEmpty: "battery-warning",
         batteryCharging: "battery-charging",
         batteryAlert: "battery-warning",
+        plug: "plug",
+
+        // Power profiles
+        zap: "zap",
+        gauge: "gauge",
+        leaf: "leaf",
 
         // Notifications
         notification: "bell",

@@ -265,49 +265,12 @@ PanelWindow {
                 }
             }
 
-            // Weather (if enabled)
-            BarButton {
-                visible: Common.Config.showWeather && Services.Weather.ready
-                icon: Common.Icons.weatherIcon(Services.Weather.condition, Services.Weather.isNight)
-                buttonText: Services.Weather.temperature
-                tooltip: Services.Weather.description
-            }
-
-            // Privacy indicators
+            // Camera Privacy indicator
             BarButton {
                 visible: Services.Privacy.cameraInUse
                 icon: Common.Icons.icons.camera
                 textColor: Common.Appearance.m3colors.error
                 tooltip: "Camera in use"
-            }
-
-            // Network
-            BarButton {
-                visible: Common.Config.showNetwork
-                icon: {
-                    if (!Services.Network.connected) {
-                        return Services.Network.wifiAvailable ? Common.Icons.icons.wifiOff : Common.Icons.icons.ethernetOff
-                    }
-                    if (Services.Network.type === "wifi") {
-                        return Common.Icons.wifiIcon(Services.Network.strength, true)
-                    }
-                    return Common.Icons.icons.ethernet
-                }
-                tooltip: Services.Network.connected
-                    ? Services.Network.name
-                    : "Disconnected"
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "network")
-            }
-
-            // Audio output
-            BarButton {
-                icon: Services.Audio.muted
-                    ? Common.Icons.icons.volumeOff
-                    : Common.Icons.volumeIcon(Services.Audio.volume * 100, false)
-                tooltip: Services.Audio.muted
-                    ? "Volume: Muted"
-                    : "Volume: " + Math.round(Services.Audio.volume * 100) + "%"
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "audio")
             }
 
             // Microphone
@@ -332,6 +295,17 @@ PanelWindow {
                 onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "audio")
             }
 
+            // Audio output
+            BarButton {
+                icon: Services.Audio.muted
+                    ? Common.Icons.icons.volumeOff
+                    : Common.Icons.volumeIcon(Services.Audio.volume * 100, false)
+                tooltip: Services.Audio.muted
+                    ? "Volume: Muted"
+                    : "Volume: " + Math.round(Services.Audio.volume * 100) + "%"
+                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "audio")
+            }
+
             // Bluetooth
             BarButton {
                 visible: Services.BluetoothStatus.available
@@ -351,17 +325,22 @@ PanelWindow {
                 onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "bluetooth")
             }
 
-            // Battery (if present)
+            // Network
             BarButton {
-                visible: Common.Config.showBattery && Services.Battery.present
-                icon: Common.Icons.batteryIcon(Services.Battery.percent, Services.Battery.charging)
-                buttonText: Services.Battery.percent + "%"
-                tooltip: Services.Battery.charging
-                    ? "Charging: " + Services.Battery.percent + "%"
-                    : "Battery: " + Services.Battery.percent + "%"
-                textColor: Services.Battery.percent <= 20 && !Services.Battery.charging
-                    ? Common.Appearance.m3colors.error
-                    : Common.Appearance.m3colors.onSurfaceVariant
+                visible: Common.Config.showNetwork
+                icon: {
+                    if (!Services.Network.connected) {
+                        return Services.Network.wifiAvailable ? Common.Icons.icons.wifiOff : Common.Icons.icons.ethernetOff
+                    }
+                    if (Services.Network.type === "wifi") {
+                        return Common.Icons.wifiIcon(Services.Network.strength, true)
+                    }
+                    return Common.Icons.icons.ethernet
+                }
+                tooltip: Services.Network.connected
+                    ? Services.Network.name
+                    : "Disconnected"
+                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "network")
             }
 
             // Notifications bell
@@ -380,7 +359,7 @@ PanelWindow {
                     : Common.Appearance.m3colors.onSurfaceVariant
             }
 
-            // Date and Time - rightmost item
+            // Date and Time
             BarButton {
                 id: clockButton
                 buttonText: Services.DateTime.dateString + "  " + Services.DateTime.timeString
@@ -394,6 +373,59 @@ PanelWindow {
                     triggeredOnStart: true
                     onTriggered: Services.DateTime.update()
                 }
+            }
+
+            // Weather (if enabled)
+            BarButton {
+                visible: Common.Config.showWeather && Services.Weather.ready
+                icon: Common.Icons.weatherIcon(Services.Weather.condition, Services.Weather.isNight)
+                buttonText: Services.Weather.temperature
+                tooltip: Services.Weather.description
+            }
+
+            // Power button (shows battery on laptops, power icon on desktops)
+            BarButton {
+                icon: {
+                    if (Services.Battery.present) {
+                        // Laptop with battery
+                        if (Services.Battery.pluggedIn && Services.Battery.percent >= 95) {
+                            // Fully charged and plugged in
+                            return Common.Icons.icons.plug
+                        } else if (Services.Battery.charging) {
+                            return Common.Icons.icons.batteryCharging
+                        } else {
+                            return Common.Icons.batteryIcon(Services.Battery.percent, false)
+                        }
+                    }
+                    // Desktop - no battery
+                    return Common.Icons.icons.power
+                }
+                buttonText: Services.Battery.present ? Services.Battery.percent + "%" : ""
+                tooltip: {
+                    if (Services.Battery.present) {
+                        if (Services.Battery.pluggedIn && Services.Battery.percent >= 95) {
+                            return "Fully charged"
+                        } else if (Services.Battery.charging) {
+                            return "Charging: " + Services.Battery.percent + "%"
+                        } else {
+                            const timeStr = Services.Battery.timeRemainingString()
+                            return "Battery: " + Services.Battery.percent + "%" + (timeStr ? " (" + timeStr + " remaining)" : "")
+                        }
+                    }
+                    return "Power options"
+                }
+                textColor: {
+                    if (Services.Battery.present) {
+                        if (Services.Battery.percent <= 20 && !Services.Battery.charging) {
+                            return Common.Appearance.m3colors.error
+                        }
+                        if (Services.Battery.pluggedIn) {
+                            return Common.Appearance.m3colors.primary
+                        }
+                    }
+                    return Common.Appearance.m3colors.onSurfaceVariant
+                }
+                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "power")
             }
         }
     }
