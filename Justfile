@@ -286,7 +286,7 @@ build-iso-local: _titanoboa-setup
     {{ SUDO }} HOOK_post_rootfs="${PROJECT_ROOT}/iso_files/hook-post-rootfs.sh" just build \
         "${REGISTRY_IMAGE}" \
         1 \
-        "${PROJECT_ROOT}/flatpaks/system-flatpaks.list" \
+        NONE \
         squashfs \
         NONE \
         "${REGISTRY_IMAGE}" \
@@ -335,7 +335,7 @@ build-iso-ghcr: _titanoboa-setup
     {{ SUDO }} HOOK_post_rootfs="${PROJECT_ROOT}/iso_files/hook-post-rootfs.sh" just build \
         "${IMAGE_FULL}" \
         1 \
-        "${PROJECT_ROOT}/flatpaks/system-flatpaks.list" \
+        NONE \
         squashfs \
         NONE \
         "${IMAGE_FULL}" \
