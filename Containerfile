@@ -41,7 +41,7 @@ ENV AKMODS_FLAVOR=${AKMODS_FLAVOR}
 COPY dot_files /usr/share/hypercube/config
 
 # Ensure all config files are readable by everyone
-RUN chmod -R a+rX /usr/share/hypercube/config
+RUN chmod -R a+rX /usr/share/hypercube
 
 # Build with mounted context and caches
 # - Bind mount from ctx stage for build scripts and system files

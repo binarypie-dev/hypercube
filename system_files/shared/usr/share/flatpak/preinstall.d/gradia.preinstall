@@ -1,0 +1,3 @@
+[Flatpak Preinstall be.alexandervanhee.gradia]
+Branch=stable
+IsRuntime=false

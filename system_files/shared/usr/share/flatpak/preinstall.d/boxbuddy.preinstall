@@ -1,0 +1,3 @@
+[Flatpak Preinstall io.github.dvlv.boxbuddyrs]
+Branch=stable
+IsRuntime=false

@@ -1,0 +1,12 @@
+[Unit]
+Description=Add Flathub Remote
+Before=flatpak-preinstall.service
+ConditionPathExists=/usr/bin/flatpak
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/flatpak remote-add --if-not-exists --system flathub https://flathub.org/repo/flathub.flatpakrepo
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target

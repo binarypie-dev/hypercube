@@ -83,6 +83,13 @@ dnf5 -y install \
     gvfs-gphoto2 \
     gvfs-smb
 
+### Flatpak (ensure latest version for preinstall.d support)
+dnf5 -y install flatpak
+
+### Homebrew integration (from ublue COPR)
+dnf5 -y copr enable ublue-os/packages
+dnf5 -y install ublue-brew
+
 ### Create greeter user for greetd
 # greetd runs the greeter as this user
 if ! id -u greeter &>/dev/null; then
@@ -94,8 +101,8 @@ systemctl enable greetd.service
 systemctl enable NetworkManager.service
 systemctl enable bluetooth.service
 systemctl enable power-profiles-daemon.service
-# TODO: Re-enable once first-boot wizard is properly tested
-# systemctl enable hypercube-first-boot.service
+systemctl enable flatpak-add-flathub.service
+systemctl enable flatpak-preinstall.service
 
 ### Disable services we don't need
 systemctl disable gdm.service 2>/dev/null || true
