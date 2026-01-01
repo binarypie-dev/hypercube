@@ -11,52 +11,105 @@ Singleton {
     // Configuration ready flag
     property bool ready: false
 
-    // Configuration file path
-    readonly property string configPath: Quickshell.env("XDG_CONFIG_HOME") + "/hypercube/shell.json"
+    // Configuration file path - fallback to ~/.config if XDG_CONFIG_HOME is not set
+    readonly property string configDir: {
+        const xdg = Quickshell.env("XDG_CONFIG_HOME")
+        if (xdg && xdg !== "") return xdg + "/hypercube"
+        const home = Quickshell.env("HOME")
+        return home + "/.config/hypercube"
+    }
+    readonly property string configPath: configDir + "/shell.json"
     readonly property string defaultConfigPath: Qt.resolvedUrl("../../defaults/config.json")
 
+    // Default values (used for comparison when saving)
+    readonly property var defaults: ({
+        appearance: {
+            darkMode: true,
+            accentColor: "blue",
+            wallpaperTheming: false,
+            panelOpacity: 0.85
+        },
+        fonts: {
+            family: "JetBrains Mono",
+            mono: "JetBrains Mono",
+            size: 14
+        },
+        bar: {
+            showWeather: true,
+            showBattery: true,
+            showNetwork: true,
+            showTray: true,
+            showClock: true,
+            use24Hour: true
+        },
+        notifications: {
+            timeout: 5000,
+            sounds: true,
+            dndSchedule: false,
+            dndStart: "22:00",
+            dndEnd: "08:00"
+        },
+        sidebar: {
+            animations: true,
+            width: 380
+        },
+        osd: {
+            timeout: 1500,
+            showValue: true
+        },
+        weather: {
+            location: "",
+            units: "metric",
+            updateInterval: 900000
+        },
+        launcher: {
+            maxResults: 50,
+            showCategories: true
+        }
+    })
+
     // Appearance settings
-    property bool darkMode: true
-    property string accentColor: "blue" // blue, green, purple, orange, red, cyan
-    property bool wallpaperTheming: false
-    property real panelOpacity: 0.85
+    property bool darkMode: defaults.appearance.darkMode
+    property string accentColor: defaults.appearance.accentColor
+    property bool wallpaperTheming: defaults.appearance.wallpaperTheming
+    property real panelOpacity: defaults.appearance.panelOpacity
 
     // Font settings
-    property string fontFamily: "JetBrains Mono"
-    property string monoFontFamily: "JetBrains Mono"
-    property int fontSize: 14
+    property string fontFamily: defaults.fonts.family
+    property string monoFontFamily: defaults.fonts.mono
+    property int fontSize: defaults.fonts.size
 
     // Bar settings
-    property bool showWeather: true
-    property bool showBattery: true
-    property bool showNetwork: true
-    property bool showTray: true
-    property bool showClock: true
-    property bool use24Hour: true
+    property bool showWeather: defaults.bar.showWeather
+    property bool showBattery: defaults.bar.showBattery
+    property bool showNetwork: defaults.bar.showNetwork
+    property bool showTray: defaults.bar.showTray
+    property bool showClock: defaults.bar.showClock
+    property bool use24Hour: defaults.bar.use24Hour
 
     // Notification settings
-    property int notificationTimeout: 5000
-    property bool notificationSounds: true
-    property bool doNotDisturbSchedule: false
-    property string doNotDisturbStart: "22:00"
-    property string doNotDisturbEnd: "08:00"
+    property int notificationTimeout: defaults.notifications.timeout
+    property bool notificationSounds: defaults.notifications.sounds
+    property bool doNotDisturbSchedule: defaults.notifications.dndSchedule
+    property string doNotDisturbStart: defaults.notifications.dndStart
+    property string doNotDisturbEnd: defaults.notifications.dndEnd
 
     // Sidebar settings
-    property bool sidebarAnimations: true
-    property int sidebarWidth: 380
+    property bool sidebarAnimations: defaults.sidebar.animations
+    property int sidebarWidth: defaults.sidebar.width
 
     // OSD settings
-    property int osdTimeout: 1500
-    property bool osdShowValue: true
+    property int osdTimeout: defaults.osd.timeout
+    property bool osdShowValue: defaults.osd.showValue
 
     // Weather settings
-    property string weatherLocation: "" // Empty = auto-detect
-    property string weatherUnits: "metric" // metric, imperial
-    property int weatherUpdateInterval: 900000 // 15 minutes
+    property string weatherLocation: defaults.weather.location
+    property string weatherUnits: defaults.weather.units
+    property int weatherUpdateInterval: defaults.weather.updateInterval
 
     // Launcher settings
-    property int launcherMaxResults: 50
-    property bool launcherShowCategories: true
+    property int launcherMaxResults: defaults.launcher.maxResults
+    property bool launcherShowCategories: defaults.launcher.showCategories
 
     // Check if config file exists and create if needed
     Process {
@@ -173,55 +226,80 @@ Singleton {
         }
     }
 
-    // Save configuration to file
+    // Process to write config file
+    Process {
+        id: saveProcess
+        running: false
+
+        onExited: {
+            console.log("Config: Saved to", root.configPath)
+        }
+    }
+
+    // Helper to add non-default value to config object
+    function addIfChanged(obj, section, key, currentValue, defaultValue) {
+        if (currentValue !== defaultValue) {
+            if (!obj[section]) obj[section] = {}
+            obj[section][key] = currentValue
+        }
+    }
+
+    // Save configuration to file - only writes values that differ from defaults
     function save() {
-        const config = {
-            appearance: {
-                darkMode: darkMode,
-                accentColor: accentColor,
-                wallpaperTheming: wallpaperTheming,
-                panelOpacity: panelOpacity
-            },
-            fonts: {
-                family: fontFamily,
-                mono: monoFontFamily,
-                size: fontSize
-            },
-            bar: {
-                showWeather: showWeather,
-                showBattery: showBattery,
-                showNetwork: showNetwork,
-                showTray: showTray,
-                showClock: showClock,
-                use24Hour: use24Hour
-            },
-            notifications: {
-                timeout: notificationTimeout,
-                sounds: notificationSounds,
-                dndSchedule: doNotDisturbSchedule,
-                dndStart: doNotDisturbStart,
-                dndEnd: doNotDisturbEnd
-            },
-            sidebar: {
-                animations: sidebarAnimations,
-                width: sidebarWidth
-            },
-            osd: {
-                timeout: osdTimeout,
-                showValue: osdShowValue
-            },
-            weather: {
-                location: weatherLocation,
-                units: weatherUnits,
-                updateInterval: weatherUpdateInterval
-            },
-            launcher: {
-                maxResults: launcherMaxResults,
-                showCategories: launcherShowCategories
-            }
+        const config = {}
+
+        // Appearance
+        addIfChanged(config, "appearance", "darkMode", darkMode, defaults.appearance.darkMode)
+        addIfChanged(config, "appearance", "accentColor", accentColor, defaults.appearance.accentColor)
+        addIfChanged(config, "appearance", "wallpaperTheming", wallpaperTheming, defaults.appearance.wallpaperTheming)
+        addIfChanged(config, "appearance", "panelOpacity", panelOpacity, defaults.appearance.panelOpacity)
+
+        // Fonts
+        addIfChanged(config, "fonts", "family", fontFamily, defaults.fonts.family)
+        addIfChanged(config, "fonts", "mono", monoFontFamily, defaults.fonts.mono)
+        addIfChanged(config, "fonts", "size", fontSize, defaults.fonts.size)
+
+        // Bar
+        addIfChanged(config, "bar", "showWeather", showWeather, defaults.bar.showWeather)
+        addIfChanged(config, "bar", "showBattery", showBattery, defaults.bar.showBattery)
+        addIfChanged(config, "bar", "showNetwork", showNetwork, defaults.bar.showNetwork)
+        addIfChanged(config, "bar", "showTray", showTray, defaults.bar.showTray)
+        addIfChanged(config, "bar", "showClock", showClock, defaults.bar.showClock)
+        addIfChanged(config, "bar", "use24Hour", use24Hour, defaults.bar.use24Hour)
+
+        // Notifications
+        addIfChanged(config, "notifications", "timeout", notificationTimeout, defaults.notifications.timeout)
+        addIfChanged(config, "notifications", "sounds", notificationSounds, defaults.notifications.sounds)
+        addIfChanged(config, "notifications", "dndSchedule", doNotDisturbSchedule, defaults.notifications.dndSchedule)
+        addIfChanged(config, "notifications", "dndStart", doNotDisturbStart, defaults.notifications.dndStart)
+        addIfChanged(config, "notifications", "dndEnd", doNotDisturbEnd, defaults.notifications.dndEnd)
+
+        // Sidebar
+        addIfChanged(config, "sidebar", "animations", sidebarAnimations, defaults.sidebar.animations)
+        addIfChanged(config, "sidebar", "width", sidebarWidth, defaults.sidebar.width)
+
+        // OSD
+        addIfChanged(config, "osd", "timeout", osdTimeout, defaults.osd.timeout)
+        addIfChanged(config, "osd", "showValue", osdShowValue, defaults.osd.showValue)
+
+        // Weather
+        addIfChanged(config, "weather", "location", weatherLocation, defaults.weather.location)
+        addIfChanged(config, "weather", "units", weatherUnits, defaults.weather.units)
+        addIfChanged(config, "weather", "updateInterval", weatherUpdateInterval, defaults.weather.updateInterval)
+
+        // Launcher
+        addIfChanged(config, "launcher", "maxResults", launcherMaxResults, defaults.launcher.maxResults)
+        addIfChanged(config, "launcher", "showCategories", launcherShowCategories, defaults.launcher.showCategories)
+
+        // Only write if there are changes
+        if (Object.keys(config).length === 0) {
+            console.log("Config: No changes from defaults, skipping save")
+            return
         }
 
-        configFile.setText(JSON.stringify(config, null, 2))
+        const jsonContent = JSON.stringify(config, null, 2)
+        saveProcess.command = ["sh", "-c", "mkdir -p '" + root.configDir + "' && cat > '" + root.configPath + "' << 'EOFCONFIG'\n" + jsonContent + "\nEOFCONFIG"]
+        saveProcess.running = true
     }
 
     // Load configuration

@@ -395,6 +395,7 @@ PanelWindow {
                 icon: Common.Icons.weatherIcon(Services.Weather.condition, Services.Weather.isNight)
                 buttonText: Services.Weather.temperature
                 tooltip: Services.Weather.description
+                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "weather")
             }
 
             // Power button (shows battery on laptops, power icon on desktops)

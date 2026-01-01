@@ -36,19 +36,35 @@ Singleton {
     // Icon based on condition
     property string icon: Common.Icons.weatherIcon(condition, isNight)
 
+    // Pending output buffer
+    property string pendingOutput: ""
+
     Process {
         id: weatherProcess
         command: ["curl", "-s", "--max-time", "10",
             "wttr.in/" + (Common.Config.weatherLocation || "") + "?format=j1"]
 
         running: false
+
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.pendingOutput = this.text
+            }
+        }
+
+        onRunningChanged: {
+            if (running) {
+                root.pendingOutput = ""
+            }
+        }
+
         onExited: parseOutput()
     }
 
     function parseOutput() {
         loading = false
 
-        const output = weatherProcess.stdout
+        const output = root.pendingOutput
         if (!output || output.trim() === "") {
             error = "No data received"
             return

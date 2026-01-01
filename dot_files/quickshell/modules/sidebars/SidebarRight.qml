@@ -28,8 +28,8 @@ PanelWindow {
 
     visible: Root.GlobalStates.sidebarRightOpen
 
-    // Don't grab keyboard focus - let bar remain clickable
-    WlrLayershell.keyboardFocus: WlrKeyboardFocus.None
+    // Allow keyboard focus for text input in sidebars
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "sidebar"
 
@@ -90,6 +90,14 @@ PanelWindow {
         anchors.margins: Common.Appearance.spacing.medium
         active: Root.GlobalStates.sidebarRightView === "power"
         source: "PowerView.qml"
+    }
+
+    // Weather View (shown when sidebarRightView === "weather")
+    Loader {
+        anchors.fill: parent
+        anchors.margins: Common.Appearance.spacing.medium
+        active: Root.GlobalStates.sidebarRightView === "weather"
+        source: "WeatherView.qml"
     }
 
     // Default Content (shown when sidebarRightView === "default")

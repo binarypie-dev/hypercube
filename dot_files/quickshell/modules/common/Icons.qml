@@ -156,7 +156,13 @@ QtObject {
         repeat: "repeat",
         repeatOne: "repeat-1",
 
+        // Location
+        mapPin: "map-pin",
+
         // Misc
+        thermometer: "thermometer",
+        droplets: "droplets",
+        eye: "eye",
         star: "star",
         starOutline: "star",
         heart: "heart",
