@@ -1,4 +1,4 @@
-# Hypercube
+# Hypercube (archive)
 
 > Cloud-native development environment with vim keybindings
 
