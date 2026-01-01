@@ -188,13 +188,15 @@ Singleton {
 
         switch (key) {
             case "volume":
-                volume = parseFloat(value) || 0.75
+                // Cap at 1.0 (100%) - don't allow over-amplification display
+                volume = Math.min(1.0, parseFloat(value) || 0.75)
                 break
             case "muted":
                 muted = value === "true"
                 break
             case "micVolume":
-                micVolume = parseFloat(value) || 1.0
+                // Cap at 1.0 (100%) - don't allow over-amplification display
+                micVolume = Math.min(1.0, parseFloat(value) || 1.0)
                 break
             case "micMuted":
                 micMuted = value === "true"
@@ -300,10 +302,12 @@ Singleton {
 
     // Control functions
     function setVolume(value) {
-        const percent = Math.round(value * 100)
+        // Cap at 100% - no over-amplification
+        const clampedValue = Math.min(1.0, Math.max(0, value))
+        const percent = Math.round(clampedValue * 100)
         volumeProcess.command = ["sh", "-c", "wpctl set-volume @DEFAULT_AUDIO_SINK@ " + percent + "% || pactl set-sink-volume @DEFAULT_SINK@ " + percent + "%"]
         volumeProcess.running = true
-        volume = value
+        volume = clampedValue
     }
 
     Process {
@@ -328,10 +332,12 @@ Singleton {
     }
 
     function setMicVolume(value) {
-        const percent = Math.round(value * 100)
+        // Cap at 100% - no over-amplification
+        const clampedValue = Math.min(1.0, Math.max(0, value))
+        const percent = Math.round(clampedValue * 100)
         micVolumeProcess.command = ["sh", "-c", "wpctl set-volume @DEFAULT_AUDIO_SOURCE@ " + percent + "% || pactl set-source-volume @DEFAULT_SOURCE@ " + percent + "%"]
         micVolumeProcess.running = true
-        micVolume = value
+        micVolume = clampedValue
     }
 
     Process {

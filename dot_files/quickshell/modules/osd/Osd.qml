@@ -22,6 +22,11 @@ PanelWindow {
     implicitHeight: Common.Appearance.sizes.osdHeight + Common.Appearance.spacing.large
     color: "transparent"
 
+    // Float on top of windows without reserving space
+    exclusionMode: ExclusionMode.Ignore
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.namespace: "osd"
+
     visible: Root.GlobalStates.osdVisible
 
     // OSD background

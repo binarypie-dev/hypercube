@@ -15,6 +15,11 @@ Singleton {
     property bool available: false
     property string controlMethod: "none"  // "backlight", "ddc", "none"
 
+    // Pending output for parsing
+    property string pendingDetect: ""
+    property string pendingBacklight: ""
+    property string pendingDdc: ""
+
     Component.onCompleted: {
         detectMethod.running = true
     }
@@ -24,9 +29,18 @@ Singleton {
         id: detectMethod
         command: ["sh", "-c", "if brightnessctl -l 2>/dev/null | grep -q backlight; then echo backlight; elif command -v ddcutil &>/dev/null && ddcutil detect --brief 2>/dev/null | grep -q Display; then echo ddc; else echo none; fi"]
         running: false
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => {
+                if (data && data.trim()) {
+                    root.pendingDetect = data.trim()
+                }
+            }
+        }
+
         onExited: {
-            if (!stdout) return
-            const method = stdout.trim()
+            const method = root.pendingDetect
             controlMethod = method
             available = (method !== "none")
             if (method === "backlight") {
@@ -34,6 +48,7 @@ Singleton {
             } else if (method === "ddc") {
                 ddcProcess.running = true
             }
+            root.pendingDetect = ""
         }
     }
 
@@ -42,12 +57,22 @@ Singleton {
         id: brightnessProcess
         command: ["brightnessctl", "-m"]
         running: false
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => {
+                if (data && data.trim()) {
+                    root.pendingBacklight = data.trim()
+                }
+            }
+        }
+
         onExited: parseBacklightOutput()
     }
 
     function parseBacklightOutput() {
-        if (!brightnessProcess.stdout) return
-        const output = brightnessProcess.stdout.trim()
+        const output = pendingBacklight
+        pendingBacklight = ""
         if (!output) return
 
         // brightnessctl -m format: device,class,current,percentage,max
@@ -65,12 +90,22 @@ Singleton {
         id: ddcProcess
         command: ["ddcutil", "getvcp", "10", "--brief"]
         running: false
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => {
+                if (data && data.trim()) {
+                    root.pendingDdc = data.trim()
+                }
+            }
+        }
+
         onExited: parseDdcOutput()
     }
 
     function parseDdcOutput() {
-        if (!ddcProcess.stdout) return
-        const output = ddcProcess.stdout.trim()
+        const output = pendingDdc
+        pendingDdc = ""
         if (!output) return
 
         // ddcutil --brief format: VCP 10 C 75 100

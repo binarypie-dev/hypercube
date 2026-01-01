@@ -38,6 +38,14 @@ Singleton {
     property bool vpnActive: false
     property string vpnName: ""
 
+    // Parsing state
+    property var pendingInterfaces: []
+    property bool parsingInterfaces: false
+    property var pendingNetworks: []
+    property bool parsingNetworks: false
+    property var pendingSaved: []
+    property bool parsingSaved: false
+
     // Interface list script
     readonly property string interfaceListScript: `
         if command -v nmcli &>/dev/null; then
@@ -121,21 +129,60 @@ Singleton {
         id: interfaceProcess
         command: ["sh", "-c", root.interfaceListScript]
         running: true
-        onExited: root.parseInterfaces()
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => root.parseInterfaceLine(data)
+        }
+
+        onRunningChanged: {
+            if (running) {
+                root.pendingInterfaces = []
+                root.parsingInterfaces = false
+            }
+        }
+
+        onExited: root.finalizeInterfaces()
     }
 
     Process {
         id: wifiScanProcess
         command: ["sh", "-c", root.wifiScanScript]
         running: false
-        onExited: root.parseWifiScan()
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => root.parseNetworkLine(data)
+        }
+
+        onRunningChanged: {
+            if (running) {
+                root.pendingNetworks = []
+                root.parsingNetworks = false
+            }
+        }
+
+        onExited: root.finalizeNetworks()
     }
 
     Process {
         id: savedNetworksProcess
         command: ["sh", "-c", root.savedNetworksScript]
         running: false
-        onExited: root.parseSavedNetworks()
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => root.parseSavedLine(data)
+        }
+
+        onRunningChanged: {
+            if (running) {
+                root.pendingSaved = []
+                root.parsingSaved = false
+            }
+        }
+
+        onExited: root.finalizeSaved()
     }
 
     Process {
@@ -169,76 +216,74 @@ Singleton {
         }
     }
 
-    function parseInterfaces() {
-        const output = interfaceProcess.stdout
-        if (!output) return
+    function parseInterfaceLine(line) {
+        if (!line || line.trim() === "") return
 
-        const lines = output.split("\n")
-        let ifaces = []
-        let inInterfaces = false
+        if (line === "INTERFACES_START") {
+            parsingInterfaces = true
+            return
+        }
+        if (line === "INTERFACES_END") {
+            parsingInterfaces = false
+            return
+        }
+
+        if (parsingInterfaces && line.startsWith("IFACE:")) {
+            const parts = line.substring(6).split(":")
+            if (parts.length >= 4) {
+                const iface = {
+                    device: parts[0] || "",
+                    type: parts[1] || "",
+                    state: parts[2] || "",
+                    connection: parts[3] || "",
+                    ipAddress: parts[4] || "",
+                    gateway: parts[5] || "",
+                    macAddress: parts[6] || "",
+                    strength: parseInt(parts[7]) || 0,
+                    ssid: parts[8] || "",
+                    security: parts[9] || ""
+                }
+                pendingInterfaces.push(iface)
+            }
+            return
+        }
+
+        // Parse other properties
+        const idx = line.indexOf("=")
+        if (idx !== -1) {
+            const key = line.substring(0, idx).trim()
+            const value = line.substring(idx + 1).trim()
+
+            switch (key) {
+                case "wifiEnabled":
+                    wifiEnabled = value === "true"
+                    break
+                case "vpnActive":
+                    vpnActive = value === "true"
+                    break
+                case "vpnName":
+                    vpnName = value
+                    break
+            }
+        }
+    }
+
+    function finalizeInterfaces() {
         let hasWifi = false
         let hasEthernet = false
         let primaryConnection = null
 
-        for (const line of lines) {
-            if (line === "INTERFACES_START") {
-                inInterfaces = true
-                continue
-            }
-            if (line === "INTERFACES_END") {
-                inInterfaces = false
-                continue
-            }
+        for (const iface of pendingInterfaces) {
+            if (iface.type === "wifi") hasWifi = true
+            if (iface.type === "ethernet") hasEthernet = true
 
-            if (inInterfaces && line.startsWith("IFACE:")) {
-                const parts = line.substring(6).split(":")
-                if (parts.length >= 4) {
-                    const iface = {
-                        device: parts[0] || "",
-                        type: parts[1] || "",
-                        state: parts[2] || "",
-                        connection: parts[3] || "",
-                        ipAddress: parts[4] || "",
-                        gateway: parts[5] || "",
-                        macAddress: parts[6] || "",
-                        strength: parseInt(parts[7]) || 0,
-                        ssid: parts[8] || "",
-                        security: parts[9] || ""
-                    }
-
-                    if (iface.type === "wifi") hasWifi = true
-                    if (iface.type === "ethernet") hasEthernet = true
-
-                    // Track primary connection (first connected interface)
-                    if (iface.state === "connected" && !primaryConnection) {
-                        primaryConnection = iface
-                    }
-
-                    ifaces.push(iface)
-                }
-            }
-
-            // Parse other properties
-            const idx = line.indexOf("=")
-            if (idx !== -1) {
-                const key = line.substring(0, idx).trim()
-                const value = line.substring(idx + 1).trim()
-
-                switch (key) {
-                    case "wifiEnabled":
-                        wifiEnabled = value === "true"
-                        break
-                    case "vpnActive":
-                        vpnActive = value === "true"
-                        break
-                    case "vpnName":
-                        vpnName = value
-                        break
-                }
+            // Track primary connection (first connected interface)
+            if (iface.state === "connected" && !primaryConnection) {
+                primaryConnection = iface
             }
         }
 
-        interfaces = [...ifaces]
+        interfaces = [...pendingInterfaces]
         wifiAvailable = hasWifi
         ethernetAvailable = hasEthernet
 
@@ -264,78 +309,67 @@ Singleton {
         }
     }
 
-    function parseWifiScan() {
-        const output = wifiScanProcess.stdout
-        if (!output) {
-            scanning = false
+    function parseNetworkLine(line) {
+        if (!line || line.trim() === "") return
+
+        if (line === "NETWORKS_START") {
+            parsingNetworks = true
+            return
+        }
+        if (line === "NETWORKS_END") {
+            parsingNetworks = false
             return
         }
 
-        const lines = output.split("\n")
-        let networks = []
-        let inNetworks = false
-
-        for (const line of lines) {
-            if (line === "NETWORKS_START") {
-                inNetworks = true
-                continue
-            }
-            if (line === "NETWORKS_END") {
-                inNetworks = false
-                continue
-            }
-            if (inNetworks && line.startsWith("NETWORK:")) {
-                const parts = line.substring(8).split(":")
-                if (parts.length >= 3) {
-                    networks.push({
-                        ssid: parts[0],
-                        strength: parseInt(parts[1]) || 0,
-                        security: parts[2] || "",
-                        bssid: parts[3] || "",
-                        saved: savedNetworks.includes(parts[0])
-                    })
-                }
+        if (parsingNetworks && line.startsWith("NETWORK:")) {
+            const parts = line.substring(8).split(":")
+            if (parts.length >= 3) {
+                pendingNetworks.push({
+                    ssid: parts[0],
+                    strength: parseInt(parts[1]) || 0,
+                    security: parts[2] || "",
+                    bssid: parts[3] || "",
+                    saved: savedNetworks.includes(parts[0])
+                })
             }
         }
+    }
 
+    function finalizeNetworks() {
         // Sort by signal strength
-        networks.sort((a, b) => b.strength - a.strength)
+        pendingNetworks.sort((a, b) => b.strength - a.strength)
 
         // Remove duplicates (keep strongest signal)
         const seen = new Set()
-        const filtered = networks.filter(n => {
+        const filtered = pendingNetworks.filter(n => {
             if (seen.has(n.ssid)) return false
             seen.add(n.ssid)
             return true
         })
-        availableNetworks = [...filtered]
 
+        availableNetworks = [...filtered]
         scanning = false
     }
 
-    function parseSavedNetworks() {
-        const output = savedNetworksProcess.stdout
-        if (!output) return
+    function parseSavedLine(line) {
+        if (!line || line.trim() === "") return
 
-        const lines = output.split("\n")
-        let saved = []
-        let inSaved = false
-
-        for (const line of lines) {
-            if (line === "SAVED_START") {
-                inSaved = true
-                continue
-            }
-            if (line === "SAVED_END") {
-                inSaved = false
-                continue
-            }
-            if (inSaved && line.startsWith("SAVED:")) {
-                saved.push(line.substring(6))
-            }
+        if (line === "SAVED_START") {
+            parsingSaved = true
+            return
+        }
+        if (line === "SAVED_END") {
+            parsingSaved = false
+            return
         }
 
-        savedNetworks = [...saved]
+        if (parsingSaved && line.startsWith("SAVED:")) {
+            pendingSaved.push(line.substring(6))
+        }
+    }
+
+    function finalizeSaved() {
+        savedNetworks = [...pendingSaved]
     }
 
     // Update timer

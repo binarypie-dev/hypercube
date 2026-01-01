@@ -19,6 +19,9 @@ Singleton {
     property var results: []
     property int maxResults: 20
 
+    // Pending output buffer
+    property string pendingOutput: ""
+
     // Signals
     signal resultsReady(var results)
     signal searchError(string error)
@@ -81,9 +84,21 @@ Singleton {
         command: ["bash", "-c", root.fileSearchScript, "--", root.currentQuery, String(root.maxResults)]
         running: false
 
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.pendingOutput = this.text
+            }
+        }
+
+        onRunningChanged: {
+            if (running) {
+                root.pendingOutput = ""
+            }
+        }
+
         onExited: {
             root.searching = false
-            root.parseResults(this.stdout)
+            root.parseResults(root.pendingOutput)
         }
     }
 

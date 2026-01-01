@@ -91,52 +91,55 @@ Singleton {
         id: batteryProcess
         command: ["sh", "-c", root.batteryQueryScript]
         running: true
-        onExited: root.parseOutput()
+
+        stdout: SplitParser {
+            splitMarker: "\n"
+            onRead: data => root.parseLine(data)
+        }
     }
 
-    function parseOutput() {
-        const output = batteryProcess.stdout
-        if (!output) return
-        const lines = output.split("\n")
+    function parseLine(line) {
+        if (!line || line.trim() === "") return
 
-        for (const line of lines) {
-            const [key, value] = line.split("=")
-            if (!key || !value) continue
+        const idx = line.indexOf("=")
+        if (idx === -1) return
 
-            switch (key.trim()) {
-                case "present":
-                    present = value.trim() === "true"
-                    break
-                case "percent":
-                    percent = parseInt(value.trim()) || 100
-                    break
-                case "charging":
-                    charging = value.trim() === "true"
-                    break
-                case "pluggedIn":
-                    pluggedIn = value.trim() === "true"
-                    break
-                case "status":
-                    status = value.trim()
-                    break
-                case "timeRemaining":
-                    const mins = parseInt(value.trim()) || 0
-                    if (charging) {
-                        timeToFull = mins
-                    } else {
-                        timeToEmpty = mins
-                    }
-                    break
-                case "designCapacity":
-                    designCapacity = parseInt(value.trim()) || 0
-                    break
-                case "fullCapacity":
-                    fullCapacity = parseInt(value.trim()) || 0
-                    if (designCapacity > 0) {
-                        health = fullCapacity / designCapacity
-                    }
-                    break
-            }
+        const key = line.substring(0, idx).trim()
+        const value = line.substring(idx + 1).trim()
+
+        switch (key) {
+            case "present":
+                present = value === "true"
+                break
+            case "percent":
+                percent = parseInt(value) || 100
+                break
+            case "charging":
+                charging = value === "true"
+                break
+            case "pluggedIn":
+                pluggedIn = value === "true"
+                break
+            case "status":
+                status = value
+                break
+            case "timeRemaining":
+                const mins = parseInt(value) || 0
+                if (charging) {
+                    timeToFull = mins
+                } else {
+                    timeToEmpty = mins
+                }
+                break
+            case "designCapacity":
+                designCapacity = parseInt(value) || 0
+                break
+            case "fullCapacity":
+                fullCapacity = parseInt(value) || 0
+                if (designCapacity > 0) {
+                    health = fullCapacity / designCapacity
+                }
+                break
         }
     }
 

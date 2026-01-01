@@ -23,6 +23,9 @@ Singleton {
     // Configuration
     property int maxResults: 50
 
+    // Pending output buffer
+    property string pendingOutput: ""
+
     // Signals
     signal resultsReady(var results)
     signal appsLoaded()
@@ -119,9 +122,21 @@ Singleton {
         command: ["bash", "-c", root.appLoaderScript]
         running: false
 
+        stdout: StdioCollector {
+            onStreamFinished: {
+                root.pendingOutput = this.text
+            }
+        }
+
+        onRunningChanged: {
+            if (running) {
+                root.pendingOutput = ""
+            }
+        }
+
         onExited: {
             root.searching = false
-            root.parseApps(this.stdout)
+            root.parseApps(root.pendingOutput)
         }
     }
 
