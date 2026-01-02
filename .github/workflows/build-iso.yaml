@@ -52,7 +52,7 @@ jobs:
           builder-distro: fedora
           livesys: true
           livesys-repo: binarypie/hypercube
-          flatpaks-list: ${{ github.workspace }}/flatpaks/system-flatpaks.list
+          flatpaks-list: NONE
           hook-post-rootfs: ${{ github.workspace }}/iso_files/hook-post-rootfs.sh
 
       - name: Rename ISO and generate checksum
