@@ -1,0 +1,170 @@
+/* ReGreet CSS - Tokyo Night Theme for Hypercube */
+
+/* Tokyo Night Color Palette */
+@define-color bg #1a1b26;
+@define-color bg_dark #16161e;
+@define-color bg_highlight #292e42;
+@define-color fg #c0caf5;
+@define-color fg_dark #a9b1d6;
+@define-color blue #7aa2f7;
+@define-color purple #bb9af7;
+@define-color cyan #7dcfff;
+@define-color green #9ece6a;
+@define-color red #f7768e;
+@define-color border #414868;
+
+/* Main window */
+window {
+    background-color: transparent;
+}
+
+/* Login box container */
+#login-box {
+    background-color: alpha(@bg, 0.85);
+    border-radius: 16px;
+    padding: 32px;
+    border: 1px solid @border;
+    box-shadow: 0 8px 32px alpha(black, 0.4);
+}
+
+/* Greeting text */
+#greeting {
+    color: @fg;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 16px;
+}
+
+/* Username and password entries */
+entry {
+    background-color: @bg_highlight;
+    color: @fg;
+    border: 1px solid @border;
+    border-radius: 8px;
+    padding: 12px 16px;
+    min-height: 20px;
+    margin: 4px 0;
+}
+
+entry:focus {
+    border-color: @blue;
+    box-shadow: 0 0 0 2px alpha(@blue, 0.3);
+}
+
+entry placeholder {
+    color: @fg_dark;
+}
+
+/* Labels */
+label {
+    color: @fg;
+}
+
+/* Buttons */
+button {
+    background-color: @blue;
+    color: @bg;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-weight: bold;
+    min-height: 20px;
+}
+
+button:hover {
+    background-color: @purple;
+}
+
+button:active {
+    background-color: @cyan;
+}
+
+/* Secondary buttons (cancel, etc) */
+button.flat {
+    background-color: transparent;
+    color: @fg_dark;
+}
+
+button.flat:hover {
+    background-color: @bg_highlight;
+    color: @fg;
+}
+
+/* Session selector - move to bottom and make subtle */
+#session-box {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid @border;
+}
+
+#session-box label {
+    color: @fg_dark;
+    font-size: 12px;
+}
+
+#session-box combobox {
+    background-color: @bg_highlight;
+    color: @fg_dark;
+    border: 1px solid @border;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+}
+
+/* Clock widget */
+#clock {
+    color: @fg;
+    font-size: 48px;
+    font-weight: 300;
+    margin-bottom: 8px;
+}
+
+/* Error messages */
+#error-label {
+    color: @red;
+    font-size: 12px;
+    margin-top: 8px;
+}
+
+/* Power buttons */
+#power-box button {
+    background-color: transparent;
+    color: @fg_dark;
+    padding: 8px;
+    border-radius: 50%;
+    min-width: 40px;
+    min-height: 40px;
+}
+
+#power-box button:hover {
+    background-color: @bg_highlight;
+    color: @fg;
+}
+
+/* User dropdown/selector */
+combobox {
+    background-color: @bg_highlight;
+    color: @fg;
+    border: 1px solid @border;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+combobox:hover {
+    border-color: @blue;
+}
+
+/* Dropdown menu */
+combobox window {
+    background-color: @bg;
+    border: 1px solid @border;
+    border-radius: 8px;
+}
+
+combobox window row {
+    padding: 8px 12px;
+}
+
+combobox window row:hover {
+    background-color: @bg_highlight;
+}
