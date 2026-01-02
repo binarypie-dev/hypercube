@@ -25,7 +25,7 @@ concurrency:
 jobs:
   build:
     name: Build ISO
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest-m #ubuntu-24.04
     permissions:
       contents: write
       packages: read

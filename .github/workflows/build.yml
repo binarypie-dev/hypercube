@@ -30,7 +30,7 @@ concurrency:
 jobs:
   build_push:
     name: Build and push image
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest-m #ubuntu-24.04
 
     permissions:
       contents: read
