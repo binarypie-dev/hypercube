@@ -25,4 +25,10 @@ gtk-update-icon-cache /usr/share/icons/Tokyonight-Light 2>/dev/null || true
 ### Cleanup
 rm -rf /tmp/tokyonight-gtk
 
+### Create symlinks in /etc/skel for flatpak theme access
+# Flatpaks access ~/.themes and ~/.icons, symlinks allow system theme updates to propagate
+mkdir -p /etc/skel/.themes /etc/skel/.icons
+ln -sf /usr/share/themes/Tokyonight-Dark /etc/skel/.themes/
+ln -sf /usr/share/icons/Tokyonight-Dark /etc/skel/.icons/
+
 echo "Tokyo Night theme installed successfully"

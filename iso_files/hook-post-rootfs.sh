@@ -82,7 +82,7 @@ env = GTK_THEME,Tokyonight-Dark
 env = QT_QPA_PLATFORMTHEME,qt6ct
 
 # Live ISO - Window rules for Anaconda installer
-# Prevent fullscreen, keep as tiled window so user can access terminal/nm-applet
+# Prevent fullscreen, keep as tiled window so user can access terminal
 windowrule = tile, class:^(anaconda)$
 windowrule = tile, class:^(liveinst)$
 windowrule = noinitialfocus, class:^(anaconda)$

@@ -409,10 +409,23 @@ PanelWindow {
     }
 
     function launchApp(app) {
-        if (!app || !app.exec) return
+        const metadata = app?._raw?.metadata || {}
+        const desktopId = metadata.desktop_id || app?.id || ""
+        if (!desktopId) return
 
-        // Use hyprctl dispatch exec to inherit Hyprland's environment
-        appLaunchProcess.command = ["hyprctl", "dispatch", "exec", app.exec]
+        // Check if terminal app - handle boolean or string "true"/"false"
+        const isTerminal = metadata.terminal === true || metadata.terminal === "true"
+
+        let execCmd
+        if (isTerminal) {
+            // Terminal apps: launch with ghostty
+            execCmd = "ghostty -e " + desktopId
+        } else {
+            // GUI apps: use gtk-launch with desktop_id
+            execCmd = "gtk-launch " + desktopId
+        }
+
+        appLaunchProcess.command = ["hyprctl", "dispatch", "exec", execCmd]
         appLaunchProcess.running = true
 
         Root.GlobalStates.sidebarLeftOpen = false

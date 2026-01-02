@@ -44,8 +44,7 @@ dnf5 -y install \
 dnf5 -y install \
     NetworkManager \
     NetworkManager-wifi \
-    NetworkManager-bluetooth \
-    network-manager-applet
+    NetworkManager-bluetooth
 
 ### Bluetooth
 dnf5 -y install \

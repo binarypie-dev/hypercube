@@ -75,4 +75,8 @@ install -Dm644 "${CONFIG_DIR}/qt6ct/colors/TokyoNight.conf" /usr/share/qt6ct/col
 ### ReGreet login greeter configuration (Tokyo Night themed)
 install -Dm644 "${CONFIG_DIR}/regreet/regreet.toml" /etc/greetd/regreet.toml
 
+### Enable xdg-desktop-portal-gtk for dark mode detection (Firefox, etc.)
+# This portal provides the org.freedesktop.appearance.color-scheme setting
+systemctl --global enable xdg-desktop-portal-gtk.service
+
 echo "Hypercube configurations installed successfully"

@@ -1,12 +1,14 @@
 [Unit]
 Description=Preinstall Flatpaks
-After=network-online.target
+After=network-online.target flatpak-add-flathub.service
 Wants=network-online.target
+Requires=flatpak-add-flathub.service
 ConditionPathExists=/usr/bin/flatpak
+ConditionPathExists=/usr/libexec/flatpak-preinstall
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/flatpak preinstall -y
+ExecStart=/usr/libexec/flatpak-preinstall
 RemainAfterExit=true
 Restart=on-failure
 RestartSec=30

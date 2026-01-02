@@ -1,0 +1,6 @@
+[Context]
+filesystems=xdg-config/gtk-3.0:ro;xdg-config/gtk-4.0:ro;~/.themes:ro;~/.icons:ro;/usr/share/themes:ro;/usr/share/icons:ro
+
+[Environment]
+GTK_THEME=Tokyonight-Dark
+ICON_THEME=Tokyonight-Dark

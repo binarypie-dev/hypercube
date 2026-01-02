@@ -1,5 +1,7 @@
 [Unit]
 Description=Add Flathub Remote
+After=network-online.target
+Wants=network-online.target
 Before=flatpak-preinstall.service
 ConditionPathExists=/usr/bin/flatpak
 
@@ -7,6 +9,8 @@ ConditionPathExists=/usr/bin/flatpak
 Type=oneshot
 ExecStart=/usr/bin/flatpak remote-add --if-not-exists --system flathub https://flathub.org/repo/flathub.flatpakrepo
 RemainAfterExit=true
+Restart=on-failure
+RestartSec=10
 
 [Install]
 WantedBy=multi-user.target
