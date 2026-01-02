@@ -416,23 +416,20 @@ PanelWindow {
         // Check if terminal app - handle boolean or string "true"/"false"
         const isTerminal = metadata.terminal === true || metadata.terminal === "true"
 
-        let execCmd
         if (isTerminal) {
             // Terminal apps: launch with ghostty
-            execCmd = "ghostty -e " + desktopId
+            appLaunchProcess.command = ["ghostty", "-e", desktopId]
         } else {
             // GUI apps: use gtk-launch with desktop_id
-            execCmd = "gtk-launch " + desktopId
+            appLaunchProcess.command = ["gtk-launch", desktopId]
         }
-
-        appLaunchProcess.command = ["hyprctl", "dispatch", "exec", execCmd]
         appLaunchProcess.running = true
 
         Root.GlobalStates.sidebarLeftOpen = false
         searchInput.text = ""
     }
 
-    // App launcher process - uses hyprctl to inherit compositor environment
+    // App launcher process
     Process {
         id: appLaunchProcess
         command: ["true"]
