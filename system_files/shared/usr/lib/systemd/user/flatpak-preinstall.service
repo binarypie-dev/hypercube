@@ -4,16 +4,13 @@ After=network-online.target
 Wants=network-online.target
 ConditionPathExists=/usr/bin/flatpak
 ConditionPathExists=/usr/libexec/flatpak-preinstall
+StartLimitIntervalSec=600
+StartLimitBurst=3
 
 [Service]
 Type=oneshot
 ExecStart=/usr/libexec/flatpak-preinstall
 RemainAfterExit=true
-Restart=on-failure
-RestartSec=30
-
-StartLimitIntervalSec=600
-StartLimitBurst=3
 
 [Install]
 WantedBy=default.target

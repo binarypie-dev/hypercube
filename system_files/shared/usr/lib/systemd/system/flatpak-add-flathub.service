@@ -2,7 +2,6 @@
 Description=Add Flathub Remote
 After=network-online.target
 Wants=network-online.target
-Before=flatpak-preinstall.service
 ConditionPathExists=/usr/bin/flatpak
 
 [Service]

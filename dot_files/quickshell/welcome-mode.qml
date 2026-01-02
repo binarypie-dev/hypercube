@@ -120,6 +120,8 @@ ShellRoot {
                                 clip: true
                                 text: username
                                 onTextChanged: username = text
+                                activeFocusOnTab: true
+                                KeyNavigation.tab: fullNameInput
                                 Component.onCompleted: forceActiveFocus()
 
                                 Text {
@@ -163,6 +165,9 @@ ShellRoot {
                                 clip: true
                                 text: fullName
                                 onTextChanged: fullName = text
+                                activeFocusOnTab: true
+                                KeyNavigation.tab: passwordInput
+                                KeyNavigation.backtab: usernameInput
 
                                 Text {
                                     anchors.fill: parent
@@ -206,6 +211,9 @@ ShellRoot {
                                 echoMode: TextInput.Password
                                 text: password
                                 onTextChanged: password = text
+                                activeFocusOnTab: true
+                                KeyNavigation.tab: confirmInput
+                                KeyNavigation.backtab: fullNameInput
 
                                 Text {
                                     anchors.fill: parent
@@ -249,6 +257,8 @@ ShellRoot {
                                 echoMode: TextInput.Password
                                 text: passwordConfirm
                                 onTextChanged: passwordConfirm = text
+                                activeFocusOnTab: true
+                                KeyNavigation.backtab: passwordInput
 
                                 Text {
                                     anchors.fill: parent

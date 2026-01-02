@@ -104,7 +104,7 @@ grep -q '^livesys_session=' /etc/sysconfig/livesys || echo 'livesys_session=hypr
 systemctl disable rpm-ostree-countme.service || true
 systemctl disable bootloader-update.service || true
 systemctl disable rpm-ostreed-automatic.timer || true
-systemctl disable flatpak-preinstall.service || true
+# flatpak-preinstall is now a user service, no need to disable
 systemctl disable hypercube-first-boot.service || true
 
 # Disable services that fail in live environment

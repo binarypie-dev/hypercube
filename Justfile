@@ -82,6 +82,190 @@ run:
 # VM Recipes
 # ============================================
 
+# Build qcow2 disk image using bootc install (fastest method for testing)
+[group('VM')]
+build-qcow2-fast:
+    #!/usr/bin/bash
+    set -euo pipefail
+
+    LOCAL_IMAGE="localhost/{{ image_name }}:{{ fedora_version }}"
+    OUTPUT_DIR="${PWD}/.vm"
+    RAW_FILE="${OUTPUT_DIR}/{{ image_name }}.raw"
+    QCOW2_FILE="${OUTPUT_DIR}/{{ image_name }}.qcow2"
+    DISK_SIZE="64G"
+
+    echo "Building qcow2 from ${LOCAL_IMAGE} using bootc install..."
+
+    # Check if image exists
+    if ! {{ PODMAN }} image exists "${LOCAL_IMAGE}"; then
+        echo "Error: Image ${LOCAL_IMAGE} not found. Run 'just build' first."
+        exit 1
+    fi
+
+    mkdir -p "${OUTPUT_DIR}"
+
+    # Remove existing disks to start fresh
+    rm -f "${RAW_FILE}" "${QCOW2_FILE}"
+
+    # Create a raw disk image (loopback works properly with raw)
+    echo "Creating ${DISK_SIZE} raw disk image..."
+    truncate -s "${DISK_SIZE}" "${RAW_FILE}"
+
+    # Use bootc install to-disk from within the container
+    # This is much faster than bootc-image-builder as it directly installs
+    {{ SUDO }} {{ PODMAN }} run \
+        --rm \
+        -it \
+        --privileged \
+        --pid=host \
+        --security-opt label=type:unconfined_t \
+        -v /var/lib/containers/storage:/var/lib/containers/storage \
+        -v "${RAW_FILE}":/disk.raw \
+        -v /dev:/dev \
+        "${LOCAL_IMAGE}" \
+        bootc install to-disk --skip-fetch-check --generic-image --via-loopback --filesystem btrfs /disk.raw
+
+    # Convert raw to qcow2 (sparse, much smaller)
+    echo "Converting to qcow2..."
+    qemu-img convert -f raw -O qcow2 "${RAW_FILE}" "${QCOW2_FILE}"
+    rm -f "${RAW_FILE}"
+
+    # Fix ownership
+    if [[ "${UID}" -gt 0 ]]; then
+        {{ SUDO }} chown "${UID}:$(id -g)" "${QCOW2_FILE}"
+    fi
+
+    echo ""
+    echo "========================================"
+    echo "qcow2 built: ${QCOW2_FILE}"
+    echo "Run 'just run-qcow2' to test"
+    echo "========================================"
+
+# Build qcow2 disk image using bootc-image-builder (slower, more options)
+[group('VM')]
+build-qcow2:
+    #!/usr/bin/bash
+    set -euo pipefail
+
+    LOCAL_IMAGE="localhost/{{ image_name }}:{{ fedora_version }}"
+    OUTPUT_DIR="${PWD}/.vm"
+    QCOW2_FILE="${OUTPUT_DIR}/{{ image_name }}.qcow2"
+
+    echo "Building qcow2 from ${LOCAL_IMAGE}..."
+
+    # Check if image exists
+    if ! {{ PODMAN }} image exists "${LOCAL_IMAGE}"; then
+        echo "Error: Image ${LOCAL_IMAGE} not found. Run 'just build' first."
+        exit 1
+    fi
+
+    mkdir -p "${OUTPUT_DIR}"
+
+    # Copy image to root storage if needed
+    if [[ "${UID}" -gt 0 ]]; then
+        echo "Copying image to root podman storage..."
+        COPYTMP=$(mktemp -p "${PWD}" -d -t podman_scp.XXXXXXXXXX)
+        {{ SUDO }} TMPDIR=${COPYTMP} {{ PODMAN }} image scp "${UID}@localhost::${LOCAL_IMAGE}" root@localhost::"${LOCAL_IMAGE}"
+        rm -rf "${COPYTMP}"
+    fi
+
+    # Create cache directories for faster rebuilds
+    CACHE_DIR="${PWD}/.cache/bootc-image-builder"
+    mkdir -p "${CACHE_DIR}/store" "${CACHE_DIR}/rpmmd"
+
+    # Build qcow2 using bootc-image-builder
+    {{ SUDO }} {{ PODMAN }} run \
+        --rm \
+        -it \
+        --privileged \
+        --pull=newer \
+        --security-opt label=type:unconfined_t \
+        -v "${OUTPUT_DIR}":/output \
+        -v /var/lib/containers/storage:/var/lib/containers/storage \
+        -v "${CACHE_DIR}/store":/store \
+        -v "${CACHE_DIR}/rpmmd":/rpmmd \
+        quay.io/centos-bootc/bootc-image-builder:latest \
+        --type qcow2 \
+        --rootfs btrfs \
+        --use-librepo=True \
+        "${LOCAL_IMAGE}"
+
+    # Fix ownership
+    if [[ "${UID}" -gt 0 ]]; then
+        {{ SUDO }} chown -R "${UID}:$(id -g)" "${OUTPUT_DIR}"
+    fi
+
+    # Move to expected location
+    if [[ -f "${OUTPUT_DIR}/qcow2/disk.qcow2" ]]; then
+        mv "${OUTPUT_DIR}/qcow2/disk.qcow2" "${QCOW2_FILE}"
+        rm -rf "${OUTPUT_DIR}/qcow2"
+        echo ""
+        echo "========================================"
+        echo "qcow2 built: ${QCOW2_FILE}"
+        echo "Run 'just run-qcow2' to test"
+        echo "========================================"
+    else
+        echo "Error: qcow2 build failed"
+        exit 1
+    fi
+
+# Run qcow2 in VM with virt-manager
+[group('VM')]
+run-qcow2:
+    #!/usr/bin/bash
+    set -euo pipefail
+
+    VM_NAME="hypercube-qcow2"
+    QCOW2_FILE="${PWD}/.vm/{{ image_name }}.qcow2"
+
+    if [[ ! -f "${QCOW2_FILE}" ]]; then
+        echo "Error: qcow2 not found at ${QCOW2_FILE}"
+        echo "Run 'just build-qcow2' first."
+        exit 1
+    fi
+
+    # RAM and CPU settings
+    ram_size=16
+    vcpus=8
+
+    echo "VM: ${VM_NAME}"
+    echo "Disk: ${QCOW2_FILE}"
+    echo "RAM: ${ram_size}GB, vCPUs: ${vcpus}"
+
+    # Check if VM already exists
+    if virsh dominfo "${VM_NAME}" &>/dev/null; then
+        echo "Starting existing VM..."
+        virsh start "${VM_NAME}" 2>/dev/null || true
+        virt-manager --connect qemu:///system --show-domain-console "${VM_NAME}"
+        exit 0
+    fi
+
+    echo "Creating new VM..."
+    virt-install \
+        --name "${VM_NAME}" \
+        --memory $(( ram_size * 1024 )) \
+        --vcpus ${vcpus} \
+        --import \
+        --disk path="${QCOW2_FILE}",format=qcow2,bus=virtio \
+        --os-variant fedora-unknown \
+        --boot uefi \
+        --autoconsole graphical
+
+# Delete the qcow2 test VM
+[group('VM')]
+delete-qcow2-vm:
+    #!/usr/bin/bash
+    set -euo pipefail
+    VM_NAME="hypercube-qcow2"
+
+    echo "Stopping VM if running..."
+    virsh destroy "${VM_NAME}" 2>/dev/null || true
+
+    echo "Removing VM definition..."
+    virsh undefine "${VM_NAME}" --nvram 2>/dev/null || true
+
+    echo "qcow2 VM deleted (disk preserved in .vm/)"
+
 # Run ISO in local VM with virt-manager (persistent disk for testing installs)
 [group('VM')]
 run-iso-local iso_file:
@@ -228,11 +412,12 @@ build-iso-local: _titanoboa-setup
         exit 1
     fi
 
-    # Cleanup function
+    # Cleanup function (container has --rm so stop is enough)
     cleanup() {
         echo "Stopping local registry..."
-        {{ SUDO }} {{ PODMAN }} stop "${REGISTRY_NAME}" 2>/dev/null || true
-        {{ SUDO }} {{ PODMAN }} rm "${REGISTRY_NAME}" 2>/dev/null || true
+        if {{ SUDO }} {{ PODMAN }} container exists "${REGISTRY_NAME}" 2>/dev/null; then
+            {{ SUDO }} {{ PODMAN }} stop "${REGISTRY_NAME}" 2>/dev/null || :
+        fi
     }
     trap cleanup EXIT
 
@@ -296,6 +481,11 @@ build-iso-local: _titanoboa-setup
     # Stop registry before moving ISO (while sudo is still cached)
     cleanup
     trap - EXIT
+
+    # Fix ownership of _titanoboa directory (must happen before mv)
+    if [[ "${UID}" -gt 0 ]]; then
+        {{ SUDO }} chown -R "${UID}:$(id -g)" "${PWD}"
+    fi
 
     # Move ISO to project root
     if [[ -f "output.iso" ]]; then
