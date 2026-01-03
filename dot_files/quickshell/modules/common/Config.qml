@@ -5,13 +5,11 @@ import Quickshell
 import Quickshell.Io
 
 // Persistent JSON configuration system
+// Loads synchronously at startup via FileView preload
 Singleton {
     id: root
 
-    // Configuration ready flag
-    property bool ready: false
-
-    // Configuration file path - fallback to ~/.config if XDG_CONFIG_HOME is not set
+    // Configuration file path
     readonly property string configDir: {
         const xdg = Quickshell.env("XDG_CONFIG_HOME")
         if (xdg && xdg !== "") return xdg + "/hypercube"
@@ -19,7 +17,6 @@ Singleton {
         return home + "/.config/hypercube"
     }
     readonly property string configPath: configDir + "/shell.json"
-    readonly property string defaultConfigPath: Qt.resolvedUrl("../../defaults/config.json")
 
     // Default values (used for comparison when saving)
     readonly property var defaults: ({
@@ -111,48 +108,31 @@ Singleton {
     property int launcherMaxResults: defaults.launcher.maxResults
     property bool launcherShowCategories: defaults.launcher.showCategories
 
-    // Check if config file exists and create if needed
-    Process {
-        id: configDirCheck
-        command: ["sh", "-c", "mkdir -p \"$(dirname '" + root.configPath + "')\" && [ -f '" + root.configPath + "' ] && echo exists || echo missing"]
-        running: true
-        onExited: {
-            if (stdout && stdout.trim() === "missing") {
-                console.log("Config: No user config found, using defaults")
-                root.ready = true
-            } else {
-                // File exists, load it
-                configFile.reload()
-            }
-        }
-    }
-
-    // File watcher for config changes
+    // Load config synchronously at startup
     FileView {
         id: configFile
         path: root.configPath
+        preload: true
         watchChanges: true
-        blockLoading: true
-        preload: false  // Don't preload - we check existence first
 
-        onFileChanged: {
-            reload()
+        onTextChanged: {
+            root.parseConfig(text())
         }
+    }
 
-        onLoaded: {
-            if (text()) {
-                root.parseConfig(text())
-            } else {
-                root.ready = true
-            }
+    // Parse on component completion (handles preloaded content)
+    Component.onCompleted: {
+        const content = configFile.text()
+        if (content && content.trim() !== "") {
+            parseConfig(content)
+        } else {
+            console.log("Config: No user config found, using defaults")
         }
     }
 
     // Parse configuration from JSON
     function parseConfig(content) {
         if (!content || content.trim() === "") {
-            console.log("Config: Empty config, using defaults")
-            ready = true
             return
         }
 
@@ -218,11 +198,9 @@ Singleton {
                 launcherShowCategories = config.launcher.showCategories ?? launcherShowCategories
             }
 
-            console.log("Config: Loaded successfully")
-            ready = true
+            console.log("Config: Loaded from", root.configPath)
         } catch (e) {
-            console.error("Config: Failed to parse config:", e)
-            ready = true // Use defaults
+            console.error("Config: Failed to parse:", e)
         }
     }
 
@@ -230,10 +208,7 @@ Singleton {
     Process {
         id: saveProcess
         running: false
-
-        onExited: {
-            console.log("Config: Saved to", root.configPath)
-        }
+        onExited: console.log("Config: Saved to", root.configPath)
     }
 
     // Helper to add non-default value to config object
@@ -302,31 +277,12 @@ Singleton {
         saveProcess.running = true
     }
 
-    // Load configuration
-    function load() {
-        // Config file will be loaded automatically via preload
-        // If already loaded, parse immediately
-        if (configFile.loaded) {
-            const content = configFile.text()
-            if (content && content.trim() !== "") {
-                parseConfig(content)
-            } else {
-                console.log("Config: No config file found, using defaults")
-                ready = true
-            }
-        } else {
-            // Will be parsed when onLoaded fires
-            console.log("Config: Waiting for config file to load...")
-        }
-    }
-
-    // Set a nested value and save
+    // Set a value and save
     function setValue(key, value) {
         const parts = key.split(".")
         if (parts.length === 1) {
             root[key] = value
         } else {
-            // Handle nested keys like "appearance.darkMode"
             root[parts[1]] = value
         }
         save()

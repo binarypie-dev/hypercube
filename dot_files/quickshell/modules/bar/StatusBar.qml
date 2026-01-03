@@ -391,10 +391,12 @@ PanelWindow {
 
             // Weather (if enabled)
             BarButton {
-                visible: Common.Config.showWeather && Services.Weather.ready
-                icon: Common.Icons.weatherIcon(Services.Weather.condition, Services.Weather.isNight)
-                buttonText: Services.Weather.temperature
-                tooltip: Services.Weather.description
+                visible: Common.Config.showWeather
+                icon: Services.Weather.ready
+                    ? Common.Icons.weatherIcon(Services.Weather.condition, Services.Weather.isNight)
+                    : Common.Icons.icons.cloudy
+                buttonText: Services.Weather.ready ? Services.Weather.temperature : "--°"
+                tooltip: Services.Weather.ready ? Services.Weather.description : "Loading weather..."
                 onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "weather")
             }
 

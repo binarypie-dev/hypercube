@@ -21,7 +21,6 @@ ShellRoot {
 
     Component.onCompleted: {
         console.log("Hypercube Shell starting...")
-        Common.Config.load()
     }
 
     // Notification server
