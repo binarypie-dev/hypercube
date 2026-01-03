@@ -144,69 +144,25 @@ PanelWindow {
                 Layout.fillWidth: true
                 spacing: Common.Appearance.spacing.small
 
-                // App icon with datacube fallback
+                // App icon via IconResolver
                 Item {
                     id: popupIconContainer
                     Layout.preferredWidth: 20
                     Layout.preferredHeight: 20
 
-                    property string iconName: notification.appIcon || ""
-                    property string datacubeIcon: ""
-                    property bool datacubeQueried: false
-                    property bool iconLoaded: datacubePopupIcon.status === Image.Ready || primaryPopupIcon.status === Image.Ready
-                    visible: iconLoaded
+                    // Get icon from IconResolver (triggers async lookup if not cached)
+                    property string resolvedIcon: notification.appName ? Services.IconResolver.getIcon(notification.appName) : ""
+                    property string fallbackIcon: notification.appIcon || ""
+                    property string iconSource: resolvedIcon || (fallbackIcon ? "image://icon/" + fallbackIcon : "")
 
-                    Component.onCompleted: {
-                        if (notification.appName && !datacubeQueried) {
-                            datacubeQueried = true
-                            popupIconLookup.query = notification.appName
-                            popupIconLookup.running = true
-                        }
-                    }
+                    visible: appIcon.status === Image.Ready
 
-                    Process {
-                        id: popupIconLookup
-                        property string query: ""
-                        command: ["bash", "-lc", "datacube-cli query '" + query.replace(/'/g, "'\\''") + "' --json -m 1"]
-
-                        stdout: SplitParser {
-                            splitMarker: "\n"
-                            onRead: data => {
-                                if (!data || data.trim() === "") return
-                                try {
-                                    const item = JSON.parse(data)
-                                    if (item.icon) {
-                                        if (item.icon.startsWith("/")) {
-                                            popupIconContainer.datacubeIcon = "file://" + item.icon
-                                        } else {
-                                            popupIconContainer.datacubeIcon = "image://icon/" + item.icon
-                                        }
-                                    }
-                                } catch (e) {}
-                            }
-                        }
-                    }
-
-                    // Primary: Try datacube icon first
                     Image {
-                        id: datacubePopupIcon
+                        id: appIcon
                         anchors.fill: parent
-                        source: popupIconContainer.datacubeIcon
+                        source: popupIconContainer.iconSource
                         sourceSize: Qt.size(20, 20)
                         smooth: true
-                        visible: status === Image.Ready
-                    }
-
-                    // Fallback: Qt icon provider
-                    Image {
-                        id: primaryPopupIcon
-                        anchors.fill: parent
-                        source: popupIconContainer.iconName && datacubePopupIcon.status !== Image.Ready
-                            ? "image://icon/" + popupIconContainer.iconName
-                            : ""
-                        sourceSize: Qt.size(20, 20)
-                        smooth: true
-                        visible: datacubePopupIcon.status !== Image.Ready && status === Image.Ready
                     }
                 }
 

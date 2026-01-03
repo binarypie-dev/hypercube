@@ -273,76 +273,31 @@ ColumnLayout {
                 anchors.margins: Common.Appearance.spacing.medium
                 spacing: Common.Appearance.spacing.small
 
-                // App icon with datacube fallback
+                // App icon via IconResolver
                 Item {
                     id: notifIconContainer
                     Layout.preferredWidth: 32
                     Layout.preferredHeight: 32
                     Layout.alignment: Qt.AlignTop
 
-                    property string iconName: notification.appIcon || ""
-                    property string datacubeIcon: ""
-                    property bool datacubeQueried: false
+                    // Get icon from IconResolver (triggers async lookup if not cached)
+                    property string resolvedIcon: notification.appName ? Services.IconResolver.getIcon(notification.appName) : ""
+                    property string fallbackIcon: notification.appIcon || ""
+                    property string iconSource: resolvedIcon || (fallbackIcon ? "image://icon/" + fallbackIcon : "")
 
-                    Component.onCompleted: {
-                        if (notification.appName && !datacubeQueried) {
-                            datacubeQueried = true
-                            iconLookup.query = notification.appName
-                            iconLookup.running = true
-                        }
-                    }
-
-                    Process {
-                        id: iconLookup
-                        property string query: ""
-                        command: ["bash", "-lc", "datacube-cli query '" + query.replace(/'/g, "'\\''") + "' --json -m 1"]
-
-                        stdout: SplitParser {
-                            splitMarker: "\n"
-                            onRead: data => {
-                                if (!data || data.trim() === "") return
-                                try {
-                                    const item = JSON.parse(data)
-                                    if (item.icon) {
-                                        if (item.icon.startsWith("/")) {
-                                            notifIconContainer.datacubeIcon = "file://" + item.icon
-                                        } else {
-                                            notifIconContainer.datacubeIcon = "image://icon/" + item.icon
-                                        }
-                                    }
-                                } catch (e) {
-                                    console.log("Icon lookup parse error:", e)
-                                }
-                            }
-                        }
-                    }
-
-                    // Primary: Try datacube icon first
                     Image {
-                        id: datacubeNotifIcon
+                        id: notifIcon
                         anchors.fill: parent
-                        source: notifIconContainer.datacubeIcon
+                        source: notifIconContainer.iconSource
                         sourceSize: Qt.size(32, 32)
                         smooth: true
                         visible: status === Image.Ready
                     }
 
-                    // Fallback 1: Qt icon provider
-                    Image {
-                        id: primaryNotifIcon
-                        anchors.fill: parent
-                        source: notifIconContainer.iconName && datacubeNotifIcon.status !== Image.Ready
-                            ? "image://icon/" + notifIconContainer.iconName
-                            : ""
-                        sourceSize: Qt.size(32, 32)
-                        smooth: true
-                        visible: datacubeNotifIcon.status !== Image.Ready && status === Image.Ready
-                    }
-
-                    // Fallback 2: Letter icon
+                    // Fallback: Letter icon
                     Rectangle {
                         anchors.fill: parent
-                        visible: datacubeNotifIcon.status !== Image.Ready && primaryNotifIcon.status !== Image.Ready
+                        visible: notifIcon.status !== Image.Ready
                         radius: Common.Appearance.rounding.small
                         color: Common.Appearance.m3colors.primaryContainer
 

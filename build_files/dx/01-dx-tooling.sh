@@ -13,6 +13,7 @@ dnf5 -y install distrobox
 dnf5 -y install \
     podman \
     podman-compose \
+    podman-docker \
     buildah \
     skopeo
 

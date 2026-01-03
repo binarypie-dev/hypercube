@@ -2,16 +2,16 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 
-// Icon resolution service using datacube for flatpak and other icon lookups
+// Icon resolution service using Datacube for icon lookups
+// Maintains a cache of resolved icon paths for window classes, app names, etc.
 Singleton {
     id: root
 
     // Icon cache: maps query string to resolved icon path
     property var iconCache: ({})
     // Track which queries are in progress
-    property var queriesInProgress: ({})
+    property var pendingQueries: ({})  // queryId -> cacheKey mapping
 
     // Get icon for a given query (app name, window class, etc.)
     // Returns cached path if available, empty string if not yet resolved
@@ -26,7 +26,8 @@ Singleton {
         }
 
         // Trigger a lookup if not already in progress
-        if (!queriesInProgress[cacheKey]) {
+        const alreadyPending = Object.values(pendingQueries).includes(cacheKey)
+        if (!alreadyPending) {
             lookupIcon(query, cacheKey)
         }
 
@@ -38,9 +39,7 @@ Singleton {
     function refreshIcon(query) {
         if (!query) return
         const cacheKey = query.toLowerCase()
-        if (!queriesInProgress[cacheKey]) {
-            lookupIcon(query, cacheKey)
-        }
+        lookupIcon(query, cacheKey)
     }
 
     // Check if an icon is cached
@@ -53,56 +52,33 @@ Singleton {
     function lookupIcon(query, cacheKey) {
         if (!query) return
 
-        queriesInProgress[cacheKey] = true
-
-        const proc = iconLookupComponent.createObject(root, {
-            query: query,
-            cacheKey: cacheKey
-        })
-        proc.running = true
+        const queryId = Datacube.queryApplications(query, 1)
+        pendingQueries[queryId] = cacheKey
     }
 
-    Component {
-        id: iconLookupComponent
+    // Handle Datacube query results
+    Connections {
+        target: Datacube
 
-        Process {
-            id: iconProc
-            property string query: ""
-            property string cacheKey: ""
-            command: ["bash", "-lc", "datacube-cli query '" + query.replace(/'/g, "'\\''") + "' --json -m 1 -p applications"]
+        function onQueryCompleted(queryId, results) {
+            const cacheKey = root.pendingQueries[queryId]
+            if (!cacheKey) return
 
-            stdout: SplitParser {
-                splitMarker: "\n"
-                onRead: data => {
-                    if (!data || data.trim() === "") return
-                    try {
-                        const item = JSON.parse(data)
-                        if (item.icon) {
-                            let iconPath
-                            if (item.icon.startsWith("/")) {
-                                iconPath = "file://" + item.icon
-                            } else {
-                                iconPath = "image://icon/" + item.icon
-                            }
-                            // Update the cache - create new object to trigger binding updates
-                            let newCache = Object.assign({}, root.iconCache)
-                            newCache[iconProc.cacheKey] = iconPath
-                            root.iconCache = newCache
-                        }
-                    } catch (e) {
-                        console.log("IconResolver: Failed to parse lookup result:", e)
-                    }
-                }
+            delete root.pendingQueries[queryId]
+
+            if (results.length > 0 && results[0].icon) {
+                // Update the cache - create new object to trigger binding updates
+                let newCache = Object.assign({}, root.iconCache)
+                newCache[cacheKey] = results[0].icon
+                root.iconCache = newCache
             }
+        }
 
-            onExited: {
-                // Remove from in-progress tracking
-                let newInProgress = Object.assign({}, root.queriesInProgress)
-                delete newInProgress[iconProc.cacheKey]
-                root.queriesInProgress = newInProgress
-
-                // Clean up this process object
-                iconProc.destroy()
+        function onQueryFailed(queryId, error) {
+            const cacheKey = root.pendingQueries[queryId]
+            if (cacheKey) {
+                delete root.pendingQueries[queryId]
+                console.log("IconResolver: lookup failed for", cacheKey, "-", error)
             }
         }
     }

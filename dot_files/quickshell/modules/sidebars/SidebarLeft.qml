@@ -7,6 +7,7 @@ import Quickshell.Wayland
 
 import "../common" as Common
 import "../../" as Root
+import "../../services" as Services
 
 PanelWindow {
     id: root
@@ -175,41 +176,27 @@ PanelWindow {
                     anchors.rightMargin: Common.Appearance.spacing.medium
                     spacing: Common.Appearance.spacing.medium
 
-                    // App icon with cascading fallback
+                    // App icon with letter fallback
                     Item {
                         id: iconContainer
                         Layout.preferredWidth: 32
                         Layout.preferredHeight: 32
 
-                        property string iconName: modelData._raw ? modelData._raw.icon : ""
-                        property bool iconLoaded: primaryIcon.status === Image.Ready || flatpakIcon.status === Image.Ready
+                        property string iconSource: modelData.icon || ""
 
-                        // Primary: Qt icon provider
                         Image {
-                            id: primaryIcon
+                            id: appIcon
                             anchors.fill: parent
-                            source: iconContainer.iconName ? "image://icon/" + iconContainer.iconName : ""
+                            source: iconContainer.iconSource
                             sourceSize: Qt.size(32, 32)
                             smooth: true
                             visible: status === Image.Ready
                         }
 
-                        // Fallback 1: Flatpak icon path
-                        Image {
-                            id: flatpakIcon
-                            anchors.fill: parent
-                            source: primaryIcon.status === Image.Error && iconContainer.iconName
-                                ? "file:///var/lib/flatpak/exports/share/icons/hicolor/128x128/apps/" + iconContainer.iconName + ".png"
-                                : ""
-                            sourceSize: Qt.size(32, 32)
-                            smooth: true
-                            visible: primaryIcon.status !== Image.Ready && status === Image.Ready
-                        }
-
-                        // Fallback 2: Letter icon
+                        // Fallback: Letter icon
                         Rectangle {
                             anchors.fill: parent
-                            visible: !iconContainer.iconLoaded
+                            visible: appIcon.status !== Image.Ready
                             radius: Common.Appearance.rounding.small
                             color: Common.Appearance.m3colors.primaryContainer
 
@@ -267,59 +254,36 @@ PanelWindow {
     }
 
     // Track the query we're waiting for results from
-    property string activeQueryId: ""
+    property string allAppsQueryId: ""
+    property string searchQueryId: ""
 
     // Load all apps on startup
     Component.onCompleted: {
-        allAppsQuery.running = true
+        allAppsQueryId = Services.Datacube.queryApplications("", 500)
     }
 
-    // Query to get all applications sorted alphabetically
-    Process {
-        id: allAppsQuery
-        property var pendingApps: []
-        command: ["bash", "-lc", "datacube-cli query '' --json -m 500 -p applications"]
+    // Handle Datacube query results
+    Connections {
+        target: Services.Datacube
 
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: data => {
-                if (!data || data.trim() === "") return
-
-                try {
-                    const item = JSON.parse(data)
-                    const result = {
-                        id: item.id || "",
-                        type: "app",
-                        name: item.text || "",
-                        description: item.subtext || "",
-                        genericName: item.subtext || "",
-                        icon: getIconPath(item.icon),
-                        exec: item.exec || "",
-                        provider: item.provider || "",
-                        score: item.score || 0,
-                        _raw: item
-                    }
-                    allAppsQuery.pendingApps.push(result)
-                } catch (e) {
-                    console.log("Failed to parse app:", e, data)
-                }
+        function onQueryCompleted(queryId, results) {
+            if (queryId === root.allAppsQueryId) {
+                // Sort alphabetically by name
+                results.sort((a, b) => {
+                    const nameA = (a.name || "").toLowerCase()
+                    const nameB = (b.name || "").toLowerCase()
+                    if (nameA < nameB) return -1
+                    if (nameA > nameB) return 1
+                    return 0
+                })
+                root.allApps = results
+            } else if (queryId === root.searchQueryId) {
+                root.searchResults = results
             }
         }
 
-        onStarted: {
-            allAppsQuery.pendingApps = []
-        }
-
-        onExited: {
-            // Sort alphabetically by name
-            allAppsQuery.pendingApps.sort((a, b) => {
-                const nameA = (a.name || "").toLowerCase()
-                const nameB = (b.name || "").toLowerCase()
-                if (nameA < nameB) return -1
-                if (nameA > nameB) return 1
-                return 0
-            })
-            root.allApps = allAppsQuery.pendingApps
+        function onQueryFailed(queryId, error) {
+            console.log("Datacube query failed:", queryId, error)
         }
     }
 
@@ -331,81 +295,15 @@ PanelWindow {
             const query = root.currentQuery
             if (!query || query.trim() === "") {
                 searchResults = []
-                root.activeQueryId = ""
+                root.searchQueryId = ""
                 return
             }
-            // Generate a unique ID for this query
-            root.activeQueryId = query + "_" + Date.now()
-            datacubeQuery.queryId = root.activeQueryId
-            datacubeQuery.query = query
-            datacubeQuery.running = true
-        }
-    }
-
-    // Datacube query process
-    Process {
-        id: datacubeQuery
-        property string query: ""
-        property string queryId: ""
-        property var pendingResults: []
-        command: ["bash", "-lc", "datacube-cli query '" + query.replace(/'/g, "'\\''") + "' --json -m 50"]
-
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: data => {
-                if (!data || data.trim() === "") return
-
-                try {
-                    const item = JSON.parse(data)
-                    const result = {
-                        id: item.id || "",
-                        type: item.provider === "applications" ? "app" : item.provider,
-                        name: item.text || "",
-                        description: item.subtext || "",
-                        genericName: item.subtext || "",
-                        icon: getIconPath(item.icon),
-                        exec: item.exec || "",
-                        provider: item.provider || "",
-                        score: item.score || 0,
-                        _raw: item
-                    }
-                    datacubeQuery.pendingResults.push(result)
-                } catch (e) {
-                    console.log("Failed to parse datacube result:", e, data)
-                }
+            // Cancel previous search if still running
+            if (root.searchQueryId) {
+                Services.Datacube.cancelQuery(root.searchQueryId)
             }
+            root.searchQueryId = Services.Datacube.queryAll(query, 50)
         }
-
-        onStarted: {
-            datacubeQuery.pendingResults = []
-        }
-
-        onExited: {
-            // Only update results if this is still the active query
-            if (datacubeQuery.queryId === root.activeQueryId) {
-                root.searchResults = datacubeQuery.pendingResults
-            }
-        }
-    }
-
-    function getIconPath(iconName) {
-        if (!iconName) return ""
-        if (iconName.startsWith("/")) return "file://" + iconName
-        // Try Qt icon provider first
-        return "image://icon/" + iconName
-    }
-
-    // Try to find icon in flatpak exports if Qt icon provider fails
-    function getFlatpakIconPath(iconName, size) {
-        if (!iconName) return ""
-        const sizes = [size || 128, 64, 48, 32, 256, 512]
-        const basePath = "/var/lib/flatpak/exports/share/icons/hicolor/"
-
-        for (const s of sizes) {
-            const path = basePath + s + "x" + s + "/apps/" + iconName + ".png"
-            return "file://" + path
-        }
-        return ""
     }
 
     function launchApp(app) {

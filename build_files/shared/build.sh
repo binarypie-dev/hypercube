@@ -23,6 +23,7 @@ BUILD_DIRS=(
     "/ctx/build_files/base"
     "/ctx/build_files/hyprland"
     "/ctx/build_files/dx"
+    "/ctx/build_files/apps"
     "/ctx/build_files/hypercube"
 )
 

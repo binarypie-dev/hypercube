@@ -21,7 +21,7 @@ default:
 
 # Build container image
 [group('Build')]
-build ghcr="0":
+build ghcr="0" nocache="0":
     #!/usr/bin/env bash
     set -euo pipefail
 
@@ -40,6 +40,11 @@ build ghcr="0":
 
     if [[ -z "$(git status -s)" ]]; then
         BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
+    fi
+
+    # Add --no-cache if requested
+    if [[ "{{ nocache }}" == "1" ]]; then
+        BUILD_ARGS+=("--no-cache")
     fi
 
     # Use rootful podman for GHCR builds
@@ -61,6 +66,11 @@ build ghcr="0":
     echo "========================================"
     echo "Build complete: ${IMAGE_FULL}"
     echo "========================================"
+
+# Build container image without cache
+[group('Build')]
+build-force:
+    @just build 0 1
 
 # Build for GHCR push (rootful)
 [group('Build')]
@@ -96,13 +106,22 @@ build-qcow2-fast:
 
     echo "Building qcow2 from ${LOCAL_IMAGE} using bootc install..."
 
-    # Check if image exists
+    # Check if image exists in user storage
     if ! {{ PODMAN }} image exists "${LOCAL_IMAGE}"; then
         echo "Error: Image ${LOCAL_IMAGE} not found. Run 'just build' first."
         exit 1
     fi
 
     mkdir -p "${OUTPUT_DIR}"
+
+    # Copy image to root storage (required for sudo podman run)
+    if [[ "${UID}" -gt 0 ]]; then
+        echo "Copying image to root podman storage..."
+        # Remove old image from root storage first to ensure fresh copy
+        {{ SUDO }} {{ PODMAN }} rmi "${LOCAL_IMAGE}" 2>/dev/null || true
+        # Use podman save/load instead of scp for reliability
+        {{ PODMAN }} save "${LOCAL_IMAGE}" | {{ SUDO }} {{ PODMAN }} load
+    fi
 
     # Remove existing disks to start fresh
     rm -f "${RAW_FILE}" "${QCOW2_FILE}"
@@ -249,6 +268,8 @@ run-qcow2:
         --disk path="${QCOW2_FILE}",format=qcow2,bus=virtio \
         --os-variant fedora-unknown \
         --boot uefi \
+        --video virtio \
+        --graphics spice \
         --autoconsole graphical
 
 # Delete the qcow2 test VM
