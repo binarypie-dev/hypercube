@@ -5,11 +5,11 @@
 [![Build](https://github.com/binarypie-dev/hypercube/actions/workflows/build.yml/badge.svg)](https://github.com/binarypie-dev/hypercube/actions/workflows/build.yml)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fbinarypie--dev%2Fhypercube-blue)](https://ghcr.io/binarypie-dev/hypercube)
 
-Hypercube is an opinionated, ready-to-use development environment built on [Bluefin-DX](https://projectbluefin.io/). It provides a complete cloud-native workflow with consistent vim keybindings across all tools, beautiful Tokyo Night theming, and your choice of desktop environment.
+Hypercube is an opinionated, ready-to-use development environment built on [Universal Blue's base-main](https://github.com/ublue-os/main) image with Fedora 43. It provides a complete Hyprland-based workflow with consistent vim keybindings across all tools and Tokyo Night theming throughout.
 
 ## Features
 
-### Vim-First Workflow
+### Keyboard-First Workflow
 
 Every tool is configured with vim keybindings out of the box:
 
@@ -18,12 +18,10 @@ Every tool is configured with vim keybindings out of the box:
 - **Ghostty terminal** with vim-style pane navigation
 - **Neovim** with LazyVim as the primary editor
 
-### Desktop Environments
-
-Choose your preferred workflow:
+### Desktop Environment
 
 - **Hyprland** - Dynamic tiling Wayland compositor for keyboard-driven efficiency
-- **GNOME** - Traditional desktop experience (inherited from Bluefin)
+- **Quickshell** - Custom shell with notifications, app launcher, and system controls
 
 ### Development Tools
 
@@ -33,7 +31,7 @@ Pre-configured and ready to use:
 - **Lazygit** for interactive Git operations
 - **Fish** shell with Starship prompt
 - **Ghostty** GPU-accelerated terminal
-- **Quickshell** application launcher and system controls
+- **Distrobox** and **Podman** for containerized development environments
 
 ### Consistent Theming
 
@@ -43,7 +41,7 @@ Tokyo Night color scheme everywhere:
 - Terminal emulators
 - Neovim and all CLI tools
 - Plymouth boot animation
-- GDM login screen
+- ReGreet login screen
 - System-wide dark mode enforced
 
 ## Screenshots
@@ -67,17 +65,12 @@ Tokyo Night color scheme everywhere:
 
 From your existing bootc system:
 
-**Intel/AMD Graphics:**
 ```bash
-sudo bootc switch ghcr.io/binarypie-dev/hypercube:latest
+sudo bootc switch ghcr.io/binarypie-dev/hypercube:43
 systemctl reboot
 ```
 
-**NVIDIA Graphics:**
-```bash
-sudo bootc switch ghcr.io/binarypie-dev/hypercube:latest-nvidia
-systemctl reboot
-```
+NVIDIA drivers are included in the unified image.
 
 ### Fresh Install (ISO)
 
@@ -94,20 +87,23 @@ systemctl reboot
 
 ### Packages
 
-On top of Bluefin-DX, Hypercube adds:
+Built on ublue-os/base-main, Hypercube includes:
 
 | Category | Packages |
 |----------|----------|
 | Compositor | Hyprland, Hyprlock, Hypridle, Hyprpaper, Hyprshot |
+| Shell | Quickshell (notifications, launcher, system controls) |
 | Terminals | Ghostty |
 | Editor | Neovim (nightly) |
 | Git Tools | Lazygit |
-| Launcher | Quickshell |
+| Development | Distrobox, Podman |
+| Gaming | Steam |
 | Theming | Tokyo Night GTK/Qt themes |
+| Drivers | NVIDIA (akmods), v4l2loopback |
 
 ### Configurations
 
-All configurations live in `/usr/share/hypercube/config/` and can be overridden in `~/.config/`:
+All configurations live in `/usr/share/hypercube/config/` and are symlinked to `~/.config/` on first login:
 
 - Fish shell with vim mode and Starship prompt
 - Hyprland with vim-style navigation
@@ -131,8 +127,8 @@ All configurations live in `/usr/share/hypercube/config/` and can be overridden 
 Hypercube is built on excellent open source projects:
 
 - [Universal Blue](https://universal-blue.org/) - Image-based desktop platform
-- [Project Bluefin](https://projectbluefin.io/) - Developer experience foundation
 - [Hyprland](https://hyprland.org/) - Wayland compositor
+- [Quickshell](https://quickshell.outfoxxed.me/) - Qt6/QML shell toolkit
 - [LazyVim](https://www.lazyvim.org/) - Neovim distribution
 - [Tokyo Night](https://github.com/folke/tokyonight.nvim) - Color scheme
 
