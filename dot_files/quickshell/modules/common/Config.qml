@@ -62,6 +62,9 @@ Singleton {
         launcher: {
             maxResults: 50,
             showCategories: true
+        },
+        system: {
+            preinstallCompleted: false
         }
     })
 
@@ -107,6 +110,9 @@ Singleton {
     // Launcher settings
     property int launcherMaxResults: defaults.launcher.maxResults
     property bool launcherShowCategories: defaults.launcher.showCategories
+
+    // System settings
+    property bool preinstallCompleted: defaults.system.preinstallCompleted
 
     // Load config synchronously at startup
     FileView {
@@ -198,6 +204,11 @@ Singleton {
                 launcherShowCategories = config.launcher.showCategories ?? launcherShowCategories
             }
 
+            // System
+            if (config.system) {
+                preinstallCompleted = config.system.preinstallCompleted ?? preinstallCompleted
+            }
+
             console.log("Config: Loaded from", root.configPath)
         } catch (e) {
             console.error("Config: Failed to parse:", e)
@@ -265,6 +276,9 @@ Singleton {
         // Launcher
         addIfChanged(config, "launcher", "maxResults", launcherMaxResults, defaults.launcher.maxResults)
         addIfChanged(config, "launcher", "showCategories", launcherShowCategories, defaults.launcher.showCategories)
+
+        // System
+        addIfChanged(config, "system", "preinstallCompleted", preinstallCompleted, defaults.system.preinstallCompleted)
 
         // Only write if there are changes
         if (Object.keys(config).length === 0) {

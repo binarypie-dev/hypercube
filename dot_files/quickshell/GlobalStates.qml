@@ -118,6 +118,9 @@ Singleton {
     property bool sidebarLeftOpen: false
     property bool sidebarRightOpen: false
 
+    // Left sidebar view mode: "apps", "updates"
+    property string sidebarLeftView: "apps"
+
     // Right sidebar view mode: "default", "bluetooth", "audio", "calendar", "notifications"
     property string sidebarRightView: "default"
 
@@ -183,11 +186,14 @@ Singleton {
     }
 
     // Function to toggle panels (accepts screen to show on)
-    function toggleSidebarLeft(screen) {
-        if (sidebarLeftOpen && activeScreen === screen) {
+    function toggleSidebarLeft(screen, view) {
+        const targetView = view || "apps"
+        if (sidebarLeftOpen && activeScreen === screen && sidebarLeftView === targetView) {
             sidebarLeftOpen = false
+            sidebarLeftView = "apps"
         } else {
             activeScreen = screen
+            sidebarLeftView = targetView
             sidebarLeftOpen = true
         }
     }
@@ -207,6 +213,7 @@ Singleton {
     function closeAll() {
         sidebarLeftOpen = false
         sidebarRightOpen = false
+        sidebarLeftView = "apps"
         sidebarRightView = "default"
         settingsOpen = false
     }

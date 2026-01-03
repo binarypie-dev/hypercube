@@ -49,11 +49,9 @@ PanelWindow {
         Rectangle {
             anchors.fill: parent
             radius: Common.Appearance.rounding.small
-            color: button.highlighted
-                ? Common.Appearance.m3colors.primaryContainer
-                : (button.containsMouse
-                    ? Common.Appearance.m3colors.surfaceVariant
-                    : "transparent")
+            color: button.containsMouse
+                ? Common.Appearance.m3colors.surfaceVariant
+                : "transparent"
 
             Behavior on color {
                 ColorAnimation { duration: 150 }
@@ -70,7 +68,7 @@ PanelWindow {
                 name: button.icon
                 size: Common.Appearance.sizes.iconMedium
                 color: button.highlighted
-                    ? Common.Appearance.m3colors.onPrimaryContainer
+                    ? Common.Appearance.m3colors.primary
                     : button.textColor
             }
 
@@ -80,7 +78,7 @@ PanelWindow {
                 font.family: Common.Appearance.fonts.main
                 font.pixelSize: Common.Appearance.fontSize.normal
                 color: button.highlighted
-                    ? Common.Appearance.m3colors.onPrimaryContainer
+                    ? Common.Appearance.m3colors.primary
                     : button.textColor
             }
         }
@@ -141,7 +139,20 @@ PanelWindow {
             visible: root.isLeftmost
             icon: Common.Icons.icons.apps
             tooltip: "Applications"
-            onClicked: Root.GlobalStates.toggleSidebarLeft(root.targetScreen)
+            onClicked: Root.GlobalStates.toggleSidebarLeft(root.targetScreen, "apps")
+        }
+
+        // Updates button (only on leftmost screen, shows indicator when attention needed)
+        BarButton {
+            visible: root.isLeftmost
+            icon: Services.Updates.needsAttention
+                ? Common.Icons.icons.download
+                : Common.Icons.icons.checkCircle
+            tooltip: Services.Updates.preinstallCompleted
+                ? Services.Updates.summary()
+                : "Setup required"
+            highlighted: Services.Updates.needsAttention
+            onClicked: Root.GlobalStates.toggleSidebarLeft(root.targetScreen, "updates")
         }
 
         // Spacer

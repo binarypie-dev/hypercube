@@ -44,11 +44,19 @@ PanelWindow {
         )
     }
 
-    // Application View (default and only view for now)
+    // Application View (shown when sidebarLeftView === "apps")
     Loader {
         anchors.fill: parent
         anchors.margins: Common.Appearance.spacing.medium
-        active: Root.GlobalStates.sidebarLeftOpen
+        active: Root.GlobalStates.sidebarLeftView === "apps"
         source: "ApplicationView.qml"
+    }
+
+    // Update View (shown when sidebarLeftView === "updates")
+    Loader {
+        anchors.fill: parent
+        anchors.margins: Common.Appearance.spacing.medium
+        active: Root.GlobalStates.sidebarLeftView === "updates"
+        source: "UpdateView.qml"
     }
 }
