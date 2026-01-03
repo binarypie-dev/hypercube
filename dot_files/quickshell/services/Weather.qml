@@ -61,20 +61,32 @@ Singleton {
         onExited: parseOutput()
     }
 
+    // Retry count for failed requests
+    property int retryCount: 0
+    readonly property int maxRetries: 3
+
     function parseOutput() {
         loading = false
 
         const output = root.pendingOutput
         if (!output || output.trim() === "") {
-            error = "No data received"
+            // Network might not be ready yet, retry silently
+            if (retryCount < maxRetries) {
+                retryCount++
+                retryTimer.start()
+            }
+            // Don't show error, just stay in "not ready" state
             return
         }
+
+        // Reset retry count on successful response
+        retryCount = 0
 
         try {
             const data = JSON.parse(output)
 
             if (!data.current_condition || data.current_condition.length === 0) {
-                error = "Invalid weather data"
+                // Invalid data, but don't show error - just not ready
                 return
             }
 
@@ -129,9 +141,16 @@ Singleton {
             ready = true
 
         } catch (e) {
-            error = "Failed to parse weather data: " + e.message
+            // Parse error - don't show to user, just log
             console.error("Weather parse error:", e)
         }
+    }
+
+    // Retry timer for failed requests
+    Timer {
+        id: retryTimer
+        interval: 5000  // 5 seconds between retries
+        onTriggered: refresh()
     }
 
     function refresh() {

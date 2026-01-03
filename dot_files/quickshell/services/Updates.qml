@@ -203,9 +203,35 @@ Singleton {
         onTriggered: checkUpdates()
     }
 
-    // On startup, count preinstall apps
+    // On startup, count preinstall apps and check if we should auto-run
     Component.onCompleted: {
         countPreinstallApps()
+        // Try to auto-run preinstall if network is already connected
+        autoPreinstallTimer.start()
+    }
+
+    // Auto-run preinstall when network becomes available
+    Connections {
+        target: Network
+
+        function onConnectedChanged() {
+            if (Network.connected && !root.preinstallCompleted && !root.preinstallRunning) {
+                // Small delay to let network settle
+                autoPreinstallTimer.start()
+            }
+        }
+    }
+
+    // Timer to auto-run preinstall (gives network time to settle)
+    Timer {
+        id: autoPreinstallTimer
+        interval: 3000  // 3 seconds
+        onTriggered: {
+            if (Network.connected && !root.preinstallCompleted && !root.preinstallRunning) {
+                console.log("Updates: Auto-starting preinstall...")
+                runPreinstall()
+            }
+        }
     }
 
     // Summary string

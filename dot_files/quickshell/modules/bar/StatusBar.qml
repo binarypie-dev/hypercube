@@ -143,16 +143,50 @@ PanelWindow {
         }
 
         // Updates button (only on leftmost screen, shows indicator when attention needed)
-        BarButton {
+        MouseArea {
+            id: updatesButton
             visible: root.isLeftmost
-            icon: Services.Updates.needsAttention
-                ? Common.Icons.icons.download
-                : Common.Icons.icons.checkCircle
-            tooltip: Services.Updates.preinstallCompleted
-                ? Services.Updates.summary()
-                : "Setup required"
-            highlighted: Services.Updates.needsAttention
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
             onClicked: Root.GlobalStates.toggleSidebarLeft(root.targetScreen, "updates")
+
+            property bool isRunning: Services.Updates.preinstallRunning
+            property bool needsAttention: Services.Updates.needsAttention
+
+            Rectangle {
+                anchors.fill: parent
+                radius: Common.Appearance.rounding.small
+                color: updatesButton.containsMouse
+                    ? Common.Appearance.m3colors.surfaceVariant
+                    : "transparent"
+
+                Behavior on color {
+                    ColorAnimation { duration: 150 }
+                }
+            }
+
+            Common.Icon {
+                anchors.centerIn: parent
+                name: updatesButton.isRunning
+                    ? Common.Icons.icons.refresh
+                    : (updatesButton.needsAttention
+                        ? Common.Icons.icons.download
+                        : Common.Icons.icons.checkCircle)
+                size: Common.Appearance.sizes.iconMedium
+                color: updatesButton.needsAttention
+                    ? Common.Appearance.m3colors.primary
+                    : Common.Appearance.m3colors.onSurfaceVariant
+
+                RotationAnimation on rotation {
+                    running: updatesButton.isRunning
+                    from: 0
+                    to: 360
+                    duration: 1000
+                    loops: Animation.Infinite
+                }
+            }
         }
 
         // Spacer

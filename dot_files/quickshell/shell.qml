@@ -46,9 +46,16 @@ ShellRoot {
         target: "shell"
 
         function toggleSidebarLeft() {
-            // Left sidebar always opens on leftmost screen
+            // Left sidebar always opens on leftmost screen with apps view
             GlobalStates.activeScreen = GlobalStates.leftmostScreen || Quickshell.screens[0]
-            GlobalStates.sidebarLeftOpen = !GlobalStates.sidebarLeftOpen
+            if (GlobalStates.sidebarLeftOpen && GlobalStates.sidebarLeftView === "apps") {
+                // Already showing apps, close it
+                GlobalStates.sidebarLeftOpen = false
+            } else {
+                // Open and switch to apps view
+                GlobalStates.sidebarLeftView = "apps"
+                GlobalStates.sidebarLeftOpen = true
+            }
         }
 
         function toggleSidebarRight() {

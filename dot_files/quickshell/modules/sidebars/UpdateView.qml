@@ -136,6 +136,7 @@ ColumnLayout {
                     }
 
                     Text {
+                        Layout.fillWidth: true
                         text: Services.Updates.preinstallCompleted
                             ? "Installed"
                             : (Services.Updates.preinstallRunning
@@ -144,6 +145,7 @@ ColumnLayout {
                         font.family: Common.Appearance.fonts.main
                         font.pixelSize: Common.Appearance.fontSize.small
                         color: Common.Appearance.m3colors.onSurfaceVariant
+                        elide: Text.ElideRight
                     }
                 }
             }
@@ -224,8 +226,10 @@ ColumnLayout {
                     id: logView
                     anchors.fill: parent
                     anchors.margins: Common.Appearance.spacing.small
+                    anchors.rightMargin: Common.Appearance.spacing.small + 8  // Room for scrollbar
                     model: Services.Updates.preinstallLog
                     spacing: 2
+                    boundsBehavior: Flickable.StopAtBounds
 
                     delegate: Text {
                         required property string modelData
@@ -239,6 +243,10 @@ ColumnLayout {
 
                     onCountChanged: {
                         positionViewAtEnd()
+                    }
+
+                    ScrollBar.vertical: ScrollBar {
+                        policy: ScrollBar.AsNeeded
                     }
                 }
             }
@@ -340,25 +348,4 @@ ColumnLayout {
 
     // Spacer
     Item { Layout.fillHeight: true }
-
-    // Auto-run preinstall when network becomes available
-    Connections {
-        target: Services.Network
-        function onConnectedChanged() {
-            if (Services.Network.connected && !Services.Updates.preinstallCompleted && !Services.Updates.preinstallRunning) {
-                // Small delay to let network settle
-                autoInstallTimer.start()
-            }
-        }
-    }
-
-    Timer {
-        id: autoInstallTimer
-        interval: 2000
-        onTriggered: {
-            if (Services.Network.connected && !Services.Updates.preinstallCompleted && !Services.Updates.preinstallRunning) {
-                Services.Updates.runPreinstall()
-            }
-        }
-    }
 }
