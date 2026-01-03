@@ -43,9 +43,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Checkout titanoboa
+        uses: actions/checkout@v6
+        with:
+          repository: binarypie-dev/titanoboa
+          path: _titanoboa
+
+      - name: Copy iso_files to titanoboa
+        run: |
+          cp -r iso_files _titanoboa/iso_files
+          ls -la _titanoboa/iso_files/
+
       - name: Build ISO
         id: build
-        uses: binarypie-dev/titanoboa@main
+        uses: ./_titanoboa
         with:
           image-ref: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           iso-dest: ${{ github.workspace }}/output.iso
@@ -53,7 +64,7 @@ jobs:
           livesys: true
           livesys-repo: ""
           flatpaks-list: NONE
-          hook-post-rootfs: ${{ github.workspace }}/iso_files/hook-post-rootfs.sh
+          hook-post-rootfs: ${{ github.workspace }}/_titanoboa/iso_files/hook-post-rootfs.sh
 
       - name: Rename ISO and generate checksum
         id: rename
