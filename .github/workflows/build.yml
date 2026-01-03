@@ -5,21 +5,23 @@ on:
     branches:
       - main
   schedule:
-    - cron: '05 10 * * *'  # 10:05am UTC everyday
+    - cron: "05 10 * * *" # 10:05am UTC everyday
   push:
     branches:
       - main
     paths-ignore:
-      - '**/README.md'
+      - "**/README.md"
   workflow_dispatch:
 
 env:
-  IMAGE_DESC: "Hypercube - A Hyprland-focused bootc image built on Bluefin-DX"
-  IMAGE_KEYWORDS: "bootc,ublue,universal-blue,hyprland,hypercube,wayland"
+  IMAGE_DESC: "Hypercube - A developer workstation with Hyprland built on Universal Blue"
+  IMAGE_KEYWORDS: "bootc,ublue,universal-blue,hyprland,hypercube,wayland,developer,nvidia"
   IMAGE_LOGO_URL: "https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ github.event.repository.name }}/main/branding/hypercube-logo.png"
   IMAGE_NAME: "${{ github.event.repository.name }}"
   IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
   DEFAULT_TAG: "latest"
+  FEDORA_VERSION: "43"
+  AKMODS_FLAVOR: "main"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
@@ -28,23 +30,12 @@ concurrency:
 jobs:
   build_push:
     name: Build and push image
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest-m
 
     permissions:
       contents: read
       packages: write
       id-token: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        variant:
-          - flavor: "main"
-            base_image: "ghcr.io/ublue-os/bluefin-dx:stable-daily"
-            tag_suffix: ""
-          - flavor: "nvidia"
-            base_image: "ghcr.io/ublue-os/bluefin-dx-nvidia:stable-daily"
-            tag_suffix: "-nvidia"
 
     steps:
       - name: Prepare environment
@@ -70,11 +61,12 @@ jobs:
         id: metadata
         with:
           tags: |
-            type=raw,value=${{ env.DEFAULT_TAG }}${{ matrix.variant.tag_suffix }}
-            type=raw,value=${{ env.DEFAULT_TAG }}${{ matrix.variant.tag_suffix }}.{{date 'YYYYMMDD'}}
-            type=raw,value={{date 'YYYYMMDD'}}${{ matrix.variant.tag_suffix }}
-            type=sha,enable=${{ github.event_name == 'pull_request' }},suffix=${{ matrix.variant.tag_suffix }}
-            type=ref,event=pr,suffix=${{ matrix.variant.tag_suffix }}
+            type=raw,value=${{ env.DEFAULT_TAG }}
+            type=raw,value=${{ env.DEFAULT_TAG }}.{{date 'YYYYMMDD'}}
+            type=raw,value=${{ env.FEDORA_VERSION }}
+            type=raw,value={{date 'YYYYMMDD'}}
+            type=sha,enable=${{ github.event_name == 'pull_request' }}
+            type=ref,event=pr
           labels: |
             io.artifacthub.package.readme-url=https://raw.githubusercontent.com/${{ github.repository_owner }}/${{ env.IMAGE_NAME }}/refs/heads/main/README.md
             org.opencontainers.image.created=${{ steps.date.outputs.date }}
@@ -104,9 +96,10 @@ jobs:
           tags: ${{ steps.metadata.outputs.tags }}
           labels: ${{ steps.metadata.outputs.labels }}
           build-args: |
-            BASE_IMAGE=${{ matrix.variant.base_image }}
+            FEDORA_VERSION=${{ env.FEDORA_VERSION }}
             IMAGE_NAME=${{ env.IMAGE_NAME }}
             IMAGE_VENDOR=${{ github.repository_owner }}
+            AKMODS_FLAVOR=${{ env.AKMODS_FLAVOR }}
           oci: false
 
       - name: Login to GitHub Container Registry

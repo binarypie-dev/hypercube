@@ -1,0 +1,45 @@
+{
+  "appearance": {
+    "darkMode": true,
+    "accentColor": "blue",
+    "wallpaperTheming": false,
+    "panelOpacity": 0.85
+  },
+  "fonts": {
+    "family": "JetBrains Mono",
+    "mono": "JetBrains Mono",
+    "size": 14
+  },
+  "bar": {
+    "showWeather": true,
+    "showBattery": true,
+    "showNetwork": true,
+    "showTray": true,
+    "showClock": true,
+    "use24Hour": true
+  },
+  "notifications": {
+    "timeout": 5000,
+    "sounds": true,
+    "dndSchedule": false,
+    "dndStart": "22:00",
+    "dndEnd": "08:00"
+  },
+  "sidebar": {
+    "animations": true,
+    "width": 380
+  },
+  "osd": {
+    "timeout": 1500,
+    "showValue": true
+  },
+  "weather": {
+    "location": "",
+    "units": "metric",
+    "updateInterval": 900000
+  },
+  "launcher": {
+    "maxResults": 50,
+    "showCategories": true
+  }
+}

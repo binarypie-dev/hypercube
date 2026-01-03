@@ -42,20 +42,20 @@ config-file = /usr/share/hypercube/config/ghostty/config
 # Your customizations below:
 EOF
 
-### Wezterm terminal - stub that sources system config
-# Users can customize by modifying the config table after dofile()
-mkdir -p /etc/skel/.config/wezterm
-cat > /etc/skel/.config/wezterm/wezterm.lua << 'EOF'
--- Hypercube Wezterm Configuration
--- System defaults are loaded below. Add your customizations after this line.
--- To replace defaults entirely, remove the dofile line and start fresh.
+### Hyprland - stub that sources system config
+# Users can customize by adding settings after the source line
+# Hyprland parses linearly: system config first, then user customizations
+mkdir -p /etc/skel/.config/hypr
+cat > /etc/skel/.config/hypr/hyprland.conf << 'EOF'
+# Hypercube Hyprland Configuration
+# System defaults are sourced below. Add your customizations after this line.
+# Settings defined after source will override the defaults.
+# To replace defaults entirely, remove or comment out the source line.
 
-local config = dofile("/usr/share/hypercube/config/wezterm/wezterm.lua")
+source = /usr/share/hypercube/config/hypr/hyprland.conf
 
--- Your customizations below:
--- Example: config.font_size = 14
+# Your customizations below:
 
-return config
 EOF
 
 ### GTK theme settings - install to /etc/xdg/ for system-wide defaults
@@ -71,5 +71,13 @@ install -Dm644 "${CONFIG_DIR}/gtk-4.0/settings.ini" /etc/xdg/gtk-4.0/settings.in
 # Qt6ct supports XDG_CONFIG_DIRS for system-wide defaults
 install -Dm644 "${CONFIG_DIR}/qt6ct/qt6ct.conf" /etc/xdg/qt6ct/qt6ct.conf
 install -Dm644 "${CONFIG_DIR}/qt6ct/colors/TokyoNight.conf" /usr/share/qt6ct/colors/TokyoNight.conf
+
+### ReGreet login greeter configuration (Tokyo Night themed)
+install -Dm644 "${CONFIG_DIR}/regreet/regreet.toml" /etc/greetd/regreet.toml
+install -Dm644 "${CONFIG_DIR}/regreet/regreet.css" /etc/greetd/regreet.css
+
+### Enable xdg-desktop-portal-gtk for dark mode detection (Firefox, etc.)
+# This portal provides the org.freedesktop.appearance.color-scheme setting
+systemctl --global enable xdg-desktop-portal-gtk.service
 
 echo "Hypercube configurations installed successfully"

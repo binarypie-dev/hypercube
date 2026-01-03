@@ -1,0 +1,48 @@
+#!/usr/bin/bash
+# Flatpak preinstall script for systems without flatpak 1.17+
+# Reads .preinstall files from /usr/share/flatpak/preinstall.d/
+# and installs the specified flatpaks from flathub
+
+set -euo pipefail
+
+PREINSTALL_DIR="/usr/share/flatpak/preinstall.d"
+REMOTE="flathub"
+
+if [[ ! -d "$PREINSTALL_DIR" ]]; then
+    echo "No preinstall directory found: $PREINSTALL_DIR"
+    exit 0
+fi
+
+# Check if flathub remote exists
+if ! flatpak remote-list --system | grep -q "^${REMOTE}"; then
+    echo "Flathub remote not configured, skipping preinstall"
+    exit 0
+fi
+
+# Parse preinstall files and install flatpaks
+for preinstall_file in "$PREINSTALL_DIR"/*.preinstall; do
+    [[ -f "$preinstall_file" ]] || continue
+
+    # Extract app ID from section header: [Flatpak Preinstall org.example.App]
+    app_id=$(grep -oP '^\[Flatpak Preinstall \K[^\]]+' "$preinstall_file" 2>/dev/null || true)
+
+    if [[ -z "$app_id" ]]; then
+        echo "Warning: Could not parse app ID from $preinstall_file"
+        continue
+    fi
+
+    # Check if already installed
+    if flatpak list --system --app --columns=application | grep -q "^${app_id}$"; then
+        echo "Already installed: $app_id"
+        continue
+    fi
+
+    echo "Installing: $app_id"
+    if flatpak install --system --noninteractive "$REMOTE" "$app_id"; then
+        echo "Successfully installed: $app_id"
+    else
+        echo "Failed to install: $app_id"
+    fi
+done
+
+echo "Flatpak preinstall complete"

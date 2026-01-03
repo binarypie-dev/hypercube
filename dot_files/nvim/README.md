@@ -84,7 +84,7 @@ The container mounts your local directories:
 
 ### Clipboard Support
 
-The container uses OSC 52 for clipboard integration, which works with modern terminals like Ghostty, Kitty, WezTerm, and others that support OSC 52 escape sequences.
+The container uses OSC 52 for clipboard integration, which works with modern terminals like Ghostty, Kitty, and others that support OSC 52 escape sequences.
 
 ## Plugins
 

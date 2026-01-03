@@ -1,0 +1,6 @@
+module providers
+
+singleton ApplicationProvider 1.0 ApplicationProvider.qml
+singleton CalculatorProvider 1.0 CalculatorProvider.qml
+singleton FileProvider 1.0 FileProvider.qml
+singleton CommandProvider 1.0 CommandProvider.qml

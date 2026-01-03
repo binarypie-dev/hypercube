@@ -1,0 +1,149 @@
+/* Hypercube Anaconda Theme - Tokyo Night */
+/* SPDX-License-Identifier: GPL-3.0-or-later */
+
+/* Tokyo Night color palette */
+@define-color hypercube #7aa2f7;
+@define-color tokyo_bg #1a1b26;
+@define-color tokyo_bg_dark #16161e;
+@define-color tokyo_fg #c0caf5;
+@define-color tokyo_blue #7aa2f7;
+@define-color tokyo_purple #bb9af7;
+@define-color tokyo_dark_purple #414868;
+@define-color tokyo_cyan #7dcfff;
+@define-color tokyo_green #9ece6a;
+
+/* Sidebar background with Tokyo Night dark */
+.logo-sidebar {
+    background-image: none;
+    background-color: @tokyo_bg;
+    background-repeat: no-repeat;
+}
+
+/* Hypercube logo in sidebar */
+.logo {
+    background-image: url('/usr/share/anaconda/pixmaps/hypercube/sidebar-logo.png');
+    background-position: 50% 20px;
+    background-repeat: no-repeat;
+    background-color: transparent;
+}
+
+/* Product logo placeholder */
+.product-logo {
+    background-image: none;
+    background-color: transparent;
+}
+
+/* Navigation bar - Tokyo Night purple accent */
+AnacondaSpokeWindow #nav-box,
+AnacondaHubWindow #nav-box {
+    background-color: @tokyo_purple;
+    background-image: none;
+    background-repeat: repeat;
+    color: white;
+}
+
+/* Remove button shadow in nav-box */
+AnacondaSpokeWindow #nav-box GtkButton,
+AnacondaHubWindow #nav-box GtkButton {
+    box-shadow: none;
+}
+
+/* Main content area - dark background */
+AnacondaSpokeWindow,
+AnacondaHubWindow {
+    background-color: @tokyo_bg_dark;
+}
+
+/* Spoke buttons (main hub tiles) */
+.spoke-button {
+    background-color: @tokyo_dark_purple;
+    color: @tokyo_fg;
+    border-radius: 8px;
+}
+
+.spoke-button:hover {
+    background-color: @tokyo_blue;
+    color: @tokyo_bg;
+}
+
+.spoke-button:focus {
+    border-color: @tokyo_cyan;
+}
+
+/* Selection highlights */
+*:selected {
+    background-color: @tokyo_blue;
+    color: @tokyo_bg;
+}
+
+/* Links and accents */
+*:link {
+    color: @tokyo_cyan;
+}
+
+/* Progress bar */
+progressbar progress {
+    background-color: @tokyo_purple;
+}
+
+progressbar trough {
+    background-color: @tokyo_dark_purple;
+}
+
+/* Entry fields */
+entry {
+    background-color: @tokyo_bg;
+    color: @tokyo_fg;
+    border-color: @tokyo_dark_purple;
+}
+
+entry:focus {
+    border-color: @tokyo_blue;
+}
+
+/* Buttons */
+button {
+    background-color: @tokyo_dark_purple;
+    color: @tokyo_fg;
+}
+
+button:hover {
+    background-color: @tokyo_blue;
+    color: @tokyo_bg;
+}
+
+button:active {
+    background-color: @tokyo_purple;
+}
+
+/* Check buttons and radio buttons */
+checkbutton check,
+radiobutton radio {
+    background-color: @tokyo_bg;
+    border-color: @tokyo_dark_purple;
+}
+
+checkbutton check:checked,
+radiobutton radio:checked {
+    background-color: @tokyo_blue;
+}
+
+/* Lists and tree views */
+treeview {
+    background-color: @tokyo_bg;
+    color: @tokyo_fg;
+}
+
+treeview:selected {
+    background-color: @tokyo_blue;
+    color: @tokyo_bg;
+}
+
+/* Scrollbars */
+scrollbar slider {
+    background-color: @tokyo_dark_purple;
+}
+
+scrollbar slider:hover {
+    background-color: @tokyo_blue;
+}

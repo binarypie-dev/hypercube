@@ -1,12 +1,11 @@
 # Hypercube Build System
-# Aligned with Bluefin patterns for consistency
+# Single unified image with NVIDIA support included
 
 # Configuration
 export repo_organization := env("REPO_ORGANIZATION", "binarypie-dev")
 export image_name := env("IMAGE_NAME", "hypercube")
-export base_image := env("BASE_IMAGE", "ghcr.io/ublue-os/bluefin-dx")
-export base_image_nvidia := env("BASE_IMAGE_NVIDIA", "ghcr.io/ublue-os/bluefin-dx-nvidia")
-export default_tag := env("DEFAULT_TAG", "stable-daily")
+export fedora_version := env("FEDORA_VERSION", "43")
+export akmods_flavor := env("AKMODS_FLAVOR", "main")
 
 # Runtime detection
 export SUDO := if `id -u` == "0" { "" } else { "sudo" }
@@ -22,33 +21,30 @@ default:
 
 # Build container image
 [group('Build')]
-build flavor="main" ghcr="0":
+build ghcr="0" nocache="0":
     #!/usr/bin/env bash
     set -euo pipefail
 
-    # Determine base image based on flavor
-    if [[ "{{ flavor }}" == "nvidia" ]]; then
-        BASE="{{ base_image_nvidia }}:{{ default_tag }}"
-        TAG="{{ default_tag }}-nvidia"
-    else
-        BASE="{{ base_image }}:{{ default_tag }}"
-        TAG="{{ default_tag }}"
-    fi
-
-    IMAGE_FULL="{{ image_name }}:${TAG}"
+    IMAGE_FULL="{{ image_name }}:{{ fedora_version }}"
 
     echo "========================================"
     echo "Building: ${IMAGE_FULL}"
-    echo "Base:     ${BASE}"
+    echo "Base:     ghcr.io/ublue-os/base-main:{{ fedora_version }}"
     echo "========================================"
 
     BUILD_ARGS=()
-    BUILD_ARGS+=("--build-arg" "BASE_IMAGE=${BASE}")
+    BUILD_ARGS+=("--build-arg" "FEDORA_VERSION={{ fedora_version }}")
     BUILD_ARGS+=("--build-arg" "IMAGE_NAME={{ image_name }}")
     BUILD_ARGS+=("--build-arg" "IMAGE_VENDOR={{ repo_organization }}")
+    BUILD_ARGS+=("--build-arg" "AKMODS_FLAVOR={{ akmods_flavor }}")
 
     if [[ -z "$(git status -s)" ]]; then
         BUILD_ARGS+=("--build-arg" "SHA_HEAD_SHORT=$(git rev-parse --short HEAD)")
+    fi
+
+    # Add --no-cache if requested
+    if [[ "{{ nocache }}" == "1" ]]; then
+        BUILD_ARGS+=("--no-cache")
     fi
 
     # Use rootful podman for GHCR builds
@@ -71,36 +67,317 @@ build flavor="main" ghcr="0":
     echo "Build complete: ${IMAGE_FULL}"
     echo "========================================"
 
+# Build container image without cache
+[group('Build')]
+build-force:
+    @just build 0 1
+
 # Build for GHCR push (rootful)
 [group('Build')]
-build-ghcr flavor="main":
-    @just build {{ flavor }} 1
-
-# Build both flavors
-[group('Build')]
-build-all:
-    @echo "Building main flavor..."
-    @just build main
-    @echo ""
-    @echo "Building nvidia flavor..."
-    @just build nvidia
+build-ghcr:
+    @just build 1
 
 # Run container interactively for testing
 [group('Build')]
-run flavor="main":
+run:
     #!/usr/bin/env bash
     set -euo pipefail
 
-    if [[ "{{ flavor }}" == "nvidia" ]]; then
-        TAG="{{ default_tag }}-nvidia"
-    else
-        TAG="{{ default_tag }}"
-    fi
-
     {{ PODMAN }} run -it --rm \
         --privileged \
-        "localhost/{{ image_name }}:${TAG}" \
+        "localhost/{{ image_name }}:{{ fedora_version }}" \
         /bin/bash
+
+# ============================================
+# VM Recipes
+# ============================================
+
+# Build qcow2 disk image using bootc install (fastest method for testing)
+[group('VM')]
+build-qcow2-fast:
+    #!/usr/bin/bash
+    set -euo pipefail
+
+    LOCAL_IMAGE="localhost/{{ image_name }}:{{ fedora_version }}"
+    OUTPUT_DIR="${PWD}/.vm"
+    RAW_FILE="${OUTPUT_DIR}/{{ image_name }}.raw"
+    QCOW2_FILE="${OUTPUT_DIR}/{{ image_name }}.qcow2"
+    DISK_SIZE="64G"
+
+    echo "Building qcow2 from ${LOCAL_IMAGE} using bootc install..."
+
+    # Check if image exists in user storage
+    if ! {{ PODMAN }} image exists "${LOCAL_IMAGE}"; then
+        echo "Error: Image ${LOCAL_IMAGE} not found. Run 'just build' first."
+        exit 1
+    fi
+
+    mkdir -p "${OUTPUT_DIR}"
+
+    # Copy image to root storage (required for sudo podman run)
+    if [[ "${UID}" -gt 0 ]]; then
+        echo "Copying image to root podman storage..."
+        # Remove old image from root storage first to ensure fresh copy
+        {{ SUDO }} {{ PODMAN }} rmi "${LOCAL_IMAGE}" 2>/dev/null || true
+        # Use podman save/load instead of scp for reliability
+        {{ PODMAN }} save "${LOCAL_IMAGE}" | {{ SUDO }} {{ PODMAN }} load
+    fi
+
+    # Remove existing disks to start fresh
+    rm -f "${RAW_FILE}" "${QCOW2_FILE}"
+
+    # Create a raw disk image (loopback works properly with raw)
+    echo "Creating ${DISK_SIZE} raw disk image..."
+    truncate -s "${DISK_SIZE}" "${RAW_FILE}"
+
+    # Use bootc install to-disk from within the container
+    # This is much faster than bootc-image-builder as it directly installs
+    {{ SUDO }} {{ PODMAN }} run \
+        --rm \
+        -it \
+        --privileged \
+        --pid=host \
+        --security-opt label=type:unconfined_t \
+        -v /var/lib/containers/storage:/var/lib/containers/storage \
+        -v "${RAW_FILE}":/disk.raw \
+        -v /dev:/dev \
+        "${LOCAL_IMAGE}" \
+        bootc install to-disk --skip-fetch-check --generic-image --via-loopback --filesystem btrfs /disk.raw
+
+    # Convert raw to qcow2 (sparse, much smaller)
+    echo "Converting to qcow2..."
+    qemu-img convert -f raw -O qcow2 "${RAW_FILE}" "${QCOW2_FILE}"
+    rm -f "${RAW_FILE}"
+
+    # Fix ownership
+    if [[ "${UID}" -gt 0 ]]; then
+        {{ SUDO }} chown "${UID}:$(id -g)" "${QCOW2_FILE}"
+    fi
+
+    echo ""
+    echo "========================================"
+    echo "qcow2 built: ${QCOW2_FILE}"
+    echo "Run 'just run-qcow2' to test"
+    echo "========================================"
+
+# Build qcow2 disk image using bootc-image-builder (slower, more options)
+[group('VM')]
+build-qcow2:
+    #!/usr/bin/bash
+    set -euo pipefail
+
+    LOCAL_IMAGE="localhost/{{ image_name }}:{{ fedora_version }}"
+    OUTPUT_DIR="${PWD}/.vm"
+    QCOW2_FILE="${OUTPUT_DIR}/{{ image_name }}.qcow2"
+
+    echo "Building qcow2 from ${LOCAL_IMAGE}..."
+
+    # Check if image exists
+    if ! {{ PODMAN }} image exists "${LOCAL_IMAGE}"; then
+        echo "Error: Image ${LOCAL_IMAGE} not found. Run 'just build' first."
+        exit 1
+    fi
+
+    mkdir -p "${OUTPUT_DIR}"
+
+    # Copy image to root storage if needed
+    if [[ "${UID}" -gt 0 ]]; then
+        echo "Copying image to root podman storage..."
+        COPYTMP=$(mktemp -p "${PWD}" -d -t podman_scp.XXXXXXXXXX)
+        {{ SUDO }} TMPDIR=${COPYTMP} {{ PODMAN }} image scp "${UID}@localhost::${LOCAL_IMAGE}" root@localhost::"${LOCAL_IMAGE}"
+        rm -rf "${COPYTMP}"
+    fi
+
+    # Create cache directories for faster rebuilds
+    CACHE_DIR="${PWD}/.cache/bootc-image-builder"
+    mkdir -p "${CACHE_DIR}/store" "${CACHE_DIR}/rpmmd"
+
+    # Build qcow2 using bootc-image-builder
+    {{ SUDO }} {{ PODMAN }} run \
+        --rm \
+        -it \
+        --privileged \
+        --pull=newer \
+        --security-opt label=type:unconfined_t \
+        -v "${OUTPUT_DIR}":/output \
+        -v /var/lib/containers/storage:/var/lib/containers/storage \
+        -v "${CACHE_DIR}/store":/store \
+        -v "${CACHE_DIR}/rpmmd":/rpmmd \
+        quay.io/centos-bootc/bootc-image-builder:latest \
+        --type qcow2 \
+        --rootfs btrfs \
+        --use-librepo=True \
+        "${LOCAL_IMAGE}"
+
+    # Fix ownership
+    if [[ "${UID}" -gt 0 ]]; then
+        {{ SUDO }} chown -R "${UID}:$(id -g)" "${OUTPUT_DIR}"
+    fi
+
+    # Move to expected location
+    if [[ -f "${OUTPUT_DIR}/qcow2/disk.qcow2" ]]; then
+        mv "${OUTPUT_DIR}/qcow2/disk.qcow2" "${QCOW2_FILE}"
+        rm -rf "${OUTPUT_DIR}/qcow2"
+        echo ""
+        echo "========================================"
+        echo "qcow2 built: ${QCOW2_FILE}"
+        echo "Run 'just run-qcow2' to test"
+        echo "========================================"
+    else
+        echo "Error: qcow2 build failed"
+        exit 1
+    fi
+
+# Run qcow2 in VM with virt-manager
+[group('VM')]
+run-qcow2:
+    #!/usr/bin/bash
+    set -euo pipefail
+
+    VM_NAME="hypercube-qcow2"
+    QCOW2_FILE="${PWD}/.vm/{{ image_name }}.qcow2"
+
+    if [[ ! -f "${QCOW2_FILE}" ]]; then
+        echo "Error: qcow2 not found at ${QCOW2_FILE}"
+        echo "Run 'just build-qcow2' first."
+        exit 1
+    fi
+
+    # RAM and CPU settings
+    ram_size=16
+    vcpus=8
+
+    echo "VM: ${VM_NAME}"
+    echo "Disk: ${QCOW2_FILE}"
+    echo "RAM: ${ram_size}GB, vCPUs: ${vcpus}"
+
+    # Check if VM already exists
+    if virsh dominfo "${VM_NAME}" &>/dev/null; then
+        echo "Starting existing VM..."
+        virsh start "${VM_NAME}" 2>/dev/null || true
+        virt-manager --connect qemu:///system --show-domain-console "${VM_NAME}"
+        exit 0
+    fi
+
+    echo "Creating new VM..."
+    virt-install \
+        --name "${VM_NAME}" \
+        --memory $(( ram_size * 1024 )) \
+        --vcpus ${vcpus} \
+        --import \
+        --disk path="${QCOW2_FILE}",format=qcow2,bus=virtio \
+        --os-variant fedora-unknown \
+        --boot uefi \
+        --video virtio \
+        --graphics spice \
+        --autoconsole graphical
+
+# Delete the qcow2 test VM
+[group('VM')]
+delete-qcow2-vm:
+    #!/usr/bin/bash
+    set -euo pipefail
+    VM_NAME="hypercube-qcow2"
+
+    echo "Stopping VM if running..."
+    virsh destroy "${VM_NAME}" 2>/dev/null || true
+
+    echo "Removing VM definition..."
+    virsh undefine "${VM_NAME}" --nvram 2>/dev/null || true
+
+    echo "qcow2 VM deleted (disk preserved in .vm/)"
+
+# Run ISO in local VM with virt-manager (persistent disk for testing installs)
+[group('VM')]
+run-iso-local iso_file:
+    #!/usr/bin/bash
+    set -euo pipefail
+
+    if [[ ! -f "{{ iso_file }}" ]]; then
+        echo "Error: ISO file not found: {{ iso_file }}"
+        exit 1
+    fi
+
+    ISO_PATH="$(realpath {{ iso_file }})"
+    VM_NAME="hypercube-test"
+    # Store disk in current directory to avoid libvirt permission issues
+    DISK_PATH="$(pwd)/.vm/${VM_NAME}.qcow2"
+
+    # RAM: 16GB for ostreecontainer deployment (needs temp space in tmpfs)
+    # vCPUs: 8 cores for faster installation
+    ram_size=16
+    vcpus=8
+
+    echo "VM: ${VM_NAME}"
+    echo "RAM: ${ram_size}GB, vCPUs: ${vcpus}"
+    echo "Disk: ${DISK_PATH}"
+
+    # Check if VM already exists
+    if virsh dominfo "${VM_NAME}" &>/dev/null; then
+        echo "VM '${VM_NAME}' already exists."
+        echo "Starting existing VM (will boot from disk, not ISO)..."
+        virsh start "${VM_NAME}" || true
+        virt-manager --connect qemu:///system --show-domain-console "${VM_NAME}"
+        exit 0
+    fi
+
+    # Create disk directory and disk if needed
+    mkdir -p "$(dirname "${DISK_PATH}")"
+    if [[ ! -f "${DISK_PATH}" ]]; then
+        echo "Creating disk: ${DISK_PATH}"
+        qemu-img create -f qcow2 "${DISK_PATH}" 64G
+    fi
+
+    echo "Creating new VM with ISO..."
+    echo "After installation, run 'just run-iso-local <iso>' again to boot from disk"
+
+    # Create persistent VM
+    virt-install \
+        --name "${VM_NAME}" \
+        --memory $(( ram_size * 1024 )) \
+        --vcpus ${vcpus} \
+        --cdrom "${ISO_PATH}" \
+        --disk path="${DISK_PATH}",format=qcow2,bus=virtio \
+        --os-variant fedora-unknown \
+        --boot uefi \
+        --autoconsole graphical
+
+# Restart the test VM and connect to console
+[group('VM')]
+restart-vm:
+    #!/usr/bin/bash
+    set -euo pipefail
+    VM_NAME="hypercube-test"
+
+    echo "Stopping VM..."
+    virsh destroy "${VM_NAME}" 2>/dev/null || true
+    sleep 1
+
+    echo "Starting VM..."
+    virsh start "${VM_NAME}"
+
+    echo "Connecting to console..."
+    virt-viewer "${VM_NAME}"
+
+# Delete the test VM and its disk
+[group('VM')]
+delete-test-vm:
+    #!/usr/bin/bash
+    set -euo pipefail
+    VM_NAME="hypercube-test"
+    DISK_PATH="$(pwd)/.vm/${VM_NAME}.qcow2"
+
+    echo "Stopping VM if running..."
+    virsh destroy "${VM_NAME}" 2>/dev/null || true
+
+    echo "Removing VM definition..."
+    virsh undefine "${VM_NAME}" --nvram 2>/dev/null || true
+
+    echo "Removing disk..."
+    rm -f "${DISK_PATH}"
+    rmdir "$(pwd)/.vm" 2>/dev/null || true
+
+    echo "Test VM deleted."
 
 # ============================================
 # ISO Recipes
@@ -117,57 +394,123 @@ _titanoboa-setup:
         git -C _titanoboa pull --ff-only || true
     else
         echo "Cloning Titanoboa..."
-        git clone --depth 1 "https://github.com/ublue-os/titanoboa.git" _titanoboa
+        git clone --depth 1 "https://github.com/binarypie-dev/titanoboa.git" _titanoboa
     fi
-    # Patch Titanoboa to use --policy=missing for local image builds
-    sed -i 's/PODMAN }} pull /PODMAN }} pull --policy=missing /' _titanoboa/Justfile
-    sed -i 's/podman pull /podman pull --policy=missing /' _titanoboa/Justfile
+    # Patch Titanoboa for local builds:
+    # - Add --policy=missing to avoid re-pulling existing images
+    # - Add --tls-verify=false for insecure local registries
+    sed -i 's/podman pull /podman pull --tls-verify=false --policy=missing /' _titanoboa/Justfile
+    sed -i 's/PODMAN }} pull /PODMAN }} pull --tls-verify=false --policy=missing /' _titanoboa/Justfile
 
-# Build ISO from local image
+# Build ISO from local image using a temporary local registry
 [group('ISO')]
-build-iso flavor="main": _titanoboa-setup
+build-iso-local: _titanoboa-setup
     #!/usr/bin/bash
     set -euo pipefail
 
-    if [[ "{{ flavor }}" == "nvidia" ]]; then
-        TAG="{{ default_tag }}-nvidia"
-        ISO_NAME="{{ image_name }}-nvidia.iso"
-    else
-        TAG="{{ default_tag }}"
-        ISO_NAME="{{ image_name }}.iso"
-    fi
+    REGISTRY_PORT=5000
+    REGISTRY_NAME="hypercube-registry"
+    TAG="{{ fedora_version }}"
+    ISO_NAME="{{ image_name }}.iso"
+    LOCAL_IMAGE="localhost/{{ image_name }}:${TAG}"
 
-    IMAGE_FULL="localhost/{{ image_name }}:${TAG}"
-
-    echo "Building ISO for ${IMAGE_FULL}..."
-
-    # Check if image exists
-    ID=$({{ PODMAN }} images --filter reference="${IMAGE_FULL}" --format "{{{{.ID}}}}")
-    if [[ -z "$ID" ]]; then
-        echo "Error: Image ${IMAGE_FULL} not found. Run 'just build {{ flavor }}' first."
+    # Get the host IP address that the chroot can reach
+    # Use the default route interface IP, or fall back to hostname -I
+    HOST_IP=$(ip route get 1.1.1.1 2>/dev/null | awk '{print $7; exit}' || hostname -I | awk '{print $1}')
+    if [[ -z "$HOST_IP" ]]; then
+        echo "Error: Could not determine host IP address"
         exit 1
     fi
+    REGISTRY_IMAGE="${HOST_IP}:${REGISTRY_PORT}/{{ image_name }}:${TAG}"
+
+    echo "Building ISO for ${LOCAL_IMAGE}..."
+    echo "Using registry at ${HOST_IP}:${REGISTRY_PORT}"
+
+    # Check if image exists in user storage
+    ID=$({{ PODMAN }} images --filter reference="${LOCAL_IMAGE}" --format "{{{{.ID}}}}")
+    if [[ -z "$ID" ]]; then
+        echo "Error: Image ${LOCAL_IMAGE} not found. Run 'just build' first."
+        exit 1
+    fi
+
+    # Cleanup function (container has --rm so stop is enough)
+    cleanup() {
+        echo "Stopping local registry..."
+        if {{ SUDO }} {{ PODMAN }} container exists "${REGISTRY_NAME}" 2>/dev/null; then
+            {{ SUDO }} {{ PODMAN }} stop "${REGISTRY_NAME}" 2>/dev/null || :
+        fi
+    }
+    trap cleanup EXIT
+
+    # Stop any existing registry container from a previous failed build
+    {{ SUDO }} {{ PODMAN }} stop "${REGISTRY_NAME}" 2>/dev/null || true
+    {{ SUDO }} {{ PODMAN }} rm "${REGISTRY_NAME}" 2>/dev/null || true
 
     # Copy image to root podman storage if running as non-root
     if [[ "${UID}" -gt 0 ]]; then
         echo "Copying image to root podman storage..."
         COPYTMP=$(mktemp -p "${PWD}" -d -t podman_scp.XXXXXXXXXX)
-        {{ SUDO }} TMPDIR=${COPYTMP} {{ PODMAN }} image scp "${UID}@localhost::${IMAGE_FULL}" root@localhost::"${IMAGE_FULL}"
+        {{ SUDO }} TMPDIR=${COPYTMP} {{ PODMAN }} image scp "${UID}@localhost::${LOCAL_IMAGE}" root@localhost::"${LOCAL_IMAGE}"
         rm -rf "${COPYTMP}"
     fi
 
-    # Build ISO with Titanoboa
-    cd _titanoboa
-    {{ SUDO }} just build "${IMAGE_FULL}"
+    # Start local registry bound to all interfaces
+    echo "Starting local registry on port ${REGISTRY_PORT}..."
+    {{ SUDO }} {{ PODMAN }} run -d --rm \
+        --name "${REGISTRY_NAME}" \
+        -p 0.0.0.0:${REGISTRY_PORT}:5000 \
+        docker.io/library/registry:2
 
-    # Fix ownership
+    # Wait for registry to be ready
+    echo "Waiting for registry to be ready..."
+    for i in {1..30}; do
+        if curl -s "http://${HOST_IP}:${REGISTRY_PORT}/v2/" > /dev/null 2>&1; then
+            echo "Registry is ready"
+            break
+        fi
+        sleep 1
+    done
+
+    # Tag and push image to local registry
+    echo "Pushing image to local registry..."
+    {{ SUDO }} {{ PODMAN }} tag "${LOCAL_IMAGE}" "${REGISTRY_IMAGE}"
+    {{ SUDO }} {{ PODMAN }} push --tls-verify=false "${REGISTRY_IMAGE}"
+
+    # Save project root for later
+    PROJECT_ROOT="${PWD}"
+
+    # Copy iso_files to _titanoboa so they're available at /app/iso_files inside the chroot
+    echo "Copying iso_files to _titanoboa..."
+    rm -rf _titanoboa/iso_files
+    cp -r iso_files _titanoboa/iso_files
+
+    # Build ISO with Titanoboa
+    # livesys=1 enables livesys-scripts from binarypie/hypercube COPR (includes Hyprland support)
+    # HOOK_post_rootfs installs Anaconda and copies live ISO configs
+    # Parameters (positional): image livesys flatpaks_file compression extra_kargs container_image polkit livesys_repo
+    cd _titanoboa
+    {{ SUDO }} HOOK_post_rootfs="${PROJECT_ROOT}/iso_files/hook-post-rootfs.sh" just build \
+        "${REGISTRY_IMAGE}" \
+        1 \
+        NONE \
+        squashfs \
+        NONE \
+        "${REGISTRY_IMAGE}" \
+        1 \
+        binarypie/hypercube
+
+    # Stop registry before moving ISO (while sudo is still cached)
+    cleanup
+    trap - EXIT
+
+    # Fix ownership of _titanoboa directory (must happen before mv)
     if [[ "${UID}" -gt 0 ]]; then
-        {{ SUDO }} chown "${UID}:$(id -g)" -R "${PWD}"
+        {{ SUDO }} chown -R "${UID}:$(id -g)" "${PWD}"
     fi
 
     # Move ISO to project root
     if [[ -f "output.iso" ]]; then
-        mv output.iso "../${ISO_NAME}"
+        mv output.iso "${PROJECT_ROOT}/${ISO_NAME}"
         echo ""
         echo "========================================"
         echo "ISO built successfully: ${ISO_NAME}"
@@ -179,26 +522,36 @@ build-iso flavor="main": _titanoboa-setup
 
 # Build ISO from GHCR image
 [group('ISO')]
-build-iso-ghcr flavor="main": _titanoboa-setup
+build-iso-ghcr: _titanoboa-setup
     #!/usr/bin/bash
     set -euo pipefail
 
-    REGISTRY="ghcr.io/{{ repo_organization }}"
-
-    if [[ "{{ flavor }}" == "nvidia" ]]; then
-        TAG="latest-nvidia"
-        ISO_NAME="{{ image_name }}-nvidia.iso"
-    else
-        TAG="latest"
-        ISO_NAME="{{ image_name }}.iso"
-    fi
-
-    IMAGE_FULL="${REGISTRY}/{{ image_name }}:${TAG}"
+    IMAGE_FULL="ghcr.io/{{ repo_organization }}/{{ image_name }}:latest"
+    ISO_NAME="{{ image_name }}.iso"
 
     echo "Building ISO for ${IMAGE_FULL}..."
 
+    # Save project root for later
+    PROJECT_ROOT="${PWD}"
+
+    # Copy iso_files to _titanoboa so they're available at /app/iso_files inside the chroot
+    echo "Copying iso_files to _titanoboa..."
+    rm -rf _titanoboa/iso_files
+    cp -r iso_files _titanoboa/iso_files
+
+    # livesys=1 enables livesys-scripts from binarypie/hypercube COPR (includes Hyprland support)
+    # HOOK_post_rootfs installs Anaconda and copies live ISO configs
+    # Parameters (positional): image livesys flatpaks_file compression extra_kargs container_image polkit livesys_repo
     cd _titanoboa
-    {{ SUDO }} just build "${IMAGE_FULL}"
+    {{ SUDO }} HOOK_post_rootfs="${PROJECT_ROOT}/iso_files/hook-post-rootfs.sh" just build \
+        "${IMAGE_FULL}" \
+        1 \
+        NONE \
+        squashfs \
+        NONE \
+        "${IMAGE_FULL}" \
+        1 \
+        binarypie/hypercube
 
     if [[ "${UID}" -gt 0 ]]; then
         {{ SUDO }} chown "${UID}:$(id -g)" -R "${PWD}"

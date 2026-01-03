@@ -4,7 +4,6 @@
     "quiet",
     "splash",
     "rd.plymouth=1",
-    "plymouth.use-simpledrm=1",
     "bgrt_disable"
   ]
 }

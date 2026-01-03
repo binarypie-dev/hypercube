@@ -161,9 +161,6 @@ style = "bold red"
 [fennel]
 format = 'via [$symbol]($style)'
 
-[fortran]
-format = 'via [$symbol]($style)'
-
 [gleam]
 format = 'via [$symbol]($style)'
 style = "bold magenta"

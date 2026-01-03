@@ -11,10 +11,13 @@ changelog.md
 
 # Titanoboa ISO builder
 _titanoboa/
+podman_scp.*
 
 # VM testing
 _vm_build/
+.vm/
 
 # ISO files
 *.iso
 result-iso/
+dot_files/nvim/lazy-lock.json

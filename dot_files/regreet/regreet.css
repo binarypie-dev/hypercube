@@ -1,0 +1,7 @@
+/* ReGreet CSS - Minimal overrides for Hypercube */
+/* Uses GTK Tokyo Night theme for base styling */
+
+/* Transparent window to show wallpaper */
+window {
+    background-color: transparent;
+}

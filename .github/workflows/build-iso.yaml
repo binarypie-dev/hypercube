@@ -1,0 +1,92 @@
+---
+name: Build ISO image
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "**/README.md"
+  workflow_dispatch:
+    inputs:
+      create-release:
+        description: "Create GitHub Release"
+        required: false
+        default: false
+        type: boolean
+      release-tag:
+        description: "Release tag (e.g., v1.0.0) - required if creating release"
+        required: false
+        type: string
+
+env:
+  IMAGE_NAME: ${{ github.event.repository.name }}
+  IMAGE_REGISTRY: "ghcr.io/${{ github.repository_owner }}"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build ISO
+    runs-on: ubuntu-latest-m
+    permissions:
+      contents: write
+      packages: read
+      id-token: write
+
+    steps:
+      - name: Prepare environment
+        run: |
+          echo "IMAGE_REGISTRY=${IMAGE_REGISTRY,,}" >> ${GITHUB_ENV}
+          echo "IMAGE_NAME=${IMAGE_NAME,,}" >> ${GITHUB_ENV}
+
+      - name: Maximize build space
+        uses: ublue-os/remove-unwanted-software@v9
+
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Build ISO
+        id: build
+        uses: binarypie-dev/titanoboa@main
+        with:
+          image-ref: ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          iso-dest: ${{ github.workspace }}/output.iso
+          builder-distro: fedora
+          livesys: true
+          livesys-repo: ""
+          flatpaks-list: NONE
+          hook-post-rootfs: ${{ github.workspace }}/iso_files/hook-post-rootfs.sh
+
+      - name: Rename ISO and generate checksum
+        id: rename
+        run: |
+          set -x
+          mkdir -p output
+          NEW_NAME="${{ env.IMAGE_NAME }}.iso"
+          mv "${{ steps.build.outputs.iso-dest }}" "output/$NEW_NAME"
+          (cd output && sha256sum "$NEW_NAME" | tee "$NEW_NAME.sha256")
+          echo "iso-path=output/$NEW_NAME" >> $GITHUB_OUTPUT
+          echo "iso-name=$NEW_NAME" >> $GITHUB_OUTPUT
+
+      - name: Upload ISO as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ env.IMAGE_NAME }}-iso
+          path: output/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+
+      - name: Upload ISO to release
+        if: inputs.create-release == true && inputs.release-tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ inputs.release-tag }}
+          files: |
+            output/${{ steps.rename.outputs.iso-name }}
+            output/${{ steps.rename.outputs.iso-name }}.sha256
+          fail_on_unmatched_files: true
+          generate_release_notes: true
