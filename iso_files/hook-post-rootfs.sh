@@ -38,6 +38,20 @@ if [[ -n "${CONTAINER_IMAGE}" ]]; then
     cat >> /usr/share/anaconda/interactive-defaults.ks << EOF
 # Hypercube: Install from embedded container image using ostreecontainer
 ostreecontainer --url=${CONTAINER_IMAGE} --transport=containers-storage --no-signature-verification --stateroot=hypercube
+
+# Post-install: Update the origin to use remote registry for updates
+# The containers-storage transport only works with the embedded ISO image.
+# For rpm-ostree upgrades to work, we need to point to the remote registry.
+%post --nochroot
+SYSROOT=\${ANA_INSTALL_PATH:-/mnt/sysroot}
+ORIGIN_FILE=\$(ls \${SYSROOT}/ostree/deploy/hypercube/deploy/*.origin 2>/dev/null | head -1)
+if [[ -n "\${ORIGIN_FILE}" ]]; then
+    echo "Updating origin to use remote registry for updates..."
+    sed -i 's|containers-storage:|docker://|' "\${ORIGIN_FILE}"
+    echo "Origin updated:"
+    cat "\${ORIGIN_FILE}"
+fi
+%end
 EOF
 else
     echo "WARNING: No container image found in podman storage"
