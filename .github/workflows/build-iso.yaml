@@ -62,7 +62,7 @@ jobs:
           iso-dest: ${{ github.workspace }}/output.iso
           builder-distro: fedora
           livesys: true
-          livesys-repo: ""
+          livesys-repo: binarypie/hypercube
           flatpaks-list: NONE
           hook-post-rootfs: ${{ github.workspace }}/_titanoboa/iso_files/hook-post-rootfs.sh
 
