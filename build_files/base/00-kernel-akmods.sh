@@ -33,13 +33,20 @@ dnf5 -y install \
     /tmp/akmods/kmods/*framework-laptop*.rpm \
     || true
 
-# Install RPM Fusion for v4l2loopback
+# Install v4l2loopback userspace tools from RPM Fusion (without akmod dependency)
+# Then install pre-built kmod from ublue akmods
 dnf5 -y install \
     "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${FEDORA_VERSION}.noarch.rpm" \
     "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${FEDORA_VERSION}.noarch.rpm"
 
-dnf5 -y install v4l2loopback /tmp/akmods/kmods/*v4l2loopback*.rpm || true
+# Install userspace package but exclude akmod (we use pre-built kmod instead)
+dnf5 -y install --exclude=akmod-v4l2loopback --exclude=akmods v4l2loopback || echo "WARNING: Failed to install v4l2loopback userspace"
 dnf5 -y remove rpmfusion-free-release rpmfusion-nonfree-release || true
+
+# Install pre-built v4l2loopback kmod from ublue akmods
+echo "Installing v4l2loopback kmod..."
+ls -la /tmp/akmods/kmods/*v4l2loopback*.rpm || echo "WARNING: v4l2loopback kmod not found"
+dnf5 -y install /tmp/akmods/kmods/*v4l2loopback*.rpm || echo "WARNING: Failed to install v4l2loopback kmod"
 
 ### NVIDIA Installation ###
 echo "Installing NVIDIA drivers..."
