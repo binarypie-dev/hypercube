@@ -71,7 +71,8 @@ dnf5 -y install \
     wl-clipboard \
     xdg-utils \
     polkit \
-    dbus-daemon
+    dbus-daemon \
+    gnome-disk-utility
 
 ### File Management
 dnf5 -y install \

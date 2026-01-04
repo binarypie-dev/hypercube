@@ -280,29 +280,36 @@ ColumnLayout {
             // Terminal apps: launch with ghostty
             appLaunchProcess.command = ["ghostty", "-e", desktopId]
         } else {
-            // GUI apps: use gtk-launch with desktop_id
-            appLaunchProcess.command = ["gtk-launch", desktopId]
+            // GUI apps: use gtk4-launch with desktop_id
+            appLaunchProcess.command = ["gtk4-launch", desktopId]
         }
-        appLaunchProcess.running = true
+        // Launch detached so apps survive shell restart and run independently
+        appLaunchProcess.startDetached()
 
         Root.GlobalStates.sidebarLeftOpen = false
         searchInput.text = ""
     }
 
-    // App launcher process
+    // App launcher process - used with startDetached() for independent execution
     Process {
         id: appLaunchProcess
         command: ["true"]
     }
 
-    // Focus search when view becomes visible
-    onVisibleChanged: {
-        if (visible) {
-            searchInput.forceActiveFocus()
-            appListView.currentIndex = 0
-        } else {
-            searchInput.text = ""
-            searchResults = []
+    // Reset state when sidebar closes
+    Connections {
+        target: Root.GlobalStates
+        function onSidebarLeftOpenChanged() {
+            if (!Root.GlobalStates.sidebarLeftOpen) {
+                searchInput.text = ""
+                searchResults = []
+            }
         }
+    }
+
+    // Focus search input - called externally by Loader
+    function focusSearch() {
+        searchInput.forceActiveFocus()
+        appListView.currentIndex = 0
     }
 }

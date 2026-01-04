@@ -28,6 +28,13 @@ PanelWindow {
 
     visible: Root.GlobalStates.sidebarLeftOpen
 
+    // Focus app search when sidebar opens
+    onVisibleChanged: {
+        if (visible && appViewLoader.item) {
+            appViewLoader.item.focusSearch()
+        }
+    }
+
     // Request keyboard focus from compositor
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     WlrLayershell.layer: WlrLayer.Overlay
@@ -46,10 +53,12 @@ PanelWindow {
 
     // Application View (shown when sidebarLeftView === "apps")
     Loader {
+        id: appViewLoader
         anchors.fill: parent
         anchors.margins: Common.Appearance.spacing.medium
         active: Root.GlobalStates.sidebarLeftView === "apps"
         source: "ApplicationView.qml"
+        onLoaded: item.focusSearch()
     }
 
     // Update View (shown when sidebarLeftView === "updates")
