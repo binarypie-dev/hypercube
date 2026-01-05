@@ -78,13 +78,15 @@ Singleton {
                         MAC=$(nmcli -t -f GENERAL.HWADDR device show "$dev" 2>/dev/null | head -1 | cut -d: -f2-)
 
                         if [ "$type" = "wifi" ] && [ "$state" = "connected" ]; then
-                            WIFI_INFO=$(nmcli -t -f SIGNAL,SSID,SECURITY device wifi list ifname "$dev" 2>/dev/null | head -1)
+                            # Connection name is the SSID for wifi connections
+                            SSID="$conn"
+                            # Get signal and security by filtering wifi list to our specific SSID
+                            WIFI_INFO=$(nmcli -t -f SIGNAL,SECURITY device wifi list ifname "$dev" ssid "$SSID" 2>/dev/null | head -1)
                             SIGNAL=$(echo "$WIFI_INFO" | cut -d: -f1)
-                            SSID=$(echo "$WIFI_INFO" | cut -d: -f2)
-                            SECURITY=$(echo "$WIFI_INFO" | cut -d: -f3)
+                            SECURITY=$(echo "$WIFI_INFO" | cut -d: -f2-)
                         fi
 
-                        echo "IFACE:$dev:$type:$state:$conn:$IP:$GW:$MAC:$SIGNAL:$SSID:$SECURITY"
+                        echo "IFACE|$dev|$type|$state|$conn|$IP|$GW|$MAC|$SIGNAL|$SSID|$SECURITY"
                         ;;
                 esac
             done
@@ -228,8 +230,8 @@ Singleton {
             return
         }
 
-        if (parsingInterfaces && line.startsWith("IFACE:")) {
-            const parts = line.substring(6).split(":")
+        if (parsingInterfaces && line.startsWith("IFACE|")) {
+            const parts = line.substring(6).split("|")
             if (parts.length >= 4) {
                 const iface = {
                     device: parts[0] || "",

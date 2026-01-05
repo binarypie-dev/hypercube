@@ -163,6 +163,7 @@ QtObject {
         thermometer: "thermometer",
         droplets: "droplets",
         eye: "eye",
+        eyeOff: "eye-off",
         star: "star",
         starOutline: "star",
         heart: "heart",

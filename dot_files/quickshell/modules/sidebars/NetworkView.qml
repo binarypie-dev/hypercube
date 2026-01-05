@@ -12,6 +12,33 @@ ColumnLayout {
     id: root
     spacing: Common.Appearance.spacing.medium
 
+    // Password dialog state
+    property string selectedSsid: ""
+    property string selectedSecurity: ""
+    property bool showPasswordDialog: false
+
+    function showPasswordPrompt(ssid, security) {
+        selectedSsid = ssid
+        selectedSecurity = security
+        showPasswordDialog = true
+        passwordField.text = ""
+        passwordField.forceActiveFocus()
+    }
+
+    function hidePasswordPrompt() {
+        showPasswordDialog = false
+        selectedSsid = ""
+        selectedSecurity = ""
+        passwordField.text = ""
+    }
+
+    function connectWithPassword() {
+        if (passwordField.text.length > 0) {
+            Services.Network.connectToNetwork(selectedSsid, passwordField.text)
+            hidePasswordPrompt()
+        }
+    }
+
     // Refresh when view opens
     Component.onCompleted: {
         Services.Network.refresh()
@@ -56,6 +83,206 @@ ColumnLayout {
                 name: Common.Icons.icons.close
                 size: Common.Appearance.sizes.iconMedium
                 color: Common.Appearance.m3colors.onSurface
+            }
+        }
+    }
+
+    // ===== Password Input Dialog =====
+    Rectangle {
+        visible: root.showPasswordDialog
+        Layout.fillWidth: true
+        Layout.preferredHeight: passwordContent.implicitHeight + Common.Appearance.spacing.medium * 2
+        radius: Common.Appearance.rounding.large
+        color: Common.Appearance.m3colors.primaryContainer
+
+        ColumnLayout {
+            id: passwordContent
+            anchors.fill: parent
+            anchors.margins: Common.Appearance.spacing.medium
+            spacing: Common.Appearance.spacing.small
+
+            // Header
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Common.Appearance.spacing.small
+
+                Common.Icon {
+                    name: Common.Icons.icons.wifi
+                    size: Common.Appearance.sizes.iconMedium
+                    color: Common.Appearance.m3colors.onPrimaryContainer
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+
+                    Text {
+                        text: root.selectedSsid
+                        font.family: Common.Appearance.fonts.main
+                        font.pixelSize: Common.Appearance.fontSize.normal
+                        font.weight: Font.Medium
+                        color: Common.Appearance.m3colors.onPrimaryContainer
+                        elide: Text.ElideRight
+                        Layout.fillWidth: true
+                    }
+
+                    Text {
+                        text: "Enter password to connect"
+                        font.family: Common.Appearance.fonts.main
+                        font.pixelSize: Common.Appearance.fontSize.small
+                        color: Common.Appearance.m3colors.onPrimaryContainer
+                        opacity: 0.8
+                    }
+                }
+
+                MouseArea {
+                    Layout.preferredWidth: 28
+                    Layout.preferredHeight: 28
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.hidePasswordPrompt()
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Common.Appearance.rounding.small
+                        color: parent.containsMouse ? Common.Appearance.m3colors.primary : "transparent"
+                        opacity: 0.2
+                    }
+
+                    Common.Icon {
+                        anchors.centerIn: parent
+                        name: Common.Icons.icons.close
+                        size: Common.Appearance.sizes.iconSmall
+                        color: Common.Appearance.m3colors.onPrimaryContainer
+                    }
+                }
+            }
+
+            // Password field
+            Rectangle {
+                Layout.fillWidth: true
+                Layout.preferredHeight: 44
+                radius: Common.Appearance.rounding.medium
+                color: Common.Appearance.m3colors.surface
+                border.width: passwordField.activeFocus ? 2 : 1
+                border.color: passwordField.activeFocus
+                    ? Common.Appearance.m3colors.primary
+                    : Common.Appearance.m3colors.outline
+
+                RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: Common.Appearance.spacing.medium
+                    anchors.rightMargin: Common.Appearance.spacing.small
+                    spacing: Common.Appearance.spacing.small
+
+                    Common.Icon {
+                        name: Common.Icons.icons.lock
+                        size: Common.Appearance.sizes.iconSmall
+                        color: Common.Appearance.m3colors.onSurfaceVariant
+                    }
+
+                    TextInput {
+                        id: passwordField
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        verticalAlignment: TextInput.AlignVCenter
+                        font.family: Common.Appearance.fonts.main
+                        font.pixelSize: Common.Appearance.fontSize.normal
+                        color: Common.Appearance.m3colors.onSurface
+                        echoMode: showPasswordButton.checked ? TextInput.Normal : TextInput.Password
+                        clip: true
+
+                        Keys.onReturnPressed: root.connectWithPassword()
+                        Keys.onEscapePressed: root.hidePasswordPrompt()
+
+                        Text {
+                            anchors.fill: parent
+                            anchors.leftMargin: 0
+                            verticalAlignment: Text.AlignVCenter
+                            visible: !passwordField.text && !passwordField.activeFocus
+                            text: "Password"
+                            font.family: Common.Appearance.fonts.main
+                            font.pixelSize: Common.Appearance.fontSize.normal
+                            color: Common.Appearance.m3colors.onSurfaceVariant
+                        }
+                    }
+
+                    MouseArea {
+                        id: showPasswordButton
+                        property bool checked: false
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 28
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: checked = !checked
+
+                        Common.Icon {
+                            anchors.centerIn: parent
+                            name: showPasswordButton.checked ? Common.Icons.icons.eyeOff : Common.Icons.icons.eye
+                            size: Common.Appearance.sizes.iconSmall
+                            color: Common.Appearance.m3colors.onSurfaceVariant
+                        }
+                    }
+                }
+            }
+
+            // Buttons
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: Common.Appearance.spacing.small
+
+                Item { Layout.fillWidth: true }
+
+                MouseArea {
+                    Layout.preferredWidth: cancelText.implicitWidth + Common.Appearance.spacing.medium * 2
+                    Layout.preferredHeight: 36
+                    cursorShape: Qt.PointingHandCursor
+                    hoverEnabled: true
+                    onClicked: root.hidePasswordPrompt()
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Common.Appearance.rounding.medium
+                        color: parent.containsMouse ? Common.Appearance.m3colors.surface : "transparent"
+                    }
+
+                    Text {
+                        id: cancelText
+                        anchors.centerIn: parent
+                        text: "Cancel"
+                        font.family: Common.Appearance.fonts.main
+                        font.pixelSize: Common.Appearance.fontSize.normal
+                        font.weight: Font.Medium
+                        color: Common.Appearance.m3colors.onPrimaryContainer
+                    }
+                }
+
+                MouseArea {
+                    Layout.preferredWidth: connectText.implicitWidth + Common.Appearance.spacing.medium * 2
+                    Layout.preferredHeight: 36
+                    cursorShape: passwordField.text.length > 0 ? Qt.PointingHandCursor : Qt.ArrowCursor
+                    hoverEnabled: true
+                    enabled: passwordField.text.length > 0
+                    onClicked: root.connectWithPassword()
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Common.Appearance.rounding.medium
+                        color: passwordField.text.length > 0
+                            ? (parent.containsMouse ? Qt.darker(Common.Appearance.m3colors.primary, 1.1) : Common.Appearance.m3colors.primary)
+                            : Common.Appearance.m3colors.surfaceVariant
+                    }
+
+                    Text {
+                        id: connectText
+                        anchors.centerIn: parent
+                        text: "Connect"
+                        font.family: Common.Appearance.fonts.main
+                        font.pixelSize: Common.Appearance.fontSize.normal
+                        font.weight: Font.Medium
+                        color: passwordField.text.length > 0
+                            ? Common.Appearance.m3colors.onPrimary
+                            : Common.Appearance.m3colors.onSurfaceVariant
+                    }
+                }
             }
         }
     }
@@ -401,10 +628,10 @@ ColumnLayout {
                         saved: modelData.saved
                         isConnected: Services.Network.ssid === modelData.ssid && Services.Network.connected
                         onConnectClicked: {
-                            if (modelData.saved || !modelData.security) {
+                            if (modelData.saved || !modelData.security || modelData.security === "--") {
                                 Services.Network.connectToNetwork(modelData.ssid)
                             } else {
-                                console.log("Need password for", modelData.ssid)
+                                root.showPasswordPrompt(modelData.ssid, modelData.security)
                             }
                         }
                         onForgetClicked: Services.Network.forgetNetwork(modelData.ssid)
