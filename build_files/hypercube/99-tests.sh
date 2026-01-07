@@ -45,7 +45,6 @@ REQUIRED_FILES=(
   # greetd
   "/etc/greetd/config.toml"
   # Config files
-  "/usr/bin/nvimd"
   "/etc/fish/config.fish"
   "/usr/share/hypercube/config/starship/starship.toml"
   # Theming

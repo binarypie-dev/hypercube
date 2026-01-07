@@ -1,0 +1,26 @@
+-- Example plugin customization
+-- Add your own plugins or override Hypercube defaults here
+--
+-- To add a new plugin:
+--   return {
+--     "username/plugin-name",
+--     opts = { ... },
+--   }
+--
+-- To override a Hypercube plugin:
+--   return {
+--     "folke/snacks.nvim",
+--     opts = {
+--       dashboard = {
+--         preset = { header = "Your custom header" },
+--       },
+--     },
+--   }
+--
+-- To disable a plugin:
+--   return {
+--     "plugin/name",
+--     enabled = false,
+--   }
+
+return {}

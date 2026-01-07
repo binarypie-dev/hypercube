@@ -1,131 +1,232 @@
-# Neovim Podman Development Environment
-# Run `just --list` to see available commands
+# Neovim Distrobox Development Environment
+# Local development and testing commands
 
-image_name := "nvim-dev"
-config_dir := env_var("HOME") / ".config/nvim"
-data_dir := env_var("HOME") / ".local/share/nvim"
-state_dir := env_var("HOME") / ".local/state/nvim"
-cache_dir := env_var("HOME") / ".cache/nvim"
+container_name := "nvim-dev"
+local_image := "localhost/nvim-dev"
+remote_image := "ghcr.io/binarypie/nvim-dev:latest"
 
 # Default recipe - show help
 default:
     @just --list
 
-# Build the Podman image (uses layer cache)
+# =============================================================================
+# Image Building
+# =============================================================================
+
+# Build the container image locally
 build:
-    @echo "Building {{image_name}} image..."
-    podman build -t {{image_name}} .
-    @echo "✓ Image {{image_name}} built successfully"
+    @echo "Building nvim-dev image locally..."
+    podman build -t {{local_image}} .
+    @echo "Done! Image: {{local_image}}"
 
-# Force rebuild from scratch (no cache)
-rebuild:
-    @echo "Building {{image_name}} image (no cache)..."
-    podman build --no-cache -t {{image_name}} .
-    @echo "✓ Image {{image_name}} rebuilt successfully"
+# Build without cache
+build-no-cache:
+    @echo "Building nvim-dev image (no cache)..."
+    podman build --no-cache -t {{local_image}} .
+    @echo "Done! Image: {{local_image}}"
 
-# Full clean rebuild (removes old image first, no cache)
-rebuild-clean:
-    @echo "Removing existing {{image_name}} image..."
-    -podman rmi -f {{image_name}} 2>/dev/null
-    @echo "Building fresh {{image_name}} image..."
-    podman build --no-cache -t {{image_name}} .
-    @echo "✓ Image {{image_name}} rebuilt successfully"
+# Push to GHCR (requires: podman login ghcr.io)
+push:
+    podman tag {{local_image}} {{remote_image}}
+    podman push {{remote_image}}
 
-# Run nvim in current directory
+# =============================================================================
+# Container Management (using local image)
+# =============================================================================
+
+# Create container from LOCAL image (for testing)
+create-local: build
+    #!/usr/bin/bash
+    set -euo pipefail
+    if distrobox list | grep -q "{{container_name}}"; then
+        echo "Container '{{container_name}}' already exists. Run 'just clean' first."
+        exit 1
+    fi
+    echo "Creating {{container_name}} from local image..."
+    distrobox create --name "{{container_name}}" --image "{{local_image}}"
+    echo "Done!"
+
+# Create container from REMOTE image (production)
+create-remote:
+    #!/usr/bin/bash
+    set -euo pipefail
+    if distrobox list | grep -q "{{container_name}}"; then
+        echo "Container '{{container_name}}' already exists. Run 'just clean' first."
+        exit 1
+    fi
+    echo "Creating {{container_name}} from {{remote_image}}..."
+    distrobox create --name "{{container_name}}" --image "{{remote_image}}"
+    echo "Done!"
+
+# Alias for create-remote (default behavior)
+create: create-remote
+
+# =============================================================================
+# Usage
+# =============================================================================
+
+# Enter the container interactively
+enter:
+    #!/usr/bin/bash
+    set -euo pipefail
+    if ! distrobox list | grep -q "{{container_name}}"; then
+        echo "Container not found. Creating from remote image..."
+        just create-remote
+    fi
+    distrobox enter {{container_name}}
+
+# Export nvim to ~/.local/bin
+export:
+    #!/usr/bin/bash
+    set -euo pipefail
+    if ! distrobox list | grep -q "{{container_name}}"; then
+        echo "Error: Container '{{container_name}}' not found. Run 'just create' first."
+        exit 1
+    fi
+    echo "Exporting nvim to ~/.local/bin..."
+    distrobox enter {{container_name}} -- distrobox-export --bin /home/linuxbrew/.linuxbrew/bin/nvim --export-path ~/.local/bin
+    echo ""
+    echo "Done! You can now run 'nvim' directly."
+
+# Run a command inside the container
 run *args:
-    @mkdir -p "{{data_dir}}" "{{state_dir}}" "{{cache_dir}}"
-    podman run -it --rm \
-        --name "nvim-$PPID" \
-        --userns=keep-id \
-        -e "TERM=${TERM:-xterm-256color}" \
-        -e "COLORTERM=${COLORTERM:-truecolor}" \
-        -v "{{config_dir}}:/home/nvim/.config/nvim:ro,z" \
-        -v "{{data_dir}}:/home/nvim/.local/share/nvim:z" \
-        -v "{{state_dir}}:/home/nvim/.local/state/nvim:z" \
-        -v "{{cache_dir}}:/home/nvim/.cache/nvim:z" \
-        -v "$(pwd):/home/nvim/workspace:z" \
-        -w "/home/nvim/workspace" \
-        {{image_name}} {{args}}
+    distrobox enter {{container_name}} -- {{args}}
 
-# Run a shell inside the container (for debugging)
-shell:
-    @mkdir -p "{{data_dir}}" "{{state_dir}}" "{{cache_dir}}"
-    podman run -it --rm \
-        --name "nvim-shell-$PPID" \
-        --userns=keep-id \
-        --entrypoint /bin/bash \
-        -e "TERM=${TERM:-xterm-256color}" \
-        -e "COLORTERM=${COLORTERM:-truecolor}" \
-        -v "{{config_dir}}:/home/nvim/.config/nvim:ro,z" \
-        -v "{{data_dir}}:/home/nvim/.local/share/nvim:z" \
-        -v "{{state_dir}}:/home/nvim/.local/state/nvim:z" \
-        -v "{{cache_dir}}:/home/nvim/.cache/nvim:z" \
-        -v "$(pwd):/home/nvim/workspace:z" \
-        -w "/home/nvim/workspace" \
-        {{image_name}}
+# =============================================================================
+# Cleanup
+# =============================================================================
 
-# Show image info
-info:
-    @podman image inspect {{image_name}} --format '{{{{.Id}}}}' 2>/dev/null && \
-        echo "Image: {{image_name}}" && \
-        podman image inspect {{image_name}} --format 'Created: {{{{.Created}}}}' && \
-        podman image inspect {{image_name}} --format 'Size: {{{{.Size}}}}' | awk '{printf "Size: %.2f GB\n", $2/1024/1024/1024}' \
-    || echo "Image {{image_name}} not found. Run 'just build' to create it."
-
-# Remove the image
+# Remove the container
 clean:
-    @echo "Removing {{image_name}} image..."
-    -podman rmi -f {{image_name}} 2>/dev/null
-    @echo "✓ Image removed"
+    #!/usr/bin/bash
+    set -euo pipefail
+    if distrobox list | grep -q "{{container_name}}"; then
+        echo "Removing {{container_name}} container..."
+        distrobox rm -f {{container_name}}
+        echo "Container removed"
+    else
+        echo "Container '{{container_name}}' not found"
+    fi
 
-# Configure shell alias for nvimd
-shell-config:
-    #!/usr/bin/env bash
-    SCRIPT_PATH="{{config_dir}}/docker-nvim.sh"
-    ALIAS_LINE="alias nvimd=\"$SCRIPT_PATH\""
+# Remove container and unexport nvim
+clean-all: clean
+    #!/usr/bin/bash
+    set -euo pipefail
+    if [ -f ~/.local/bin/nvim ]; then
+        rm -f ~/.local/bin/nvim
+        echo "Removed ~/.local/bin/nvim"
+    fi
 
-    case "$SHELL" in
-        */bash)
-            RC_FILE="$HOME/.bashrc"
-            if grep -q "alias nvimd=" "$RC_FILE" 2>/dev/null; then
-                echo "✓ Alias 'nvimd' already exists in $RC_FILE"
-            else
-                echo "" >> "$RC_FILE"
-                echo "# Podman Neovim alias" >> "$RC_FILE"
-                echo "$ALIAS_LINE" >> "$RC_FILE"
-                echo "✓ Added 'nvimd' alias to $RC_FILE"
-                echo "  Run 'source $RC_FILE' or restart your shell"
-            fi
-            ;;
-        */zsh)
-            RC_FILE="$HOME/.zshrc"
-            if grep -q "alias nvimd=" "$RC_FILE" 2>/dev/null; then
-                echo "✓ Alias 'nvimd' already exists in $RC_FILE"
-            else
-                echo "" >> "$RC_FILE"
-                echo "# Podman Neovim alias" >> "$RC_FILE"
-                echo "$ALIAS_LINE" >> "$RC_FILE"
-                echo "✓ Added 'nvimd' alias to $RC_FILE"
-                echo "  Run 'source $RC_FILE' or restart your shell"
-            fi
-            ;;
-        */fish)
-            RC_FILE="$HOME/.config/fish/config.fish"
-            mkdir -p "$(dirname "$RC_FILE")"
-            if grep -q "alias nvimd" "$RC_FILE" 2>/dev/null; then
-                echo "✓ Alias 'nvimd' already exists in $RC_FILE"
-            else
-                echo "" >> "$RC_FILE"
-                echo "# Podman Neovim alias" >> "$RC_FILE"
-                echo "alias nvimd \"$SCRIPT_PATH\"" >> "$RC_FILE"
-                echo "✓ Added 'nvimd' alias to $RC_FILE"
-                echo "  Run 'source $RC_FILE' or restart your shell"
-            fi
-            ;;
-        *)
-            echo "Shell '$SHELL' not supported for automatic configuration."
-            echo "Please add the following alias manually to your shell config:"
-            echo ""
-            echo "  $ALIAS_LINE"
-            ;;
-    esac
+# Remove local image
+clean-image:
+    -podman rmi {{local_image}}
+
+# =============================================================================
+# Quick Setup
+# =============================================================================
+
+# Full setup with remote image: create + export
+setup: create-remote export
+    @echo ""
+    @echo "Setup complete! Run 'nvim' to use the containerized editor."
+
+# Full setup with local image: build + create + export
+setup-local: create-local export
+    @echo ""
+    @echo "Setup complete! Run 'nvim' to use the locally-built editor."
+
+# =============================================================================
+# Config Management (for testing without installing Hypercube)
+# =============================================================================
+
+# Initialize ~/.config/nvim from skel (uses local repo path)
+init-config:
+    #!/usr/bin/bash
+    set -euo pipefail
+    REPO_DIR="{{justfile_directory()}}"
+
+    if [ -d ~/.config/nvim ]; then
+        echo "~/.config/nvim already exists!"
+        echo "Run 'just clean-config' first to remove it."
+        exit 1
+    fi
+
+    echo "Initializing ~/.config/nvim from skel..."
+    mkdir -p ~/.config/nvim/lua/config
+    mkdir -p ~/.config/nvim/lua/plugins
+
+    # Copy skel files
+    cp "$REPO_DIR/skel/lua/config/lazy.lua" ~/.config/nvim/lua/config/
+    cp "$REPO_DIR/skel/lua/plugins/example.lua" ~/.config/nvim/lua/plugins/
+
+    # Create init.lua pointing to local repo instead of /usr/share
+    cat > ~/.config/nvim/init.lua << 'INITLUA'
+    -- Hypercube Neovim Configuration (LOCAL DEVELOPMENT)
+    -- Using local repo path instead of system path
+
+    -- Add LOCAL config to runtime path (for hypercube plugin)
+    vim.opt.rtp:prepend("REPO_PATH_PLACEHOLDER")
+
+    -- Load hypercube config (autocmds, filetypes, etc.)
+    require("hypercube.config").setup()
+
+    -- Store LazyVim state in data dir (writable)
+    vim.g.lazyvim_json = vim.fn.stdpath("data") .. "/lazyvim.json"
+
+    -- Bootstrap lazy.nvim
+    require("config.lazy")
+    INITLUA
+    sed -i "s|REPO_PATH_PLACEHOLDER|$REPO_DIR|g" ~/.config/nvim/init.lua
+    sed -i 's/^    //' ~/.config/nvim/init.lua
+
+    echo ""
+    echo "Done! ~/.config/nvim initialized for local development."
+    echo "Hypercube plugin path: $REPO_DIR"
+    echo ""
+    echo "Next steps:"
+    echo "  1. Run 'just setup-local' to create the nvim-dev container"
+    echo "  2. Run 'nvim' to test"
+
+# Remove ~/.config/nvim
+clean-config:
+    #!/usr/bin/bash
+    set -euo pipefail
+    if [ -d ~/.config/nvim ]; then
+        echo "Removing ~/.config/nvim..."
+        rm -rf ~/.config/nvim
+        echo "Done!"
+    else
+        echo "~/.config/nvim not found"
+    fi
+
+# Reset config (clean + init)
+reset-config: clean-config init-config
+
+# =============================================================================
+# Development Helpers
+# =============================================================================
+
+# Test the Containerfile builds successfully
+test-build: build
+    @echo "Testing container..."
+    podman run --rm {{local_image}} nvim --version
+    podman run --rm {{local_image}} go version
+    podman run --rm {{local_image}} node --version
+    podman run --rm {{local_image}} python3 --version
+    podman run --rm {{local_image}} rustc --version
+    @echo ""
+    @echo "All tests passed!"
+
+# Show what's installed in the container
+show-versions:
+    #!/usr/bin/bash
+    echo "=== Versions in {{container_name}} ==="
+    distrobox enter {{container_name}} -- bash -c '
+        echo "neovim: $(nvim --version | head -1)"
+        echo "go: $(go version)"
+        echo "node: $(node --version)"
+        echo "python: $(python3 --version)"
+        echo "rustc: $(rustc --version)"
+        echo "lua: $(lua -v)"
+        echo "ruby: $(ruby --version)"
+    '

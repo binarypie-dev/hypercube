@@ -82,7 +82,7 @@ hypercube/
 | `00-hypercube-branding.sh` | OS release info, Plymouth theme, GDM dconf |
 | `01-hypercube-packages.sh` | Package installation via DNF/COPR |
 | `02-hypercube-theming.sh` | Tokyo Night GTK/icon theme installation |
-| `03-hypercube-configs.sh` | Config file deployment (fish, nvimd, etc.) |
+| `03-hypercube-configs.sh` | Config file deployment (fish, gtk, etc.) |
 | `99-tests.sh` | Validation tests for required packages/files |
 
 ### Configuration Deployment

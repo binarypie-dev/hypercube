@@ -8,9 +8,6 @@ echo "Installing Hypercube configurations..."
 
 CONFIG_DIR="/usr/share/hypercube/config"
 
-### Install nvimd (containerized neovim wrapper)
-install -Dm755 "${CONFIG_DIR}/nvim/bin/nvimd" /usr/bin/nvimd
-
 ### Fish shell configs
 # Fish doesn't use XDG_CONFIG_DIRS, so we install to /etc/fish
 install -Dm644 "${CONFIG_DIR}/fish/config.fish" /etc/fish/config.fish
@@ -57,6 +54,15 @@ source = /usr/share/hypercube/config/hypr/hyprland.conf
 # Your customizations below:
 
 EOF
+
+### Neovim - skel that loads hypercube plugin from system config
+# System config at /usr/share/hypercube/config/nvim/ provides the hypercube plugin
+# Users get a minimal config that imports it and can add their own plugins
+mkdir -p /etc/skel/.config/nvim/lua/config
+mkdir -p /etc/skel/.config/nvim/lua/plugins
+cp "${CONFIG_DIR}/nvim/skel/init.lua" /etc/skel/.config/nvim/
+cp "${CONFIG_DIR}/nvim/skel/lua/config/lazy.lua" /etc/skel/.config/nvim/lua/config/
+cp "${CONFIG_DIR}/nvim/skel/lua/plugins/example.lua" /etc/skel/.config/nvim/lua/plugins/
 
 ### GTK theme settings - install to /etc/xdg/ for system-wide defaults
 # Users can override by creating ~/.config/gtk-3.0/settings.ini

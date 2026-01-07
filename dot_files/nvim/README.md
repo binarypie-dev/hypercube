@@ -6,46 +6,58 @@ This is my personal Neovim configuration, based on [LazyVim](https://github.com/
 
 This configuration is built upon the LazyVim distribution and customized with a set of plugins and settings to enhance the development workflow.
 
-## Docker Development Environment
+## Distrobox Development Environment
 
-A fully containerized Neovim environment is available for portable, consistent development across machines.
+A pre-built containerized Neovim environment is available via distrobox. The image includes all LSPs, formatters, linters, and language runtimes pre-installed.
 
-### Quick Start
+### Quick Start (Hypercube Users)
 
 ```bash
-# Build the container
-just build
+# One command to set everything up
+just nvim-setup
 
-# Configure shell alias (adds 'nvimd' to your shell)
-just shell-config
-
-# Restart your shell or source your config, then:
-nvimd                    # Open nvim in current directory
-nvimd ~/projects/myapp   # Open nvim in specific directory
-nvimd file.txt           # Open specific file
+# Now use nvim directly
+nvim file.rs
 ```
 
-### Requirements
+### Quick Start (Any Distrobox User)
 
-- Docker
-- [just](https://github.com/casey/just) command runner
+```bash
+# Pull the pre-built image
+distrobox create --name nvim-dev --image ghcr.io/binarypie/nvim-dev:latest
 
-### Available Commands
+# Export nvim to your PATH
+distrobox enter nvim-dev -- distrobox-export --bin /home/linuxbrew/.linuxbrew/bin/nvim --export-path ~/.local/bin
+
+# Use nvim directly
+nvim file.rs
+```
+
+### Available Commands (Hypercube)
 
 | Command | Description |
 |---------|-------------|
-| `just build` | Build the Docker image (uses layer cache) |
-| `just rebuild` | Force rebuild without cache |
-| `just rebuild-clean` | Remove old image and rebuild fresh |
-| `just run [args]` | Run nvim in current directory |
-| `just shell` | Open a bash shell in the container (debugging) |
-| `just info` | Show image info (size, creation date) |
-| `just clean` | Remove the Docker image |
-| `just shell-config` | Add `nvimd` alias to your shell config |
+| `just nvim-setup` | Create container + export nvim (one-time setup) |
+| `just nvim-dev` | Enter the container interactively |
+| `just nvim-export` | Export nvim to ~/.local/bin |
+| `just nvim-upgrade` | Upgrade container to latest image |
 
-### What's Included
+### Local Development
 
-The Docker image is based on Fedora and includes:
+For testing changes to the container image:
+
+```bash
+cd dot_files/nvim
+
+just build        # Build image locally
+just setup-local  # Create container from local image + export
+just test-build   # Verify all tools are installed
+just clean        # Remove container
+```
+
+### What's Pre-Installed
+
+The container image (`ghcr.io/binarypie/nvim-dev`) includes:
 
 **Languages & Runtimes:**
 - Go, Python 3.12, Node.js, Ruby, Lua, Rust
@@ -66,91 +78,50 @@ The Docker image is based on Fedora and includes:
 - ripgrep, fd, fzf, lazygit, gh, bat, eza, delta, jq, yq
 
 **Other:**
-- Tree-sitter CLI and pre-installed parsers
+- Tree-sitter CLI
 - Ghostty terminal support (terminfo)
-- Fish shell (for fish_indent formatter)
+- Fish shell
 
-### Volume Mounts
+### How It Works
 
-The container mounts your local directories:
+The pre-built image is published to GitHub Container Registry and rebuilt automatically when the Containerfile changes. Users pull the ~2GB image once, then container creation is instant.
 
-| Container Path | Host Path | Purpose |
-|---------------|-----------|---------|
-| `/home/nvim/.config/nvim` | `~/.config/nvim` | Config (read-only) |
-| `/home/nvim/.local/share/nvim` | `~/.local/share/nvim` | Plugin data |
-| `/home/nvim/.local/state/nvim` | `~/.local/state/nvim` | State files |
-| `/home/nvim/.cache/nvim` | `~/.cache/nvim` | Cache |
-| `/workspace` | Current directory | Your code |
+Unlike Docker containers, distrobox provides seamless integration:
+- Your `~/.config/nvim` is directly accessible
+- Git credentials, SSH keys, GPG keys all work automatically
+- Clipboard works via OSC 52
+- The exported `nvim` command transparently enters the container
 
-### Clipboard Support
+### Updating
 
-The container uses OSC 52 for clipboard integration, which works with modern terminals like Ghostty, Kitty, and others that support OSC 52 escape sequences.
+```bash
+# Update to latest image
+just nvim-upgrade
+
+# Or manually
+distrobox upgrade nvim-dev
+```
 
 ## Plugins
 
-This configuration uses [lazy.nvim](https://github.com/folke/lazy.nvim) to manage plugins. Here is a list of the plugins included in this configuration:
+This configuration uses [lazy.nvim](https://github.com/folke/lazy.nvim) to manage plugins.
 
 ### Core Plugins (from LazyVim)
 
-* LazyVim
-* blink.cmp 
-* bufferline.nvim
-* catppuccin 
-* conform.nvim 
-* crates.nvim 
-* dial.nvim 
-* flash.nvim
-* friendly-snippets 
-* gitsigns.nvim 
-* grug-far.nvim 
-* inc-rename.nvim 
-* lazy.nvim
-* lazydev.nvim 
-* lualine.nvim
-* mason-lspconfig.nvim 
-* mason.nvim 
-* mini.ai
-* mini.hipatterns 
-* mini.icons 
-* mini.pairs
-* noice.nvim
-* nui.nvim
-* nvim-lint
-* nvim-lspconfig 
-* nvim-treesitter
-* nvim-treesitter-textobjects
-* nvim-ts-autotag 
-* persistence.nvim
-* plenary.nvim
-* rustaceanvim 
-* snacks.nvim
-* todo-comments.nvim
-* tokyonight.nvim
-* trouble.nvim
-* ts-comments.nvim
-* vim-dadbod 
-* vim-dadbod-completion 
-* vim-dadbod-ui 
-* vim-helm 
-* which-key.nvim
-* yanky.nvim
+* LazyVim, blink.cmp, bufferline.nvim, conform.nvim, flash.nvim
+* gitsigns.nvim, grug-far.nvim, lazy.nvim, lazydev.nvim, lualine.nvim
+* mason.nvim, mason-lspconfig.nvim, mini.ai, mini.icons, mini.pairs
+* noice.nvim, nvim-lint, nvim-lspconfig, nvim-treesitter
+* persistence.nvim, snacks.nvim, todo-comments.nvim, tokyonight.nvim
+* trouble.nvim, which-key.nvim, yanky.nvim
 
- ### Custom Plugins and Configuration
+### Language-Specific
 
-The following customizations have been applied.
+* rustaceanvim, crates.nvim, vim-helm
+* vim-dadbod, vim-dadbod-ui, vim-dadbod-completion
 
-* Augment Code 
+## Installation (Without Container)
 
-## How it Works
-
-This configuration is loaded from `init.lua`, which bootstraps `lazy.nvim` and the rest of the configuration. The main configuration is in `lua/config/lazy.lua`, which sets up `lazy.nvim` and loads the plugins.
-
-The plugins are defined in `lua/plugins/`. The file `lua/plugins/example.lua` contains the custom plugin configurations. Any file in this directory is automatically loaded by `lazy.nvim`.
-
-The `lazy-lock.json` file is used to lock the versions of the plugins, ensuring that the configuration is reproducible.
-
-## Installation
-
-1.  Clone this repository to `~/.config/nvim`.
-2.  Delete the .git folder
-3.  Start Neovim. `lazy.nvim` will automatically install the plugins.
+1. Clone this repository to `~/.config/nvim`
+2. Delete the .git folder
+3. Start Neovim - lazy.nvim will install plugins automatically

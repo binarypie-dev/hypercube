@@ -1,30 +1,62 @@
 # Hypercube DX (Developer Experience) Commands
 
-# Enter the bluefin-cli container (Homebrew environment)
-brew:
+# Enter the nvim-dev container (creates if needed)
+nvim-dev:
     #!/usr/bin/bash
     set -euo pipefail
 
-    # Check if bluefin-cli container exists
-    if ! distrobox list | grep -q "bluefin-cli"; then
-        echo "Creating bluefin-cli container..."
+    if ! distrobox list | grep -q "nvim-dev"; then
+        echo "Creating nvim-dev container (this pulls ~2GB image on first run)..."
         distrobox assemble create --file /etc/distrobox/distrobox.ini
     fi
 
-    distrobox enter bluefin-cli
+    distrobox enter nvim-dev
 
-# Run a brew command directly without entering the container
-brew-run *args:
+# Export nvim to host for direct access
+nvim-export:
     #!/usr/bin/bash
     set -euo pipefail
 
-    # Check if bluefin-cli container exists
-    if ! distrobox list | grep -q "bluefin-cli"; then
-        echo "Creating bluefin-cli container..."
+    if ! distrobox list | grep -q "nvim-dev"; then
+        echo "Creating nvim-dev container..."
         distrobox assemble create --file /etc/distrobox/distrobox.ini
     fi
 
-    distrobox enter bluefin-cli -- brew {{ args }}
+    echo "Exporting nvim to ~/.local/bin..."
+    distrobox enter nvim-dev -- distrobox-export --bin /home/linuxbrew/.linuxbrew/bin/nvim --export-path ~/.local/bin
+    echo ""
+    echo "Done! You can now run 'nvim' directly from the host."
+
+# Quick setup: create container + export nvim
+nvim-setup:
+    #!/usr/bin/bash
+    set -euo pipefail
+
+    echo "Setting up nvim-dev environment..."
+    echo ""
+
+    if ! distrobox list | grep -q "nvim-dev"; then
+        echo "Creating nvim-dev container (this pulls ~2GB image on first run)..."
+        distrobox assemble create --file /etc/distrobox/distrobox.ini
+    else
+        echo "Container nvim-dev already exists"
+    fi
+
+    echo ""
+    echo "Exporting nvim to ~/.local/bin..."
+    distrobox enter nvim-dev -- distrobox-export --bin /home/linuxbrew/.linuxbrew/bin/nvim --export-path ~/.local/bin
+
+    echo ""
+    echo "Setup complete! You can now run 'nvim' directly."
+
+# Upgrade nvim-dev container to latest image
+nvim-upgrade:
+    #!/usr/bin/bash
+    set -euo pipefail
+
+    echo "Upgrading nvim-dev to latest image..."
+    distrobox upgrade nvim-dev
+    echo "Done!"
 
 # Create distrobox containers from config
 distrobox-assemble:
@@ -40,13 +72,13 @@ distrobox-assemble:
 distrobox-list:
     distrobox list
 
-# Create a new dev container with common tools
+# Create a new dev container based on Fedora toolbox
 distrobox-dev name:
     #!/usr/bin/bash
     set -euo pipefail
 
     echo "Creating development container: {{ name }}"
-    distrobox create --name "{{ name }}" --image ghcr.io/ublue-os/bluefin-cli:latest
+    distrobox create --name "{{ name }}" --image registry.fedoraproject.org/fedora-toolbox:43
     echo ""
     echo "Container created. Enter with: distrobox enter {{ name }}"
 

@@ -407,10 +407,14 @@ Singleton {
 
     // Connect to a network
     function connectToNetwork(ssid, password) {
+        // If already connected to wifi, disconnect first to ensure we switch
+        const disconnectFirst = connected && type === "wifi" && device ? `nmcli device disconnect "${device}" 2>/dev/null; ` : ""
+
         if (password) {
-            connectProcess.command = ["sh", "-c", `nmcli device wifi connect "${ssid}" password "${password}"`]
+            connectProcess.command = ["sh", "-c", `${disconnectFirst}nmcli device wifi connect "${ssid}" password "${password}"`]
         } else {
-            connectProcess.command = ["sh", "-c", `nmcli connection up "${ssid}" 2>/dev/null || nmcli device wifi connect "${ssid}"`]
+            // Use nmcli device wifi connect which handles switching better than connection up
+            connectProcess.command = ["sh", "-c", `${disconnectFirst}nmcli device wifi connect "${ssid}"`]
         }
         connectProcess.running = true
     }

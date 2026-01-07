@@ -1,0 +1,198 @@
+# Neovim Development Environment for Distrobox
+# Pre-built image with all LSPs, formatters, linters, and tools
+#
+# Build: podman build -t nvim-dev .
+# Use:   distrobox create --name nvim-dev --image localhost/nvim-dev
+
+FROM registry.fedoraproject.org/fedora-toolbox:43
+
+# =============================================================================
+# LAYER 1: System packages
+# =============================================================================
+RUN dnf update -y && dnf install -y \
+    # Build essentials
+    gcc \
+    gcc-c++ \
+    make \
+    cmake \
+    automake \
+    autoconf \
+    libtool \
+    # Development tools
+    git \
+    curl \
+    wget \
+    unzip \
+    zip \
+    tar \
+    gzip \
+    xz \
+    bzip2 \
+    # Libraries needed by various tools
+    openssl-devel \
+    readline-devel \
+    zlib-devel \
+    libffi-devel \
+    ncurses-devel \
+    sqlite-devel \
+    bzip2-devel \
+    xz-devel \
+    # Utilities
+    procps-ng \
+    findutils \
+    which \
+    file \
+    # Clipboard support
+    xclip \
+    xsel \
+    wl-clipboard \
+    # For Neovim
+    gettext \
+    # Locale support
+    langpacks-en \
+    glibc-langpack-en \
+    && dnf clean all \
+    && rm -rf /var/cache/dnf
+
+ENV LANG=en_US.UTF-8
+ENV LC_ALL=en_US.UTF-8
+
+# =============================================================================
+# LAYER 2: Homebrew installation (as root, will work for any user via distrobox)
+# =============================================================================
+RUN git clone https://github.com/Homebrew/brew /home/linuxbrew/.linuxbrew/Homebrew \
+    && mkdir -p /home/linuxbrew/.linuxbrew/bin \
+    && ln -s ../Homebrew/bin/brew /home/linuxbrew/.linuxbrew/bin/ \
+    && chmod -R 777 /home/linuxbrew
+
+ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
+ENV HOMEBREW_NO_AUTO_UPDATE=1
+ENV HOMEBREW_NO_ANALYTICS=1
+
+# Update Homebrew
+RUN brew update
+
+# =============================================================================
+# LAYER 3: Core tools via Homebrew
+# =============================================================================
+RUN brew install \
+    neovim \
+    ripgrep \
+    fd \
+    fzf \
+    tree-sitter \
+    lazygit \
+    gh \
+    delta \
+    jq \
+    yq \
+    bat \
+    eza
+
+# =============================================================================
+# LAYER 4: Languages via Homebrew
+# =============================================================================
+RUN brew install \
+    go \
+    python@3.12 \
+    node \
+    ruby \
+    lua \
+    luarocks
+
+# =============================================================================
+# LAYER 5: Formatters and linters via Homebrew
+# =============================================================================
+RUN brew install \
+    stylua \
+    prettier \
+    shfmt \
+    shellcheck \
+    hadolint \
+    lua-language-server
+
+# =============================================================================
+# LAYER 6: Infrastructure tools via Homebrew
+# =============================================================================
+RUN brew install \
+    terraform \
+    tflint \
+    helm \
+    sqlfluff \
+    fish
+
+# =============================================================================
+# LAYER 7: Rust toolchain
+# =============================================================================
+RUN brew install rustup-init \
+    && rustup-init -y --default-toolchain stable \
+    && . /root/.cargo/env \
+    && rustup component add rustfmt clippy rust-analyzer \
+    && chmod -R 777 /root/.cargo /root/.rustup
+
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# =============================================================================
+# LAYER 8: Go tools
+# =============================================================================
+ENV GOPATH="/root/go"
+ENV PATH="${GOPATH}/bin:${PATH}"
+
+RUN go install golang.org/x/tools/gopls@latest \
+    && go install github.com/go-delve/delve/cmd/dlv@latest \
+    && go install mvdan.cc/gofumpt@latest \
+    && go install golang.org/x/tools/cmd/goimports@latest \
+    && go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest \
+    && chmod -R 777 /root/go
+
+# =============================================================================
+# LAYER 9: Python tools
+# =============================================================================
+RUN pip3 install --break-system-packages \
+    pynvim \
+    ruff \
+    black \
+    isort \
+    debugpy
+
+# =============================================================================
+# LAYER 10: Node.js/npm tools
+# =============================================================================
+RUN npm install -g \
+    neovim \
+    typescript \
+    typescript-language-server \
+    @vtsls/language-server \
+    eslint \
+    eslint_d \
+    @eslint/config-array \
+    bash-language-server \
+    dockerfile-language-server-nodejs \
+    yaml-language-server \
+    markdownlint-cli2 \
+    markdown-toc \
+    @tailwindcss/language-server \
+    pyright \
+    tree-sitter-cli \
+    @mermaid-js/mermaid-cli
+
+# =============================================================================
+# LAYER 11: Terminal compatibility
+# =============================================================================
+RUN curl -fsSL https://raw.githubusercontent.com/ghostty-org/ghostty/main/src/terminfo/ghostty.terminfo \
+    | tic -x -o /etc/terminfo -
+
+# =============================================================================
+# LAYER 12: Fix permissions for distrobox user mapping
+# =============================================================================
+# Distrobox maps the host user into the container, so we need to ensure
+# these directories are accessible
+RUN chmod -R 777 /home/linuxbrew \
+    && chmod -R 777 /root/.cargo || true \
+    && chmod -R 777 /root/.rustup || true \
+    && chmod -R 777 /root/go || true
+
+# Labels for GitHub Container Registry
+LABEL org.opencontainers.image.source="https://github.com/binarypie/hypercube"
+LABEL org.opencontainers.image.description="Neovim development environment with LSPs, formatters, and tools"
+LABEL org.opencontainers.image.licenses="MIT"
