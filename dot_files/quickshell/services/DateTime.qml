@@ -10,6 +10,7 @@ Singleton {
 
     property string timeString: "00:00"
     property string dateString: ""
+    property string shortDateString: ""  // Compact MM.DD format
     property string fullDateTime: ""
     property string fullDateTimeString: ""  // Human-readable format for tooltips
 
@@ -46,6 +47,9 @@ Singleton {
 
         // Format date string: YYYY.MM.DD
         dateString = year + "." + pad(month) + "." + pad(day)
+
+        // Compact date: MM.DD
+        shortDateString = pad(month) + "." + pad(day)
 
         // Full date time
         fullDateTime = dateString + " " + timeString

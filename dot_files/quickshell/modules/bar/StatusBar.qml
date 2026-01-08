@@ -318,37 +318,62 @@ PanelWindow {
                 tooltip: "Camera in use"
             }
 
-            // Microphone
-            BarButton {
-                icon: Services.Audio.micMuted
-                    ? Common.Icons.icons.micOff
-                    : Common.Icons.icons.mic
-                tooltip: {
-                    if (Services.Audio.micMuted && Services.Privacy.micInUse) {
-                        return "Microphone: Muted (in use)"
-                    } else if (Services.Audio.micMuted) {
-                        return "Microphone: Muted"
-                    } else if (Services.Privacy.micInUse) {
-                        return "Microphone: In use"
-                    } else {
-                        return "Microphone: " + Math.round(Services.Audio.micVolume * 100) + "%"
+            // Audio (mic + output combined)
+            MouseArea {
+                id: audioButton
+                Layout.preferredHeight: 28
+                Layout.preferredWidth: 56  // Two 28px icons
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "audio")
+
+                Rectangle {
+                    anchors.fill: parent
+                    radius: Common.Appearance.rounding.small
+                    color: audioButton.containsMouse
+                        ? Common.Appearance.m3colors.surfaceVariant
+                        : "transparent"
+
+                    Behavior on color {
+                        ColorAnimation { duration: 150 }
                     }
                 }
-                textColor: Services.Privacy.micInUse
-                    ? Common.Appearance.m3colors.error
-                    : Common.Appearance.m3colors.onSurfaceVariant
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "audio")
-            }
 
-            // Audio output
-            BarButton {
-                icon: Services.Audio.muted
-                    ? Common.Icons.icons.volumeOff
-                    : Common.Icons.volumeIcon(Services.Audio.volume * 100, false)
-                tooltip: Services.Audio.muted
-                    ? "Volume: Muted"
-                    : "Volume: " + Math.round(Services.Audio.volume * 100) + "%"
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "audio")
+                RowLayout {
+                    id: audioButtonContent
+                    anchors.fill: parent
+                    spacing: 0
+
+                    Item {
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 28
+
+                        Common.Icon {
+                            anchors.centerIn: parent
+                            name: Services.Audio.micMuted
+                                ? Common.Icons.icons.micOff
+                                : Common.Icons.icons.mic
+                            size: Common.Appearance.sizes.iconMedium
+                            color: Services.Privacy.micInUse
+                                ? Common.Appearance.m3colors.error
+                                : Common.Appearance.m3colors.onSurfaceVariant
+                        }
+                    }
+
+                    Item {
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 28
+
+                        Common.Icon {
+                            anchors.centerIn: parent
+                            name: Services.Audio.muted
+                                ? Common.Icons.icons.volumeOff
+                                : Common.Icons.volumeIcon(Services.Audio.volume * 100, false)
+                            size: Common.Appearance.sizes.iconMedium
+                            color: Common.Appearance.m3colors.onSurfaceVariant
+                        }
+                    }
+                }
             }
 
             // Bluetooth
@@ -408,6 +433,7 @@ PanelWindow {
             BarButton {
                 id: clockButton
                 icon: Common.Icons.icons.calendar
+                buttonText: Services.DateTime.shortDateString + " " + Services.DateTime.timeString
                 tooltip: Services.DateTime.fullDateTimeString
 
                 onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "calendar")
