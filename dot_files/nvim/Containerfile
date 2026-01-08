@@ -58,16 +58,21 @@ ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 
 # =============================================================================
-# LAYER 2: Homebrew installation (as root, will work for any user via distrobox)
+# LAYER 2: Homebrew installation with non-root user
 # =============================================================================
-RUN git clone https://github.com/Homebrew/brew /home/linuxbrew/.linuxbrew/Homebrew \
+RUN useradd -m -s /bin/bash linuxbrew \
+    && git clone https://github.com/Homebrew/brew /home/linuxbrew/.linuxbrew/Homebrew \
     && mkdir -p /home/linuxbrew/.linuxbrew/bin \
     && ln -s ../Homebrew/bin/brew /home/linuxbrew/.linuxbrew/bin/ \
-    && chmod -R 777 /home/linuxbrew
+    && chown -R linuxbrew:linuxbrew /home/linuxbrew
 
 ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}"
 ENV HOMEBREW_NO_AUTO_UPDATE=1
 ENV HOMEBREW_NO_ANALYTICS=1
+
+# Switch to linuxbrew user for all brew operations
+USER linuxbrew
+WORKDIR /home/linuxbrew
 
 # Update Homebrew
 RUN brew update
@@ -122,31 +127,31 @@ RUN brew install \
     fish
 
 # =============================================================================
-# LAYER 7: Rust toolchain
+# LAYER 7: Rust toolchain (as linuxbrew user)
 # =============================================================================
+ENV CARGO_HOME="/home/linuxbrew/.cargo"
+ENV RUSTUP_HOME="/home/linuxbrew/.rustup"
+ENV PATH="${CARGO_HOME}/bin:${PATH}"
+
 RUN brew install rustup-init \
     && rustup-init -y --default-toolchain stable \
-    && . /root/.cargo/env \
-    && rustup component add rustfmt clippy rust-analyzer \
-    && chmod -R 777 /root/.cargo /root/.rustup
-
-ENV PATH="/root/.cargo/bin:${PATH}"
+    && . ${CARGO_HOME}/env \
+    && rustup component add rustfmt clippy rust-analyzer
 
 # =============================================================================
-# LAYER 8: Go tools
+# LAYER 8: Go tools (as linuxbrew user)
 # =============================================================================
-ENV GOPATH="/root/go"
+ENV GOPATH="/home/linuxbrew/go"
 ENV PATH="${GOPATH}/bin:${PATH}"
 
 RUN go install golang.org/x/tools/gopls@latest \
     && go install github.com/go-delve/delve/cmd/dlv@latest \
     && go install mvdan.cc/gofumpt@latest \
     && go install golang.org/x/tools/cmd/goimports@latest \
-    && go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest \
-    && chmod -R 777 /root/go
+    && go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 # =============================================================================
-# LAYER 9: Python tools
+# LAYER 9: Python tools (as linuxbrew user, using brew's python)
 # =============================================================================
 RUN pip3 install --break-system-packages \
     pynvim \
@@ -156,9 +161,13 @@ RUN pip3 install --break-system-packages \
     debugpy
 
 # =============================================================================
-# LAYER 10: Node.js/npm tools
+# LAYER 10: Node.js/npm tools (as linuxbrew user)
 # =============================================================================
-RUN npm install -g \
+ENV NPM_CONFIG_PREFIX="/home/linuxbrew/.npm-global"
+ENV PATH="${NPM_CONFIG_PREFIX}/bin:${PATH}"
+
+RUN mkdir -p ${NPM_CONFIG_PREFIX} \
+    && npm install -g \
     neovim \
     typescript \
     typescript-language-server \
@@ -176,6 +185,10 @@ RUN npm install -g \
     tree-sitter-cli \
     @mermaid-js/mermaid-cli
 
+# Switch back to root for system-level operations
+USER root
+WORKDIR /
+
 # =============================================================================
 # LAYER 11: Terminal compatibility
 # =============================================================================
@@ -186,11 +199,8 @@ RUN curl -fsSL https://raw.githubusercontent.com/ghostty-org/ghostty/main/src/te
 # LAYER 12: Fix permissions for distrobox user mapping
 # =============================================================================
 # Distrobox maps the host user into the container, so we need to ensure
-# these directories are accessible
-RUN chmod -R 777 /home/linuxbrew \
-    && chmod -R 777 /root/.cargo || true \
-    && chmod -R 777 /root/.rustup || true \
-    && chmod -R 777 /root/go || true
+# all tool directories are accessible
+RUN chmod -R 777 /home/linuxbrew
 
 # Labels for GitHub Container Registry
 LABEL org.opencontainers.image.source="https://github.com/binarypie/hypercube"
