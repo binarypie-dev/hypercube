@@ -1,0 +1,22 @@
+{
+  "policies": {
+    "Homepage": {
+      "URL": "https://kagi.com",
+      "StartPage": "homepage"
+    },
+    "SearchEngines": {
+      "Default": "Kagi",
+      "Add": [
+        {
+          "Name": "Kagi",
+          "URLTemplate": "https://kagi.com/search?q={searchTerms}",
+          "IconURL": "https://kagi.com/favicon.ico",
+          "Alias": "@kagi",
+          "Description": "Kagi Search",
+          "SuggestURLTemplate": "https://kagi.com/api/autosuggest?q={searchTerms}"
+        }
+      ],
+      "Remove": []
+    }
+  }
+}
