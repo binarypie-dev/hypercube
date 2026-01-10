@@ -1,5 +1,5 @@
 Name:           hyprland-guiutils
-Version:        0.2.0
+Version:        0.2.1
 Release:        1%{?dist}
 Summary:        Hyprland GUI utilities (successor to hyprland-qtutils)
 
@@ -55,5 +55,7 @@ and welcome.
 %{_bindir}/hyprland-welcome
 
 %changelog
+* Sat Jan 10 2026 Hypercube <hypercube@binarypie.dev> - 0.2.1-1
+- Update to 0.2.1
 * Wed Dec 18 2024 Hypercube <hypercube@binarypie.dev> - 0.2.0-1
 - Initial package for Hypercube
