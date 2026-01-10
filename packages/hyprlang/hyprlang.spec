@@ -1,5 +1,5 @@
 Name:           hyprlang
-Version:        0.6.7
+Version:        0.6.8
 Release:        1%{?dist}
 Summary:        The official implementation library for the hypr config language
 
@@ -49,6 +49,8 @@ sed 's/.*/%{version}/' -i VERSION
 %{_libdir}/pkgconfig/hyprlang.pc
 
 %changelog
+* Sat Jan 10 2026 Hypercube <hypercube@binarypie.dev> - 0.6.8-1
+- Update to 0.6.8
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.6.7-1
 - Update to 0.6.7
 
