@@ -24,6 +24,7 @@ REQUIRED_PACKAGES=(
   "lazygit"
   "fish"
   "starship"
+  "wifitui"
   # DX tooling
   "distrobox"
   "podman"
