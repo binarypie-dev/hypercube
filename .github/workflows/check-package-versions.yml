@@ -21,60 +21,85 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Hyprland ecosystem
+          # Hyprland ecosystem (all use GitHub releases)
           - package: hyprutils
             repo: hyprwm/hyprutils
+            version_source: release
           - package: hyprlang
             repo: hyprwm/hyprlang
+            version_source: release
           - package: hyprwayland-scanner
             repo: hyprwm/hyprwayland-scanner
+            version_source: release
           - package: hyprgraphics
             repo: hyprwm/hyprgraphics
+            version_source: release
           - package: hyprcursor
             repo: hyprwm/hyprcursor
+            version_source: release
           - package: hyprland-protocols
             repo: hyprwm/hyprland-protocols
+            version_source: release
           - package: aquamarine
             repo: hyprwm/aquamarine
+            version_source: release
           - package: hyprland-qt-support
             repo: hyprwm/hyprland-qt-support
+            version_source: release
           - package: hyprland
             repo: hyprwm/Hyprland
+            version_source: release
           - package: hyprlock
             repo: hyprwm/hyprlock
+            version_source: release
           - package: hypridle
             repo: hyprwm/hypridle
+            version_source: release
           - package: hyprpaper
             repo: hyprwm/hyprpaper
+            version_source: release
           - package: xdg-desktop-portal-hyprland
             repo: hyprwm/xdg-desktop-portal-hyprland
+            version_source: release
           - package: hyprpolkitagent
             repo: hyprwm/hyprpolkitagent
+            version_source: release
           - package: hyprtoolkit
             repo: hyprwm/hyprtoolkit
+            version_source: release
           - package: hyprland-guiutils
             repo: hyprwm/hyprland-guiutils
+            version_source: release
           # CLI tools
           - package: eza
             repo: eza-community/eza
+            version_source: release
           - package: starship
             repo: starship/starship
+            version_source: release
           - package: lazygit
             repo: jesseduffield/lazygit
+            version_source: release
           - package: wifitui
             repo: shazow/wifitui
+            version_source: release
           # Other
           - package: glaze
             repo: stephenberry/glaze
+            version_source: release
           - package: uwsm
             repo: Vladimir-csp/uwsm
+            version_source: tag
           - package: quickshell
             repo: quickshell-mirror/quickshell
+            version_source: tag
           - package: regreet
             repo: rharish101/ReGreet
+            version_source: release
           # livesys-scripts uses our fork, skip auto-update
           # - package: livesys-scripts
           #   repo: binarypie-dev/livesys-scripts
+          #   version_source: tag
 
     steps:
       - name: Check if should run
@@ -96,16 +121,28 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Get latest release from GitHub
-          RELEASE=$(gh api repos/${{ matrix.repo }}/releases/latest --jq '.tag_name' 2>/dev/null || echo "")
+          VERSION_SOURCE="${{ matrix.version_source }}"
+          RESULT=""
 
-          # If no releases, try tags
-          if [ -z "$RELEASE" ]; then
-            RELEASE=$(gh api repos/${{ matrix.repo }}/tags --jq '.[0].name' 2>/dev/null || echo "")
+          if [ "$VERSION_SOURCE" = "tag" ]; then
+            # Use tags API directly
+            echo "Checking tags for ${{ matrix.repo }}..."
+            RESULT=$(gh api repos/${{ matrix.repo }}/tags --jq '.[0].name' 2>/dev/null) || RESULT=""
+          else
+            # Use releases API (default)
+            echo "Checking releases for ${{ matrix.repo }}..."
+            RESULT=$(gh api repos/${{ matrix.repo }}/releases/latest --jq '.tag_name' 2>/dev/null) || RESULT=""
+          fi
+
+          # Check if we got a valid response (not empty and not an error message)
+          if [ -z "$RESULT" ] || echo "$RESULT" | grep -q "Not Found\|message"; then
+            echo "Could not determine upstream version for ${{ matrix.package }}"
+            echo "version=" >> $GITHUB_OUTPUT
+            exit 0
           fi
 
           # Strip 'v' prefix if present
-          VERSION="${RELEASE#v}"
+          VERSION="${RESULT#v}"
 
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Upstream version: $VERSION"
@@ -155,8 +192,26 @@ jobs:
             echo "needs_update=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Update spec file
+      - name: Check for existing PR
         if: steps.should-run.outputs.skip != 'true' && steps.compare.outputs.needs_update == 'true'
+        id: existing-pr
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Check if a PR already exists for this package update
+          BRANCH="pkg-update/${{ matrix.package }}-${{ steps.upstream.outputs.version }}"
+          EXISTING=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null) || EXISTING=""
+
+          if [ -n "$EXISTING" ]; then
+            echo "PR #$EXISTING already exists for ${{ matrix.package }} ${{ steps.upstream.outputs.version }}"
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "No existing PR found"
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update spec file
+        if: steps.should-run.outputs.skip != 'true' && steps.compare.outputs.needs_update == 'true' && steps.existing-pr.outputs.exists != 'true'
         run: |
           SPEC_FILE="packages/${{ matrix.package }}/${{ matrix.package }}.spec"
           OLD_VERSION="${{ steps.spec.outputs.version }}"
@@ -178,7 +233,7 @@ jobs:
           echo "Updated ${{ matrix.package }} from $OLD_VERSION to $NEW_VERSION"
 
       - name: Create Pull Request
-        if: steps.should-run.outputs.skip != 'true' && steps.compare.outputs.needs_update == 'true'
+        if: steps.should-run.outputs.skip != 'true' && steps.compare.outputs.needs_update == 'true' && steps.existing-pr.outputs.exists != 'true'
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
