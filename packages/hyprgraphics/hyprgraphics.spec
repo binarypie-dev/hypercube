@@ -1,5 +1,5 @@
 Name:           hyprgraphics
-Version:        0.4.0
+Version:        0.5.0
 Release:        1%{?dist}
 Summary:        Hyprland graphics / resource utilities
 
@@ -60,6 +60,8 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Sat Jan 10 2026 Hypercube <hypercube@binarypie.dev> - 0.5.0-1
+- Update to 0.5.0
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.4.0-1
 - Update to 0.4.0
 
