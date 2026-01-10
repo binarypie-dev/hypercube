@@ -40,11 +40,12 @@ dnf5 -y install \
     pipewire-alsa \
     wireplumber
 
-### Networking
+### Networking (using iwd instead of wpa_supplicant for faster, lighter WiFi)
 dnf5 -y install \
     NetworkManager \
     NetworkManager-wifi \
-    NetworkManager-bluetooth
+    NetworkManager-bluetooth \
+    iwd
 
 ### Bluetooth
 dnf5 -y install \
@@ -102,9 +103,11 @@ systemctl enable NetworkManager.service
 systemctl enable bluetooth.service
 systemctl enable power-profiles-daemon.service
 systemctl enable flatpak-add-flathub.service
+systemctl enable iwd.service
 
 ### Disable services we don't need
 systemctl disable gdm.service 2>/dev/null || true
 systemctl disable sddm.service 2>/dev/null || true
+systemctl disable wpa_supplicant.service 2>/dev/null || true
 
 echo "Hypercube base system installed successfully"

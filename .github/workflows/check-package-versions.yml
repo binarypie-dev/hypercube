@@ -1,0 +1,198 @@
+name: Check Package Versions
+
+on:
+  schedule:
+    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+  workflow_dispatch:
+    inputs:
+      package:
+        description: 'Specific package to check (leave empty for all)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  check-versions:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Hyprland ecosystem
+          - package: hyprutils
+            repo: hyprwm/hyprutils
+          - package: hyprlang
+            repo: hyprwm/hyprlang
+          - package: hyprwayland-scanner
+            repo: hyprwm/hyprwayland-scanner
+          - package: hyprgraphics
+            repo: hyprwm/hyprgraphics
+          - package: hyprcursor
+            repo: hyprwm/hyprcursor
+          - package: hyprland-protocols
+            repo: hyprwm/hyprland-protocols
+          - package: aquamarine
+            repo: hyprwm/aquamarine
+          - package: hyprland-qt-support
+            repo: hyprwm/hyprland-qt-support
+          - package: hyprland
+            repo: hyprwm/Hyprland
+          - package: hyprlock
+            repo: hyprwm/hyprlock
+          - package: hypridle
+            repo: hyprwm/hypridle
+          - package: hyprpaper
+            repo: hyprwm/hyprpaper
+          - package: xdg-desktop-portal-hyprland
+            repo: hyprwm/xdg-desktop-portal-hyprland
+          - package: hyprpolkitagent
+            repo: hyprwm/hyprpolkitagent
+          - package: hyprtoolkit
+            repo: hyprwm/hyprtoolkit
+          - package: hyprland-guiutils
+            repo: hyprwm/hyprland-guiutils
+          # CLI tools
+          - package: eza
+            repo: eza-community/eza
+          - package: starship
+            repo: starship/starship
+          - package: lazygit
+            repo: jesseduffield/lazygit
+          - package: wifitui
+            repo: shazow/wifitui
+          # Other
+          - package: glaze
+            repo: stephenberry/glaze
+          - package: uwsm
+            repo: Vladimir-csp/uwsm
+          - package: quickshell
+            repo: quickshell-mirror/quickshell
+          - package: regreet
+            repo: rharish101/ReGreet
+          # livesys-scripts uses our fork, skip auto-update
+          # - package: livesys-scripts
+          #   repo: binarypie-dev/livesys-scripts
+
+    steps:
+      - name: Check if should run
+        id: should-run
+        run: |
+          if [ -n "${{ inputs.package }}" ] && [ "${{ inputs.package }}" != "${{ matrix.package }}" ]; then
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout
+        if: steps.should-run.outputs.skip != 'true'
+        uses: actions/checkout@v4
+
+      - name: Get upstream version
+        if: steps.should-run.outputs.skip != 'true'
+        id: upstream
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get latest release from GitHub
+          RELEASE=$(gh api repos/${{ matrix.repo }}/releases/latest --jq '.tag_name' 2>/dev/null || echo "")
+
+          # If no releases, try tags
+          if [ -z "$RELEASE" ]; then
+            RELEASE=$(gh api repos/${{ matrix.repo }}/tags --jq '.[0].name' 2>/dev/null || echo "")
+          fi
+
+          # Strip 'v' prefix if present
+          VERSION="${RELEASE#v}"
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Upstream version: $VERSION"
+
+      - name: Get spec version
+        if: steps.should-run.outputs.skip != 'true'
+        id: spec
+        run: |
+          SPEC_FILE="packages/${{ matrix.package }}/${{ matrix.package }}.spec"
+
+          if [ ! -f "$SPEC_FILE" ]; then
+            echo "Spec file not found: $SPEC_FILE"
+            echo "version=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Extract version from spec file
+          VERSION=$(grep "^Version:" "$SPEC_FILE" | awk '{print $2}')
+
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Spec version: $VERSION"
+
+      - name: Compare versions
+        if: steps.should-run.outputs.skip != 'true'
+        id: compare
+        run: |
+          UPSTREAM="${{ steps.upstream.outputs.version }}"
+          SPEC="${{ steps.spec.outputs.version }}"
+
+          if [ -z "$UPSTREAM" ]; then
+            echo "Could not determine upstream version"
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [ -z "$SPEC" ]; then
+            echo "Could not determine spec version"
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          if [ "$UPSTREAM" != "$SPEC" ]; then
+            echo "Version mismatch: upstream=$UPSTREAM, spec=$SPEC"
+            echo "needs_update=true" >> $GITHUB_OUTPUT
+          else
+            echo "Versions match: $SPEC"
+            echo "needs_update=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update spec file
+        if: steps.should-run.outputs.skip != 'true' && steps.compare.outputs.needs_update == 'true'
+        run: |
+          SPEC_FILE="packages/${{ matrix.package }}/${{ matrix.package }}.spec"
+          OLD_VERSION="${{ steps.spec.outputs.version }}"
+          NEW_VERSION="${{ steps.upstream.outputs.version }}"
+
+          # Update Version field
+          sed -i "s/^Version:.*$/Version:        $NEW_VERSION/" "$SPEC_FILE"
+
+          # Update Release back to 1 for new version
+          sed -i "s/^Release:.*$/Release:        1%{?dist}/" "$SPEC_FILE"
+
+          # Update changelog with new entry
+          DATE=$(date "+%a %b %d %Y")
+          CHANGELOG_ENTRY="* $DATE Hypercube <hypercube@binarypie.dev> - $NEW_VERSION-1\n- Update to $NEW_VERSION"
+
+          # Insert new changelog entry after %changelog line
+          sed -i "/%changelog/a\\$CHANGELOG_ENTRY" "$SPEC_FILE"
+
+          echo "Updated ${{ matrix.package }} from $OLD_VERSION to $NEW_VERSION"
+
+      - name: Create Pull Request
+        if: steps.should-run.outputs.skip != 'true' && steps.compare.outputs.needs_update == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "pkg(${{ matrix.package }}): update to ${{ steps.upstream.outputs.version }}"
+          title: "pkg(${{ matrix.package }}): update to ${{ steps.upstream.outputs.version }}"
+          body: |
+            Updates **${{ matrix.package }}** from `${{ steps.spec.outputs.version }}` to `${{ steps.upstream.outputs.version }}`
+
+            **Upstream release:** https://github.com/${{ matrix.repo }}/releases/tag/v${{ steps.upstream.outputs.version }}
+
+            ---
+            *This PR was automatically created by the package version checker.*
+          branch: "pkg-update/${{ matrix.package }}-${{ steps.upstream.outputs.version }}"
+          delete-branch: true
+          labels: |
+            dependencies
+            package-update
