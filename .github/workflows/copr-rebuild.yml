@@ -1,0 +1,293 @@
+name: Rebuild COPR Packages
+
+on:
+  workflow_dispatch:
+    inputs:
+      start_from:
+        description: 'Start rebuilding from batch (rebuilds selected batch and all later batches)'
+        required: true
+        default: 'batch-1'
+        type: choice
+        options:
+          - batch-1
+          - batch-2
+          - batch-3
+          - batch-4
+          - batch-5
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: false  # Don't cancel COPR builds in progress
+
+env:
+  COPR_PROJECT: binarypie/hypercube
+
+jobs:
+  batch-1:
+    if: inputs.start_from == 'batch-1'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install copr-cli
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install copr-cli
+
+      - name: Configure COPR
+        run: |
+          mkdir -p ~/.config
+          echo "${{ secrets.COPR_CONFIG }}" > ~/.config/copr
+
+      - name: Build Batch 1 packages
+        run: |
+          # Batch 1: No dependencies - can build in parallel
+          PACKAGES=(
+            hyprutils
+            hyprwayland-scanner
+            hyprland-protocols
+            glaze
+            uwsm
+            eza
+            starship
+            lazygit
+            ghostty
+            quickshell
+            livesys-scripts
+            wifitui
+          )
+
+          echo "Starting Batch 1 builds..."
+          for pkg in "${PACKAGES[@]}"; do
+            echo "Triggering build for $pkg..."
+            copr-cli build-package --name "$pkg" "$COPR_PROJECT" || echo "Warning: $pkg build trigger failed"
+          done
+
+      - name: Wait for Batch 1 completion
+        run: |
+          echo "Waiting for Batch 1 builds to complete..."
+          echo "Check status at: https://copr.fedorainfracloud.org/coprs/$COPR_PROJECT/builds/"
+          sleep 300  # 5 minutes initial wait
+
+          for i in {1..60}; do
+            RUNNING=$(copr-cli list-builds "$COPR_PROJECT" --output-format text | grep -c "running\|pending\|starting" || true)
+            if [ "$RUNNING" -eq 0 ]; then
+              echo "All Batch 1 builds completed!"
+              break
+            fi
+            echo "Waiting for $RUNNING builds to complete... (attempt $i/60)"
+            sleep 60
+          done
+
+  batch-2:
+    if: always() && (inputs.start_from == 'batch-1' || inputs.start_from == 'batch-2')
+    needs: batch-1
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check previous batch
+        if: inputs.start_from == 'batch-1' && needs.batch-1.result != 'success'
+        run: |
+          echo "Batch 1 failed, stopping pipeline"
+          exit 1
+
+      - name: Install copr-cli
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install copr-cli
+
+      - name: Configure COPR
+        run: |
+          mkdir -p ~/.config
+          echo "${{ secrets.COPR_CONFIG }}" > ~/.config/copr
+
+      - name: Build Batch 2 packages
+        run: |
+          # Batch 2: Depends on Batch 1
+          PACKAGES=(
+            hyprlang
+            hyprgraphics
+            aquamarine
+          )
+
+          echo "Starting Batch 2 builds..."
+          for pkg in "${PACKAGES[@]}"; do
+            echo "Triggering build for $pkg..."
+            copr-cli build-package --name "$pkg" "$COPR_PROJECT" || echo "Warning: $pkg build trigger failed"
+          done
+
+      - name: Wait for Batch 2 completion
+        run: |
+          echo "Waiting for Batch 2 builds to complete..."
+          sleep 300
+
+          for i in {1..60}; do
+            RUNNING=$(copr-cli list-builds "$COPR_PROJECT" --output-format text | grep -c "running\|pending\|starting" || true)
+            if [ "$RUNNING" -eq 0 ]; then
+              echo "All Batch 2 builds completed!"
+              break
+            fi
+            echo "Waiting for $RUNNING builds to complete... (attempt $i/60)"
+            sleep 60
+          done
+
+  batch-3:
+    if: always() && (inputs.start_from == 'batch-1' || inputs.start_from == 'batch-2' || inputs.start_from == 'batch-3')
+    needs: batch-2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check previous batch
+        if: (inputs.start_from == 'batch-1' || inputs.start_from == 'batch-2') && needs.batch-2.result != 'success'
+        run: |
+          echo "Previous batch failed, stopping pipeline"
+          exit 1
+
+      - name: Install copr-cli
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install copr-cli
+
+      - name: Configure COPR
+        run: |
+          mkdir -p ~/.config
+          echo "${{ secrets.COPR_CONFIG }}" > ~/.config/copr
+
+      - name: Build Batch 3 packages
+        run: |
+          # Batch 3: Depends on Batch 2
+          PACKAGES=(
+            hyprcursor
+            hyprland-qt-support
+          )
+
+          echo "Starting Batch 3 builds..."
+          for pkg in "${PACKAGES[@]}"; do
+            echo "Triggering build for $pkg..."
+            copr-cli build-package --name "$pkg" "$COPR_PROJECT" || echo "Warning: $pkg build trigger failed"
+          done
+
+      - name: Wait for Batch 3 completion
+        run: |
+          echo "Waiting for Batch 3 builds to complete..."
+          sleep 300
+
+          for i in {1..60}; do
+            RUNNING=$(copr-cli list-builds "$COPR_PROJECT" --output-format text | grep -c "running\|pending\|starting" || true)
+            if [ "$RUNNING" -eq 0 ]; then
+              echo "All Batch 3 builds completed!"
+              break
+            fi
+            echo "Waiting for $RUNNING builds to complete... (attempt $i/60)"
+            sleep 60
+          done
+
+  batch-4:
+    if: always() && (inputs.start_from == 'batch-1' || inputs.start_from == 'batch-2' || inputs.start_from == 'batch-3' || inputs.start_from == 'batch-4')
+    needs: batch-3
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check previous batch
+        if: inputs.start_from != 'batch-4' && needs.batch-3.result != 'success'
+        run: |
+          echo "Previous batch failed, stopping pipeline"
+          exit 1
+
+      - name: Install copr-cli
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install copr-cli
+
+      - name: Configure COPR
+        run: |
+          mkdir -p ~/.config
+          echo "${{ secrets.COPR_CONFIG }}" > ~/.config/copr
+
+      - name: Build Batch 4 packages
+        run: |
+          # Batch 4: Depends on Batch 3
+          PACKAGES=(
+            hyprland
+            hyprlock
+            hypridle
+            hyprpaper
+            xdg-desktop-portal-hyprland
+            hyprpolkitagent
+            hyprtoolkit
+          )
+
+          echo "Starting Batch 4 builds..."
+          for pkg in "${PACKAGES[@]}"; do
+            echo "Triggering build for $pkg..."
+            copr-cli build-package --name "$pkg" "$COPR_PROJECT" || echo "Warning: $pkg build trigger failed"
+          done
+
+      - name: Wait for Batch 4 completion
+        run: |
+          echo "Waiting for Batch 4 builds to complete..."
+          sleep 600  # Longer wait for hyprland (big package)
+
+          for i in {1..90}; do
+            RUNNING=$(copr-cli list-builds "$COPR_PROJECT" --output-format text | grep -c "running\|pending\|starting" || true)
+            if [ "$RUNNING" -eq 0 ]; then
+              echo "All Batch 4 builds completed!"
+              break
+            fi
+            echo "Waiting for $RUNNING builds to complete... (attempt $i/90)"
+            sleep 60
+          done
+
+  batch-5:
+    if: always()
+    needs: batch-4
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check previous batch
+        if: inputs.start_from != 'batch-5' && needs.batch-4.result != 'success'
+        run: |
+          echo "Previous batch failed, stopping pipeline"
+          exit 1
+
+      - name: Install copr-cli
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install copr-cli
+
+      - name: Configure COPR
+        run: |
+          mkdir -p ~/.config
+          echo "${{ secrets.COPR_CONFIG }}" > ~/.config/copr
+
+      - name: Build Batch 5 packages
+        run: |
+          # Batch 5: Depends on Batch 4
+          PACKAGES=(
+            hyprland-guiutils
+          )
+
+          echo "Starting Batch 5 builds..."
+          for pkg in "${PACKAGES[@]}"; do
+            echo "Triggering build for $pkg..."
+            copr-cli build-package --name "$pkg" "$COPR_PROJECT" || echo "Warning: $pkg build trigger failed"
+          done
+
+      - name: Wait for Batch 5 completion
+        run: |
+          echo "Waiting for Batch 5 builds to complete..."
+          sleep 300
+
+          for i in {1..60}; do
+            RUNNING=$(copr-cli list-builds "$COPR_PROJECT" --output-format text | grep -c "running\|pending\|starting" || true)
+            if [ "$RUNNING" -eq 0 ]; then
+              echo "All Batch 5 builds completed!"
+              break
+            fi
+            echo "Waiting for $RUNNING builds to complete... (attempt $i/60)"
+            sleep 60
+          done
+
+      - name: Summary
+        run: |
+          echo "COPR rebuild complete!"
+          echo "View results at: https://copr.fedorainfracloud.org/coprs/$COPR_PROJECT/builds/"

@@ -305,6 +305,18 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
+### 25. wifitui
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/wifitui` |
+| Spec File | `wifitui.spec` |
+| Version | 0.9.0 |
+| Dependencies | None |
+| Notes | TUI for WiFi management, supports NetworkManager and iwd backends |
+
+---
+
 ## Build Order Summary
 
 To ensure dependencies are satisfied, build in this order:
@@ -321,6 +333,7 @@ To ensure dependencies are satisfied, build in this order:
 9. ghostty
 10. quickshell
 11. livesys-scripts
+12. wifitui
 
 **Batch 2** (depends on Batch 1):
 1. hyprlang (needs hyprutils)
@@ -373,3 +386,4 @@ To ensure dependencies are satisfied, build in this order:
 | 22 | ghostty | `packages/ghostty` | `ghostty.spec` | 1.2.3^git |
 | 23 | quickshell | `packages/quickshell` | `quickshell.spec` | 0.2.1 |
 | 24 | livesys-scripts | `packages/livesys-scripts` | `livesys-scripts.spec` | 0.9.1 |
+| 25 | wifitui | `packages/wifitui` | `wifitui.spec` | 0.9.0 |
