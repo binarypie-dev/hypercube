@@ -22,9 +22,15 @@ ColumnLayout {
     // Track the query we're waiting for results from
     property string allAppsQueryId: ""
     property string searchQueryId: ""
+    property int retryCount: 0
+    property int maxRetries: 5
 
     // Load all apps on startup
     Component.onCompleted: {
+        loadAllApps()
+    }
+
+    function loadAllApps() {
         allAppsQueryId = Services.Datacube.queryAll("", 500)
     }
 
@@ -230,6 +236,8 @@ ColumnLayout {
 
         function onQueryCompleted(queryId, results) {
             if (queryId === root.allAppsQueryId) {
+                // Reset retry count on success
+                root.retryCount = 0
                 // Sort alphabetically by name
                 results.sort((a, b) => {
                     const nameA = (a.name || "").toLowerCase()
@@ -246,6 +254,22 @@ ColumnLayout {
 
         function onQueryFailed(queryId, error) {
             console.log("Datacube query failed:", queryId, error)
+            // If the allApps query failed, retry after a delay (service may have restarted)
+            if (queryId === root.allAppsQueryId && root.retryCount < root.maxRetries) {
+                root.retryCount++
+                console.log("Datacube: retrying allApps query (attempt", root.retryCount, "of", root.maxRetries, ")")
+                retryTimer.start()
+            }
+        }
+    }
+
+    // Retry timer for failed queries (datacube service may have restarted)
+    Timer {
+        id: retryTimer
+        interval: 1000 * root.retryCount  // Exponential backoff: 1s, 2s, 3s, etc.
+        repeat: false
+        onTriggered: {
+            root.loadAllApps()
         }
     }
 
@@ -275,12 +299,16 @@ ColumnLayout {
 
         // Check if terminal app - handle boolean or string "true"/"false"
         const isTerminal = metadata.terminal === true || metadata.terminal === "true"
+        const source = app?.source || "native"
 
         if (isTerminal) {
             // Terminal apps: launch with ghostty
             appLaunchProcess.command = ["ghostty", "-e", desktopId]
+        } else if (source === "flatpak") {
+            // Flatpak apps: use flatpak run
+            appLaunchProcess.command = ["flatpak", "run", desktopId]
         } else {
-            // GUI apps: use gtk4-launch with desktop_id
+            // Native apps: use gtk4-launch with desktop_id
             appLaunchProcess.command = ["gtk4-launch", desktopId]
         }
         // Launch detached so apps survive shell restart and run independently
@@ -296,11 +324,18 @@ ColumnLayout {
         command: ["true"]
     }
 
-    // Reset state when sidebar closes
+    // Handle sidebar state changes
     Connections {
         target: Root.GlobalStates
         function onSidebarLeftOpenChanged() {
-            if (!Root.GlobalStates.sidebarLeftOpen) {
+            if (Root.GlobalStates.sidebarLeftOpen) {
+                // Refresh apps if list is empty (datacube may have restarted)
+                if (root.allApps.length === 0) {
+                    root.retryCount = 0
+                    root.loadAllApps()
+                }
+            } else {
+                // Reset state when sidebar closes
                 searchInput.text = ""
                 searchResults = []
             }

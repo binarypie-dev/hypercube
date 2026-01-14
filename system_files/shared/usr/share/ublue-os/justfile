@@ -1,0 +1,28 @@
+# Hypercube - Developer Workstation
+# https://github.com/binarypie-dev/hypercube
+
+set allow-duplicate-recipes := true
+set ignore-comments := true
+
+_default:
+    #!/usr/bin/bash
+    source /usr/lib/ujust/libformatting.sh
+    echo "$(Urllink "https://github.com/binarypie-dev/hypercube" "Hypercube Documentation")"
+    /usr/bin/ujust --list --list-heading $'Available commands:\n' --list-prefix $' - '
+
+# =============================================================================
+# Upstream ublue-os commands
+# =============================================================================
+import "/usr/share/ublue-os/just/00-default.just"
+import "/usr/share/ublue-os/just/10-update.just"
+import "/usr/share/ublue-os/just/15-luks.just"
+import "/usr/share/ublue-os/just/20-clean.just"
+import "/usr/share/ublue-os/just/30-distrobox.just"
+import "/usr/share/ublue-os/just/40-nvidia.just"
+import "/usr/share/ublue-os/just/50-akmods.just"
+
+# =============================================================================
+# Hypercube commands
+# =============================================================================
+import? "/usr/share/ublue-os/just/60-hypercube.just"
+import? "/usr/share/ublue-os/just/61-nvim.just"

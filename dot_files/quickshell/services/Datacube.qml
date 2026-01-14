@@ -78,6 +78,7 @@ Singleton {
             exec: item.exec || "",
             provider: item.provider || "",
             score: item.score || 0,
+            source: item.source || "native",
             metadata: item.metadata || {},
             _raw: item
         }

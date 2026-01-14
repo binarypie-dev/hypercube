@@ -9,6 +9,7 @@ user = "greeter"
 
 [initial_session]
 # First boot wizard - runs once as root, then exits to show regreet
+# Check if regular users exist (UID >= 1000) - if so, skip wizard and remove this block
 # Set XDG_RUNTIME_DIR for quickshell/Qt to work properly as root
-command = "sh -c 'mkdir -p /run/user/0 && export XDG_RUNTIME_DIR=/run/user/0; /usr/sbin/cage -s -- /usr/sbin/quickshell -p /usr/share/hypercube/config/quickshell/welcome-mode.qml'"
+command = "sh -c 'if getent passwd | awk -F: \"\\$3 >= 1000 && \\$3 < 65534\" | grep -q .; then sed -i \"/^\\[initial_session\\]/,\\$d\" /etc/greetd/config.toml; exit 0; fi; mkdir -p /run/user/0 && export XDG_RUNTIME_DIR=/run/user/0; /usr/sbin/cage -s -- /usr/sbin/quickshell -p /usr/share/hypercube/config/quickshell/welcome-mode.qml'"
 user = "root"

@@ -3,7 +3,7 @@
 
 container_name := "nvim-dev"
 local_image := "localhost/nvim-dev"
-remote_image := "ghcr.io/binarypie/nvim-dev:latest"
+remote_image := "ghcr.io/binarypie-dev/nvim-dev:latest"
 
 # Default recipe - show help
 default:
