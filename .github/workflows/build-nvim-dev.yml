@@ -57,7 +57,7 @@ jobs:
             type=ref,event=pr
 
       - name: Build and push
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v6
         with:
           context: dot_files/nvim
           file: dot_files/nvim/Containerfile
