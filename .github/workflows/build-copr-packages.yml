@@ -130,7 +130,7 @@ jobs:
           if [[ -z "$(echo $TO_BUILD | tr -d ' ')" ]]; then
             echo "packages=[]" >> $GITHUB_OUTPUT
           else
-            JSON=$(echo "$TO_BUILD" | tr -s ' ' '\n' | grep -v '^$' | jq -R . | jq -s .)
+            JSON=$(echo "$TO_BUILD" | tr -s ' ' '\n' | grep -v '^$' | jq -R . | jq -sc .)
             echo "packages=$JSON" >> $GITHUB_OUTPUT
           fi
 
