@@ -17,7 +17,7 @@ BuildRequires:  pkgconfig(cairo)
 BuildRequires:  pkgconfig(glesv2)
 BuildRequires:  pkgconfig(hyprgraphics)
 BuildRequires:  pkgconfig(hyprlang)
-BuildRequires:  pkgconfig(hyprtoolkit) >= 0.4.1
+BuildRequires:  pkgconfig(hyprtoolkit) >= 0.5.2
 BuildRequires:  pkgconfig(hyprutils)
 BuildRequires:  pkgconfig(hyprwayland-scanner)
 BuildRequires:  pkgconfig(hyprwire)

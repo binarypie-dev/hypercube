@@ -150,6 +150,9 @@ jobs:
           fi
 
           echo "Initially changed packages: $CHANGED_PKGS"
+          echo ""
+          echo "Checking which packages actually need building..."
+          echo ""
 
           # Filter out packages that are already at the correct version in COPR
           NEEDS_BUILD=""
@@ -171,28 +174,49 @@ jobs:
 
             echo "  $pkg: spec has version $SPEC_VERSION-$SPEC_RELEASE"
 
-            # Query COPR for the latest build version via web scraping
-            COPR_PAGE=$(curl -s "https://copr.fedorainfracloud.org/coprs/${{ env.COPR_PROJECT }}/package/$pkg/" || echo "")
+            # Query COPR repository metadata for the current package version
+            COPR_VERSION=""
+            REPO_URL="https://download.copr.fedorainfracloud.org/results/binarypie/hypercube/fedora-43-x86_64"
+            REPOMD=$(curl -sf "$REPO_URL/repodata/repomd.xml" 2>/dev/null || echo "")
 
-            # Extract the latest successful build NVR from the page
-            COPR_NVR=$(echo "$COPR_PAGE" | grep -oP 'succeeded.*?'"$pkg"'-[0-9][^"<]*' | head -1 | grep -oP "$pkg"'-[0-9][^"<]*' | head -1 || echo "")
+            if [[ -n "$REPOMD" ]]; then
+              # Get primary.xml.gz location
+              PRIMARY_HREF=$(echo "$REPOMD" | grep -oP 'href="[^"]*primary\.xml\.gz"' | cut -d'"' -f2 | head -1)
 
-            if [[ -z "$COPR_NVR" ]]; then
-              echo "    COPR: package not found or no successful builds, will build"
+              if [[ -n "$PRIMARY_HREF" ]]; then
+                # Download and search primary.xml.gz for our package
+                PRIMARY_XML=$(curl -sf "$REPO_URL/$PRIMARY_HREF" | gunzip 2>/dev/null || echo "")
+
+                # Extract version and release for our package
+                # Look for <name>package</name> followed by <version ... ver="X.Y.Z" rel="N"/>
+                PKG_BLOCK=$(echo "$PRIMARY_XML" | grep -A 5 "<name>$pkg</name>" | head -10)
+
+                if [[ -n "$PKG_BLOCK" ]]; then
+                  VER=$(echo "$PKG_BLOCK" | grep -oP 'ver="[^"]*"' | head -1 | cut -d'"' -f2)
+                  REL=$(echo "$PKG_BLOCK" | grep -oP 'rel="[^"]*"' | head -1 | cut -d'"' -f2)
+
+                  if [[ -n "$VER" && -n "$REL" ]]; then
+                    # Remove .fc43 suffix from release
+                    REL_CLEAN=$(echo "$REL" | sed 's/\.fc43$//')
+                    COPR_VERSION="$VER-$REL_CLEAN"
+                    echo "    COPR: has version $COPR_VERSION"
+                  fi
+                fi
+              fi
+            fi
+
+            if [[ -z "$COPR_VERSION" ]]; then
+              echo "    COPR: package not found in repository, will build"
               NEEDS_BUILD="$NEEDS_BUILD $pkg"
               continue
             fi
 
-            # Extract version-release from NVR (package-version-release)
-            COPR_VR=$(echo "$COPR_NVR" | sed "s/^$pkg-//")
-            echo "    COPR: has version $COPR_VR"
-
             # Compare spec version-release with COPR version-release
             SPEC_VR="${SPEC_VERSION}-${SPEC_RELEASE}"
-            if [[ "$COPR_VR" == "$SPEC_VR"* ]]; then
+            if [[ "$COPR_VERSION" == "$SPEC_VR" ]]; then
               echo "    -> Versions match, skipping build"
             else
-              echo "    -> Versions differ, will build"
+              echo "    -> Versions differ (spec: $SPEC_VR vs copr: $COPR_VERSION), will build"
               NEEDS_BUILD="$NEEDS_BUILD $pkg"
             fi
           done

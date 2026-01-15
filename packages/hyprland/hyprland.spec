@@ -31,6 +31,7 @@ BuildRequires:  pkgconfig(libinput) >= 1.28
 BuildRequires:  pkgconfig(libliftoff)
 BuildRequires:  pkgconfig(libseat)
 BuildRequires:  pkgconfig(libudev)
+BuildRequires:  pkgconfig(muparser)
 BuildRequires:  pkgconfig(pango)
 BuildRequires:  pkgconfig(pangocairo)
 BuildRequires:  pkgconfig(pixman-1)
