@@ -3,7 +3,7 @@
 %global debug_package %{nil}
 
 Name:           eza
-Version:        0.20.21
+Version:        0.23.4
 Release:        1%{?dist}
 Summary:        Modern replacement for ls
 
@@ -55,5 +55,7 @@ install -Dpm 0644 completions/fish/%{name}.fish -t %{buildroot}/%{_datadir}/fish
 %{_datadir}/fish/vendor_completions.d/%{name}.fish
 
 %changelog
+* Thu Jan 15 2026 Hypercube <hypercube@binarypie.dev> - 0.23.4-1
+- Update to 0.23.4
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.20.21-1
 - Initial package for Hypercube
