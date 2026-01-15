@@ -91,7 +91,7 @@ jobs:
           DEPS[hyprland]="aquamarine hyprcursor hyprgraphics hyprlang hyprutils glaze"
           DEPS[hyprlock]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
           DEPS[hypridle]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner hyprwire"
+          DEPS[hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner hyprwire hyprtoolkit"
           DEPS[xdg-desktop-portal-hyprland]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
           DEPS[hyprpolkitagent]="hyprutils hyprland-qt-support"
           DEPS[hyprtoolkit]="aquamarine hyprgraphics hyprlang hyprutils hyprwayland-scanner"
@@ -101,8 +101,8 @@ jobs:
           BATCH1="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui regreet"
           BATCH2="hyprlang hyprgraphics aquamarine"
           BATCH3="hyprcursor hyprland-qt-support"
-          BATCH4="hyprland hyprlock hypridle hyprpaper xdg-desktop-portal-hyprland hyprpolkitagent hyprtoolkit"
-          BATCH5="hyprland-guiutils"
+          BATCH4="hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprpolkitagent hyprtoolkit"
+          BATCH5="hyprpaper hyprland-guiutils"
 
           # Function to get all downstream dependents of a package
           get_dependents() {
@@ -236,8 +236,8 @@ jobs:
               {"id": 1, "packages": ["hyprutils", "hyprwayland-scanner", "hyprland-protocols", "hyprwire", "glaze", "uwsm", "eza", "starship", "lazygit", "quickshell", "livesys-scripts", "wifitui", "regreet"]},
               {"id": 2, "packages": ["hyprlang", "hyprgraphics", "aquamarine"]},
               {"id": 3, "packages": ["hyprcursor", "hyprland-qt-support"]},
-              {"id": 4, "packages": ["hyprland", "hyprlock", "hypridle", "hyprpaper", "xdg-desktop-portal-hyprland", "hyprpolkitagent", "hyprtoolkit"]},
-              {"id": 5, "packages": ["hyprland-guiutils"]}
+              {"id": 4, "packages": ["hyprland", "hyprlock", "hypridle", "xdg-desktop-portal-hyprland", "hyprpolkitagent", "hyprtoolkit"]},
+              {"id": 5, "packages": ["hyprpaper", "hyprland-guiutils"]}
             ]
           }
           EOF
