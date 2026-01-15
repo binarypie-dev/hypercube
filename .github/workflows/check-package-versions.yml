@@ -113,7 +113,7 @@ jobs:
 
       - name: Checkout
         if: steps.should-run.outputs.skip != 'true'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Get upstream version
         if: steps.should-run.outputs.skip != 'true'
