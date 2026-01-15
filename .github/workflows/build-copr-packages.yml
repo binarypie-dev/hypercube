@@ -39,7 +39,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
-          fetch-depth: 2
+          fetch-depth: 0  # Full history to find last successful build
+
+      - name: Get last successful build commit
+        id: last-success
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Find the last successful workflow run on this branch
+          LAST_SHA=$(gh run list \
+            --workflow="Build COPR Packages" \
+            --branch=main \
+            --status=success \
+            --limit=1 \
+            --json headSha \
+            --jq '.[0].headSha // empty' 2>/dev/null) || LAST_SHA=""
+
+          if [[ -n "$LAST_SHA" ]]; then
+            echo "Last successful build: $LAST_SHA"
+            echo "sha=$LAST_SHA" >> $GITHUB_OUTPUT
+          else
+            echo "No previous successful build found, will use HEAD~1"
+            echo "sha=" >> $GITHUB_OUTPUT
+          fi
 
       - name: Detect changed packages
         id: detect
@@ -102,11 +124,22 @@ jobs:
             CHANGED_PKGS=$(echo "${{ inputs.packages }}" | tr ',' ' ')
           else
             echo "Detecting changed packages..."
+
+            # Compare against last successful build, or HEAD~1 if none
+            LAST_SHA="${{ steps.last-success.outputs.sha }}"
+            if [[ -n "$LAST_SHA" ]]; then
+              echo "Comparing HEAD against last successful build: $LAST_SHA"
+              COMPARE_REF="$LAST_SHA"
+            else
+              echo "Comparing HEAD against HEAD~1"
+              COMPARE_REF="HEAD~1"
+            fi
+
             CHANGED_PKGS=""
             for dir in packages/*/; do
               pkg=$(basename "$dir")
               if [[ "$pkg" != "README.md" ]]; then
-                if git diff --name-only HEAD~1 HEAD | grep -q "^packages/$pkg/"; then
+                if git diff --name-only "$COMPARE_REF" HEAD | grep -q "^packages/$pkg/"; then
                   CHANGED_PKGS="$CHANGED_PKGS $pkg"
                 fi
               fi
