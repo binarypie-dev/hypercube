@@ -21,9 +21,17 @@ communication). It is heavily inspired by Wayland, and heavily anti-inspired
 by D-Bus. Both sides need to be on the same page to communicate, making it
 strict, fast, and simple to use.
 
+%package        scanner
+Summary:        Protocol scanner tool for %{name}
+Requires:       %{name}%{?_isa} = %{version}-%{release}
+
+%description    scanner
+Protocol scanner tool for generating code from %{name} protocol definitions.
+
 %package        devel
 Summary:        Development files for %{name}
 Requires:       %{name}%{?_isa} = %{version}-%{release}
+Requires:       %{name}-scanner%{?_isa} = %{version}-%{release}
 
 %description    devel
 Development files for %{name}.
@@ -43,6 +51,11 @@ Development files for %{name}.
 %doc README.md
 %{_libdir}/lib%{name}.so.2
 %{_libdir}/lib%{name}.so.%{version}
+
+%files scanner
+%{_bindir}/%{name}-scanner
+%{_libdir}/pkgconfig/%{name}-scanner.pc
+%{_libdir}/cmake/%{name}-scanner/
 
 %files devel
 %{_includedir}/%{name}/
