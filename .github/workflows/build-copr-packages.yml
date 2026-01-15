@@ -174,42 +174,54 @@ jobs:
 
             echo "  $pkg: spec has version $SPEC_VERSION-$SPEC_RELEASE"
 
-            # Query COPR repository metadata for the current package version
-            COPR_VERSION=""
-            REPO_URL="https://download.copr.fedorainfracloud.org/results/binarypie/hypercube/fedora-43-x86_64"
-            REPOMD=$(curl -sf "$REPO_URL/repodata/repomd.xml" 2>/dev/null || echo "")
+            # Query COPR build history API for the latest successful build
+            echo "    Querying COPR API for latest successful build..."
+            COPR_API_URL="https://copr.fedorainfracloud.org/api_3/package?ownername=binarypie&projectname=hypercube&packagename=$pkg&with_latest_build=True"
 
-            if [[ -n "$REPOMD" ]]; then
-              # Get primary.xml.gz location
-              PRIMARY_HREF=$(echo "$REPOMD" | grep -oP 'href="[^"]*primary\.xml\.gz"' | cut -d'"' -f2 | head -1)
+            COPR_API_RESPONSE=$(curl -sf "$COPR_API_URL" 2>/dev/null)
 
-              if [[ -n "$PRIMARY_HREF" ]]; then
-                # Download and search primary.xml.gz for our package
-                PRIMARY_XML=$(curl -sf "$REPO_URL/$PRIMARY_HREF" | gunzip 2>/dev/null || echo "")
-
-                # Extract version and release for our package
-                # Look for <name>package</name> followed by <version ... ver="X.Y.Z" rel="N"/>
-                PKG_BLOCK=$(echo "$PRIMARY_XML" | grep -A 5 "<name>$pkg</name>" | head -10)
-
-                if [[ -n "$PKG_BLOCK" ]]; then
-                  VER=$(echo "$PKG_BLOCK" | grep -oP 'ver="[^"]*"' | head -1 | cut -d'"' -f2)
-                  REL=$(echo "$PKG_BLOCK" | grep -oP 'rel="[^"]*"' | head -1 | cut -d'"' -f2)
-
-                  if [[ -n "$VER" && -n "$REL" ]]; then
-                    # Remove .fc43 suffix from release
-                    REL_CLEAN=$(echo "$REL" | sed 's/\.fc43$//')
-                    COPR_VERSION="$VER-$REL_CLEAN"
-                    echo "    COPR: has version $COPR_VERSION"
-                  fi
-                fi
-              fi
-            fi
-
-            if [[ -z "$COPR_VERSION" ]]; then
-              echo "    COPR: package not found in repository, will build"
+            if [[ -z "$COPR_API_RESPONSE" ]]; then
+              echo "    COPR: Failed to query API, will build"
               NEEDS_BUILD="$NEEDS_BUILD $pkg"
               continue
             fi
+
+            # Extract the latest succeeded build's source_package (which contains NVR)
+            # The API returns builds array, we want the first one with state "succeeded"
+            BUILDS_JSON=$(echo "$COPR_API_RESPONSE" | jq -r '.builds' 2>/dev/null)
+
+            if [[ -z "$BUILDS_JSON" || "$BUILDS_JSON" == "null" ]]; then
+              echo "    COPR: No builds found in API response, will build"
+              NEEDS_BUILD="$NEEDS_BUILD $pkg"
+              continue
+            fi
+
+            # Find the latest successful build and extract its NVR
+            LATEST_NVR=""
+            while IFS= read -r build; do
+              STATE=$(echo "$build" | jq -r '.state' 2>/dev/null)
+              if [[ "$STATE" == "succeeded" ]]; then
+                SOURCE_PKG=$(echo "$build" | jq -r '.source_package.name' 2>/dev/null)
+                if [[ -n "$SOURCE_PKG" && "$SOURCE_PKG" != "null" ]]; then
+                  # source_package.name is the NVR (e.g., "starship-1.24.2-1.fc43")
+                  LATEST_NVR="$SOURCE_PKG"
+                  break
+                fi
+              fi
+            done < <(echo "$BUILDS_JSON" | jq -c '.[]' 2>/dev/null)
+
+            if [[ -z "$LATEST_NVR" ]]; then
+              echo "    COPR: No successful builds found, will build"
+              NEEDS_BUILD="$NEEDS_BUILD $pkg"
+              continue
+            fi
+
+            # Extract version-release from NVR (format: package-version-release.fc43)
+            # Remove package name prefix and .fc43 suffix
+            COPR_VR=$(echo "$LATEST_NVR" | sed "s/^$pkg-//" | sed 's/\.fc43$//')
+            echo "    COPR: has version $COPR_VR (from latest successful build)"
+
+            COPR_VERSION="$COPR_VR"
 
             # Compare spec version-release with COPR version-release
             SPEC_VR="${SPEC_VERSION}-${SPEC_RELEASE}"
