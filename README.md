@@ -3,7 +3,55 @@
 > Cloud-native development environment with vim keybindings
 
 [![Build](https://github.com/binarypie-dev/hypercube/actions/workflows/build.yml/badge.svg)](https://github.com/binarypie-dev/hypercube/actions/workflows/build.yml)
+[![nvim-dev](https://github.com/binarypie-dev/hypercube/actions/workflows/build-nvim-dev.yml/badge.svg)](https://github.com/binarypie-dev/hypercube/actions/workflows/build-nvim-dev.yml)
+[![Copr](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/datacube/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fbinarypie--dev%2Fhypercube-blue)](https://ghcr.io/binarypie-dev/hypercube)
+
+<details>
+<summary><strong>COPR Package Build Status</strong></summary>
+
+#### Hyprland Core Libraries
+| Package | Status |
+|---------|--------|
+| hyprutils | [![hyprutils](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprutils/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprutils/) |
+| hyprlang | [![hyprlang](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprlang/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprlang/) |
+| hyprwayland-scanner | [![hyprwayland-scanner](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprwayland-scanner/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprwayland-scanner/) |
+| hyprgraphics | [![hyprgraphics](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprgraphics/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprgraphics/) |
+| hyprcursor | [![hyprcursor](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprcursor/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprcursor/) |
+| hyprland-protocols | [![hyprland-protocols](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland-protocols/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland-protocols/) |
+| aquamarine | [![aquamarine](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/aquamarine/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/aquamarine/) |
+| hyprland-qt-support | [![hyprland-qt-support](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland-qt-support/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland-qt-support/) |
+| glaze | [![glaze](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/glaze/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/glaze/) |
+
+#### Hyprland Compositor & Tools
+| Package | Status |
+|---------|--------|
+| hyprland | [![hyprland](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland/) |
+| hyprlock | [![hyprlock](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprlock/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprlock/) |
+| hypridle | [![hypridle](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hypridle/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hypridle/) |
+| hyprpaper | [![hyprpaper](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprpaper/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprpaper/) |
+| xdg-desktop-portal-hyprland | [![xdg-desktop-portal-hyprland](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/xdg-desktop-portal-hyprland/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/xdg-desktop-portal-hyprland/) |
+| hyprpolkitagent | [![hyprpolkitagent](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprpolkitagent/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprpolkitagent/) |
+| hyprtoolkit | [![hyprtoolkit](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprtoolkit/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprtoolkit/) |
+| hyprland-guiutils | [![hyprland-guiutils](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland-guiutils/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland-guiutils/) |
+| uwsm | [![uwsm](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/uwsm/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/uwsm/) |
+
+#### CLI Tools
+| Package | Status |
+|---------|--------|
+| eza | [![eza](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/eza/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/eza/) |
+| starship | [![starship](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/starship/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/starship/) |
+| lazygit | [![lazygit](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/lazygit/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/lazygit/) |
+| wifitui | [![wifitui](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/wifitui/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/wifitui/) |
+
+#### Other
+| Package | Status |
+|---------|--------|
+| quickshell | [![quickshell](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/quickshell/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/quickshell/) |
+| regreet | [![regreet](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/regreet/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/regreet/) |
+| livesys-scripts | [![livesys-scripts](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/livesys-scripts/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/livesys-scripts/) |
+
+</details>
 
 Hypercube is an opinionated, ready-to-use development environment built on [Universal Blue's base-main](https://github.com/ublue-os/main) image with Fedora 43. It provides a complete Hyprland-based workflow with consistent vim keybindings across all tools and Tokyo Night theming throughout.
 
@@ -58,15 +106,22 @@ Tokyo Night color scheme everywhere:
 
 ### Prerequisites
 
-- A system running a bootc-compatible image (Bazzite, Bluefin, Aurora, or Fedora Atomic)
-- Basic familiarity with container-based operating systems
+- A system running Fedora Atomic (Silverblue, Kinoite, Bazzite, Bluefin, Aurora, etc.)
+- Basic familiarity with image-based operating systems
 
 ### Switch to Hypercube
 
-From your existing bootc system:
+From your existing Fedora Atomic system:
 
 ```bash
-sudo bootc switch ghcr.io/binarypie-dev/hypercube:43
+rpm-ostree rebase ostree-unverified-registry:ghcr.io/binarypie-dev/hypercube:43
+systemctl reboot
+```
+
+After the first reboot, you can switch to signed images for additional security:
+
+```bash
+rpm-ostree rebase ostree-image-signed:docker://ghcr.io/binarypie-dev/hypercube:43
 systemctl reboot
 ```
 
@@ -79,8 +134,29 @@ Bootable ISOs are available from the [GitHub Releases](https://github.com/binary
 ### Switching Back
 
 ```bash
-sudo bootc switch <your-previous-image>
+rpm-ostree rebase <your-previous-image>
 systemctl reboot
+```
+
+### Resetting Configuration
+
+Hypercube ships default configurations in `/usr/share/hypercube/config/`. If you've modified your `~/.config/` files and want to reset to defaults:
+
+```bash
+# Reset a specific app's config (e.g., hyprland)
+rm -rf ~/.config/hypr
+cp -r /usr/share/hypercube/config/hypr ~/.config/
+
+# Or reset all Hypercube configs
+rm -rf ~/.config/{hypr,fish,starship.toml,ghostty,nvim}
+cp -r /usr/share/hypercube/config/* ~/.config/
+```
+
+To see what the default configuration looks like without overwriting your files:
+
+```bash
+ls /usr/share/hypercube/config/
+diff -r ~/.config/hypr /usr/share/hypercube/config/hypr
 ```
 
 ## What's Included

@@ -56,7 +56,8 @@ REQUIRED_FILES=(
   "/usr/share/backgrounds/hypercube/background.png"
   # DX config
   "/etc/distrobox/distrobox.ini"
-  "/usr/share/ublue-os/just/61-dx.just"
+  "/usr/share/ublue-os/just/60-hypercube.just"
+  "/usr/share/ublue-os/just/61-nvim.just"
 )
 
 for file in "${REQUIRED_FILES[@]}"; do
