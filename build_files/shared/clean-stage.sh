@@ -18,9 +18,4 @@ dnf5 -y clean all
 # Remove any leftover build artifacts
 rm -rf /tmp/* 2>/dev/null || true
 
-# Fix /var/run - must be a symlink to /run for bootc
-# Some packages (like audit) create /var/run as a directory
-echo "Ensuring /var/run is a symlink..."
-rm -rf /var/run && ln -s ../run /var/run
-
 echo "Cleanup complete"
