@@ -68,11 +68,13 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 %{_bindir}/uuctl
 %{_datadir}/%{name}/
 %{_datadir}/applications/uuctl.desktop
+%{_libexecdir}/%{name}/
 %{_mandir}/man1/%{name}.1.*
 %{_mandir}/man1/fumon.1.*
 %{_mandir}/man1/uuctl.1.*
 %{_mandir}/man1/uwsm-app.1.*
 %{_mandir}/man3/%{name}-plugins.3.*
+%{_userpresetdir}/80-fumon.preset
 %{_userunitdir}/fumon.service
 %{_userunitdir}/*-graphical.slice
 %{_userunitdir}/wayland-*.service
