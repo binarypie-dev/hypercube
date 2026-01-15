@@ -13,6 +13,7 @@ BuildRequires:  cmake
 BuildRequires:  gcc-c++
 BuildRequires:  pkgconfig(hyprutils) >= 0.9.0
 BuildRequires:  pkgconfig(libffi)
+BuildRequires:  pkgconfig(pugixml)
 
 %description
 Hyprwire is a fast and consistent wire protocol for IPC (inter-process
