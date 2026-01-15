@@ -158,7 +158,7 @@ jobs:
           EOF
 
           # Filter batches to only include packages that need building
-          FILTERED=$(jq --argjson pkgs "$PACKAGES" '
+          FILTERED=$(jq -c --argjson pkgs "$PACKAGES" '
             .batch | map(
               .packages = (.packages | map(select(. as $p | $pkgs | index($p))))
               | select(.packages | length > 0)
