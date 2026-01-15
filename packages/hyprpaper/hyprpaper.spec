@@ -1,5 +1,5 @@
 Name:           hyprpaper
-Version:        0.7.6
+Version:        0.8.1
 Release:        1%{?dist}
 Summary:        Blazing fast wayland wallpaper utility with IPC controls
 
@@ -52,5 +52,7 @@ wlroots-based compositors, though.
 %{_userunitdir}/%{name}.service
 
 %changelog
+* Thu Jan 15 2026 Hypercube <hypercube@binarypie.dev> - 0.8.1-1
+- Update to 0.8.1
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.7.6-1
 - Initial package for Hypercube (based on sdegler/hyprland COPR)
