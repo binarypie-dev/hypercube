@@ -104,7 +104,19 @@ These must be built first as other packages depend on them.
 
 ---
 
-### 8. hyprland-qt-support
+### 8. hyprwire
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/hyprwire` |
+| Spec File | `hyprwire.spec` |
+| Version | 0.2.1 |
+| Dependencies | hyprutils |
+| Notes | Wire protocol for IPC, required by hyprpaper |
+
+---
+
+### 9. hyprland-qt-support
 
 | Setting | Value |
 |---------|-------|
@@ -115,7 +127,7 @@ These must be built first as other packages depend on them.
 
 ---
 
-### 9. glaze
+### 10. glaze
 
 | Setting | Value |
 |---------|-------|
@@ -127,13 +139,13 @@ These must be built first as other packages depend on them.
 
 ---
 
-### 10. uwsm
+### 11. uwsm
 
 | Setting | Value |
 |---------|-------|
 | Subdir | `packages/uwsm` |
 | Spec File | `uwsm.spec` |
-| Version | 0.23.3 |
+| Version | 0.26.0 |
 | Dependencies | None (Python-based, uses system packages) |
 | Notes | Universal Wayland Session Manager, required by hyprland-uwsm subpackage |
 
@@ -143,7 +155,7 @@ These must be built first as other packages depend on them.
 
 Build after core libraries are available.
 
-### 11. hyprland
+### 12. hyprland
 
 | Setting | Value |
 |---------|-------|
@@ -154,7 +166,7 @@ Build after core libraries are available.
 
 ---
 
-### 12. hyprlock
+### 13. hyprlock
 
 | Setting | Value |
 |---------|-------|
@@ -165,7 +177,7 @@ Build after core libraries are available.
 
 ---
 
-### 13. hypridle
+### 14. hypridle
 
 | Setting | Value |
 |---------|-------|
@@ -176,18 +188,18 @@ Build after core libraries are available.
 
 ---
 
-### 14. hyprpaper
+### 15. hyprpaper
 
 | Setting | Value |
 |---------|-------|
 | Subdir | `packages/hyprpaper` |
 | Spec File | `hyprpaper.spec` |
-| Version | 0.7.6 |
-| Dependencies | hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner |
+| Version | 0.8.1 |
+| Dependencies | hyprgraphics, hyprlang, hyprtoolkit, hyprutils, hyprwayland-scanner, hyprwire |
 
 ---
 
-### 15. xdg-desktop-portal-hyprland
+### 16. xdg-desktop-portal-hyprland
 
 | Setting | Value |
 |---------|-------|
@@ -198,7 +210,7 @@ Build after core libraries are available.
 
 ---
 
-### 16. hyprpolkitagent
+### 17. hyprpolkitagent
 
 | Setting | Value |
 |---------|-------|
@@ -209,7 +221,7 @@ Build after core libraries are available.
 
 ---
 
-### 17. hyprtoolkit
+### 18. hyprtoolkit
 
 | Setting | Value |
 |---------|-------|
@@ -221,7 +233,7 @@ Build after core libraries are available.
 
 ---
 
-### 18. hyprland-guiutils
+### 19. hyprland-guiutils
 
 | Setting | Value |
 |---------|-------|
@@ -237,7 +249,7 @@ Build after core libraries are available.
 
 These have no hyprland dependencies and can be built in parallel.
 
-### 19. eza
+### 20. eza
 
 | Setting | Value |
 |---------|-------|
@@ -248,7 +260,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 20. starship
+### 21. starship
 
 | Setting | Value |
 |---------|-------|
@@ -259,7 +271,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 21. lazygit
+### 22. lazygit
 
 | Setting | Value |
 |---------|-------|
@@ -270,7 +282,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 22. ghostty
+### 23. ghostty
 
 | Setting | Value |
 |---------|-------|
@@ -282,7 +294,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 23. quickshell
+### 24. quickshell
 
 | Setting | Value |
 |---------|-------|
@@ -293,7 +305,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 24. livesys-scripts
+### 25. livesys-scripts
 
 | Setting | Value |
 |---------|-------|
@@ -305,7 +317,7 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 25. wifitui
+### 26. wifitui
 
 | Setting | Value |
 |---------|-------|
@@ -338,7 +350,12 @@ To ensure dependencies are satisfied, build in this order:
 **Batch 2** (depends on Batch 1):
 1. hyprlang (needs hyprutils)
 2. hyprgraphics (needs hyprutils)
-3. aquamarine (needs hyprutils, hyprwayland-scanner)
+3. hyprwire (needs hyprutils)
+4. aquamarine (needs hyprutils, hyprwayland-scanner)
+
+**Batch 3** (depends on Batch 2):
+1. hyprcursor (needs hyprlang)
+2. hyprland-qt-support (needs hyprlang)
 
 **Batch 3** (depends on Batch 2):
 1. hyprcursor (needs hyprlang)
@@ -348,7 +365,7 @@ To ensure dependencies are satisfied, build in this order:
 1. hyprland (needs aquamarine, hyprcursor, hyprgraphics, hyprlang, hyprutils, glaze)
 2. hyprlock (needs hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner)
 3. hypridle (needs hyprland-protocols, hyprlang, hyprutils, hyprwayland-scanner)
-4. hyprpaper (needs hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner)
+4. hyprpaper (needs hyprgraphics, hyprlang, hyprtoolkit, hyprutils, hyprwayland-scanner, hyprwire)
 5. xdg-desktop-portal-hyprland (needs hyprland-protocols, hyprlang, hyprutils, hyprwayland-scanner)
 6. hyprpolkitagent (needs hyprutils, hyprland-qt-support)
 7. hyprtoolkit (needs aquamarine, hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner)

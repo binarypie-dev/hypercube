@@ -71,6 +71,7 @@ jobs:
           DEPS[hyprutils]=""
           DEPS[hyprwayland-scanner]=""
           DEPS[hyprland-protocols]=""
+          DEPS[hyprwire]=""
           DEPS[glaze]=""
           DEPS[uwsm]=""
           DEPS[eza]=""
@@ -88,14 +89,14 @@ jobs:
           DEPS[hyprland]="aquamarine hyprcursor hyprgraphics hyprlang hyprutils glaze"
           DEPS[hyprlock]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
           DEPS[hypridle]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner hyprwire"
           DEPS[xdg-desktop-portal-hyprland]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
           DEPS[hyprpolkitagent]="hyprutils hyprland-qt-support"
           DEPS[hyprtoolkit]="aquamarine hyprgraphics hyprlang hyprutils hyprwayland-scanner"
           DEPS[hyprland-guiutils]="aquamarine hyprtoolkit hyprlang hyprutils"
 
           # Define batch order (packages in same batch can build in parallel)
-          BATCH1="hyprutils hyprwayland-scanner hyprland-protocols glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui regreet"
+          BATCH1="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui regreet"
           BATCH2="hyprlang hyprgraphics aquamarine"
           BATCH3="hyprcursor hyprland-qt-support"
           BATCH4="hyprland hyprlock hypridle hyprpaper xdg-desktop-portal-hyprland hyprpolkitagent hyprtoolkit"
@@ -181,7 +182,7 @@ jobs:
           cat > /tmp/batches.json << 'EOF'
           {
             "batch": [
-              {"id": 1, "packages": ["hyprutils", "hyprwayland-scanner", "hyprland-protocols", "glaze", "uwsm", "eza", "starship", "lazygit", "quickshell", "livesys-scripts", "wifitui", "regreet"]},
+              {"id": 1, "packages": ["hyprutils", "hyprwayland-scanner", "hyprland-protocols", "hyprwire", "glaze", "uwsm", "eza", "starship", "lazygit", "quickshell", "livesys-scripts", "wifitui", "regreet"]},
               {"id": 2, "packages": ["hyprlang", "hyprgraphics", "aquamarine"]},
               {"id": 3, "packages": ["hyprcursor", "hyprland-qt-support"]},
               {"id": 4, "packages": ["hyprland", "hyprlock", "hypridle", "hyprpaper", "xdg-desktop-portal-hyprland", "hyprpolkitagent", "hyprtoolkit"]},
