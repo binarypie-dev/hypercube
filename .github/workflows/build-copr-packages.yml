@@ -1,0 +1,298 @@
+# Build COPR packages when package specs change
+# Triggers builds in dependency order based on packages/README.md
+
+name: Build COPR Packages
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false  # Don't cancel - we need to cleanup COPR builds properly
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/**'
+      - '.github/workflows/build-copr-packages.yml'
+  workflow_dispatch:
+    inputs:
+      packages:
+        description: 'Comma-separated list of packages to build (empty = auto-detect from changes)'
+        required: false
+        type: string
+      rebuild_all:
+        description: 'Rebuild all packages in dependency order'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  COPR_PROJECT: binarypie/hypercube
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      packages: ${{ steps.detect.outputs.packages }}
+      matrix: ${{ steps.build-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+
+      - name: Detect changed packages
+        id: detect
+        run: |
+          # Define all packages and their dependencies
+          declare -A DEPS
+          DEPS[hyprutils]=""
+          DEPS[hyprwayland-scanner]=""
+          DEPS[hyprland-protocols]=""
+          DEPS[glaze]=""
+          DEPS[uwsm]=""
+          DEPS[eza]=""
+          DEPS[starship]=""
+          DEPS[lazygit]=""
+          DEPS[quickshell]=""
+          DEPS[livesys-scripts]=""
+          DEPS[wifitui]=""
+          DEPS[regreet]=""
+          DEPS[hyprlang]="hyprutils"
+          DEPS[hyprgraphics]="hyprutils"
+          DEPS[aquamarine]="hyprutils hyprwayland-scanner"
+          DEPS[hyprcursor]="hyprlang"
+          DEPS[hyprland-qt-support]="hyprlang"
+          DEPS[hyprland]="aquamarine hyprcursor hyprgraphics hyprlang hyprutils glaze"
+          DEPS[hyprlock]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hypridle]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
+          DEPS[xdg-desktop-portal-hyprland]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hyprpolkitagent]="hyprutils hyprland-qt-support"
+          DEPS[hyprtoolkit]="aquamarine hyprgraphics hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hyprland-guiutils]="aquamarine hyprtoolkit hyprlang hyprutils"
+
+          # Define batch order (packages in same batch can build in parallel)
+          BATCH1="hyprutils hyprwayland-scanner hyprland-protocols glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui regreet"
+          BATCH2="hyprlang hyprgraphics aquamarine"
+          BATCH3="hyprcursor hyprland-qt-support"
+          BATCH4="hyprland hyprlock hypridle hyprpaper xdg-desktop-portal-hyprland hyprpolkitagent hyprtoolkit"
+          BATCH5="hyprland-guiutils"
+
+          # Function to get all downstream dependents of a package
+          get_dependents() {
+            local pkg=$1
+            local dependents=""
+            for p in "${!DEPS[@]}"; do
+              if [[ " ${DEPS[$p]} " == *" $pkg "* ]]; then
+                dependents="$dependents $p"
+                # Recursively get dependents of dependents
+                dependents="$dependents $(get_dependents $p)"
+              fi
+            done
+            echo "$dependents"
+          }
+
+          # Determine which packages to build
+          if [[ "${{ inputs.rebuild_all }}" == "true" ]]; then
+            echo "Rebuilding all packages..."
+            CHANGED_PKGS="${!DEPS[*]}"
+          elif [[ -n "${{ inputs.packages }}" ]]; then
+            echo "Using manually specified packages..."
+            CHANGED_PKGS=$(echo "${{ inputs.packages }}" | tr ',' ' ')
+          else
+            echo "Detecting changed packages..."
+            CHANGED_PKGS=""
+            for dir in packages/*/; do
+              pkg=$(basename "$dir")
+              if [[ "$pkg" != "README.md" ]]; then
+                if git diff --name-only HEAD~1 HEAD | grep -q "^packages/$pkg/"; then
+                  CHANGED_PKGS="$CHANGED_PKGS $pkg"
+                fi
+              fi
+            done
+          fi
+
+          echo "Initially changed packages: $CHANGED_PKGS"
+
+          # Add all downstream dependents
+          TO_BUILD="$CHANGED_PKGS"
+          for pkg in $CHANGED_PKGS; do
+            dependents=$(get_dependents "$pkg")
+            TO_BUILD="$TO_BUILD $dependents"
+          done
+
+          # Deduplicate
+          TO_BUILD=$(echo "$TO_BUILD" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+          echo "Packages to build (including dependents): $TO_BUILD"
+
+          # Output as JSON array
+          if [[ -z "$(echo $TO_BUILD | tr -d ' ')" ]]; then
+            echo "packages=[]" >> $GITHUB_OUTPUT
+          else
+            JSON=$(echo "$TO_BUILD" | tr -s ' ' '\n' | grep -v '^$' | jq -R . | jq -s .)
+            echo "packages=$JSON" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build batch matrix
+        id: build-matrix
+        run: |
+          PACKAGES='${{ steps.detect.outputs.packages }}'
+
+          if [[ "$PACKAGES" == "[]" ]]; then
+            echo "matrix={\"batch\":[]}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Define batches with their packages
+          cat > /tmp/batches.json << 'EOF'
+          {
+            "batch": [
+              {"id": 1, "packages": ["hyprutils", "hyprwayland-scanner", "hyprland-protocols", "glaze", "uwsm", "eza", "starship", "lazygit", "quickshell", "livesys-scripts", "wifitui", "regreet"]},
+              {"id": 2, "packages": ["hyprlang", "hyprgraphics", "aquamarine"]},
+              {"id": 3, "packages": ["hyprcursor", "hyprland-qt-support"]},
+              {"id": 4, "packages": ["hyprland", "hyprlock", "hypridle", "hyprpaper", "xdg-desktop-portal-hyprland", "hyprpolkitagent", "hyprtoolkit"]},
+              {"id": 5, "packages": ["hyprland-guiutils"]}
+            ]
+          }
+          EOF
+
+          # Filter batches to only include packages that need building
+          FILTERED=$(jq --argjson pkgs "$PACKAGES" '
+            .batch | map(
+              .packages = (.packages | map(select(. as $p | $pkgs | index($p))))
+              | select(.packages | length > 0)
+            ) | {batch: .}
+          ' /tmp/batches.json)
+
+          echo "matrix=$FILTERED" >> $GITHUB_OUTPUT
+          echo "Build matrix:"
+          echo "$FILTERED" | jq .
+
+  build-batch:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.matrix != '{"batch":[]}' && needs.detect-changes.outputs.matrix != '' }}
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 1  # Run batches sequentially
+      fail-fast: false
+      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Install COPR CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3-pip
+          pip3 install copr-cli
+
+      - name: Configure COPR CLI
+        run: |
+          mkdir -p ~/.config
+          cat > ~/.config/copr << EOF
+          [copr-cli]
+          login = ${{ secrets.COPR_API_LOGIN }}
+          username = binarypie
+          token = ${{ secrets.COPR_API_TOKEN }}
+          copr_url = https://copr.fedorainfracloud.org
+          EOF
+
+      - name: Build batch ${{ matrix.batch.id }} packages
+        id: build
+        run: |
+          echo "Building batch ${{ matrix.batch.id }}: ${{ join(matrix.batch.packages, ', ') }}"
+
+          FAILED=""
+          BUILD_IDS=""
+
+          # Trigger all builds in this batch
+          for pkg in ${{ join(matrix.batch.packages, ' ') }}; do
+            echo ""
+            echo "========================================"
+            echo "Triggering build for: $pkg"
+            echo "========================================"
+
+            # Trigger SCM build
+            BUILD_OUTPUT=$(copr-cli build-package \
+              --name "$pkg" \
+              "${{ env.COPR_PROJECT }}" 2>&1) || {
+              echo "::error::Failed to trigger build for $pkg"
+              echo "$BUILD_OUTPUT"
+              FAILED="$FAILED $pkg"
+              continue
+            }
+
+            echo "$BUILD_OUTPUT"
+
+            # Extract build ID
+            BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -oP 'Build was added to .+builds/\K\d+' || echo "")
+            if [[ -n "$BUILD_ID" ]]; then
+              BUILD_IDS="$BUILD_IDS $BUILD_ID"
+              echo "Build ID: $BUILD_ID"
+            fi
+          done
+
+          # Save build IDs for potential cleanup
+          echo "build_ids=$BUILD_IDS" >> $GITHUB_OUTPUT
+
+          # Wait for all builds in this batch to complete
+          echo ""
+          echo "========================================"
+          echo "Waiting for batch ${{ matrix.batch.id }} builds to complete..."
+          echo "========================================"
+
+          for build_id in $BUILD_IDS; do
+            echo "Waiting for build $build_id..."
+            copr-cli watch-build "$build_id" || {
+              echo "::warning::Build $build_id failed or was cancelled"
+              # Get package name for this build
+              FAILED="$FAILED (build:$build_id)"
+            }
+          done
+
+          if [[ -n "$FAILED" ]]; then
+            echo ""
+            echo "::error::Some packages failed to build:$FAILED"
+            exit 1
+          fi
+
+          echo ""
+          echo "Batch ${{ matrix.batch.id }} completed successfully!"
+
+      - name: Cancel COPR builds on workflow cancellation
+        if: cancelled()
+        run: |
+          echo "Workflow cancelled - cancelling COPR builds..."
+          BUILD_IDS="${{ steps.build.outputs.build_ids }}"
+
+          for build_id in $BUILD_IDS; do
+            echo "Cancelling COPR build $build_id..."
+            copr-cli cancel "$build_id" || echo "Could not cancel build $build_id (may have already finished)"
+          done
+
+          echo "COPR build cancellation complete"
+
+      - name: Generate batch summary
+        if: always()
+        run: |
+          echo "## Batch ${{ matrix.batch.id }} Build Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Packages:** ${{ join(matrix.batch.packages, ', ') }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[View builds on COPR](https://copr.fedorainfracloud.org/coprs/${{ env.COPR_PROJECT }}/builds/)" >> $GITHUB_STEP_SUMMARY
+
+  summary:
+    needs: [detect-changes, build-batch]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate final summary
+        run: |
+          echo "## COPR Package Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Packages built:** ${{ needs.detect-changes.outputs.packages }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** ${{ needs.build-batch.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "[View all builds](https://copr.fedorainfracloud.org/coprs/${{ env.COPR_PROJECT }}/builds/)" >> $GITHUB_STEP_SUMMARY
