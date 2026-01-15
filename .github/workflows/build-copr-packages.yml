@@ -208,7 +208,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       max-parallel: 1  # Run batches sequentially
-      fail-fast: false
+      fail-fast: true   # Stop subsequent batches if one fails (dependencies would fail anyway)
       matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
     steps:
       - name: Checkout repository
