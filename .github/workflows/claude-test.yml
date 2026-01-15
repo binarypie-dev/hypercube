@@ -1,0 +1,31 @@
+# Test workflow for Claude Code GitHub Action
+# Use this to verify Claude integration is working before using in other workflows
+
+name: Claude Test
+
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Prompt to send to Claude'
+        required: false
+        default: 'Say hello and confirm you can access this repository. List 3 files you can see.'
+        type: string
+
+jobs:
+  test-claude:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Test Claude Code Action
+        uses: anthropics/claude-code-action@v1
+        with:
+          prompt: ${{ inputs.prompt }}
+          claude_args: "--max-turns 3"
+          timeout_minutes: 5
