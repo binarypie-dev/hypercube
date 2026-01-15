@@ -65,6 +65,8 @@ jobs:
 
       - name: Detect changed packages
         id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           # Define all packages and their dependencies
           declare -A DEPS
@@ -149,9 +151,58 @@ jobs:
 
           echo "Initially changed packages: $CHANGED_PKGS"
 
-          # Add all downstream dependents
-          TO_BUILD="$CHANGED_PKGS"
+          # Filter out packages that are already at the correct version in COPR
+          NEEDS_BUILD=""
           for pkg in $CHANGED_PKGS; do
+            SPEC_FILE="packages/$pkg/$pkg.spec"
+            if [[ ! -f "$SPEC_FILE" ]]; then
+              echo "  $pkg: spec file not found, skipping"
+              continue
+            fi
+
+            SPEC_VERSION=$(grep "^Version:" "$SPEC_FILE" | awk '{print $2}')
+            SPEC_RELEASE=$(grep "^Release:" "$SPEC_FILE" | awk '{print $2}' | sed 's/%{?dist}//')
+
+            if [[ -z "$SPEC_VERSION" ]]; then
+              echo "  $pkg: could not determine spec version, will build"
+              NEEDS_BUILD="$NEEDS_BUILD $pkg"
+              continue
+            fi
+
+            echo "  $pkg: spec has version $SPEC_VERSION-$SPEC_RELEASE"
+
+            # Query COPR for the latest build version via web scraping
+            COPR_PAGE=$(curl -s "https://copr.fedorainfracloud.org/coprs/${{ env.COPR_PROJECT }}/package/$pkg/" || echo "")
+
+            # Extract the latest successful build NVR from the page
+            COPR_NVR=$(echo "$COPR_PAGE" | grep -oP 'succeeded.*?'"$pkg"'-[0-9][^"<]*' | head -1 | grep -oP "$pkg"'-[0-9][^"<]*' | head -1 || echo "")
+
+            if [[ -z "$COPR_NVR" ]]; then
+              echo "    COPR: package not found or no successful builds, will build"
+              NEEDS_BUILD="$NEEDS_BUILD $pkg"
+              continue
+            fi
+
+            # Extract version-release from NVR (package-version-release)
+            COPR_VR=$(echo "$COPR_NVR" | sed "s/^$pkg-//")
+            echo "    COPR: has version $COPR_VR"
+
+            # Compare spec version-release with COPR version-release
+            SPEC_VR="${SPEC_VERSION}-${SPEC_RELEASE}"
+            if [[ "$COPR_VR" == "$SPEC_VR"* ]]; then
+              echo "    -> Versions match, skipping build"
+            else
+              echo "    -> Versions differ, will build"
+              NEEDS_BUILD="$NEEDS_BUILD $pkg"
+            fi
+          done
+
+          echo ""
+          echo "Packages that need building: $NEEDS_BUILD"
+
+          # Add all downstream dependents
+          TO_BUILD="$NEEDS_BUILD"
+          for pkg in $NEEDS_BUILD; do
             dependents=$(get_dependents "$pkg")
             TO_BUILD="$TO_BUILD $dependents"
           done
