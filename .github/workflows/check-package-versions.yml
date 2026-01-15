@@ -15,238 +15,407 @@ permissions:
   pull-requests: write
 
 jobs:
-  check-versions:
+  collect-updates:
+    runs-on: ubuntu-latest
+    outputs:
+      updates: ${{ steps.collect.outputs.updates }}
+      has_updates: ${{ steps.collect.outputs.has_updates }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Collect all package updates
+        id: collect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          INPUT_PACKAGE: ${{ inputs.package }}
+        run: |
+          # Define packages with their upstream repos and version sources
+          declare -A REPOS
+          declare -A VERSION_SOURCES
+
+          # Hyprland ecosystem
+          REPOS[hyprutils]="hyprwm/hyprutils"
+          REPOS[hyprlang]="hyprwm/hyprlang"
+          REPOS[hyprwayland-scanner]="hyprwm/hyprwayland-scanner"
+          REPOS[hyprgraphics]="hyprwm/hyprgraphics"
+          REPOS[hyprcursor]="hyprwm/hyprcursor"
+          REPOS[hyprland-protocols]="hyprwm/hyprland-protocols"
+          REPOS[aquamarine]="hyprwm/aquamarine"
+          REPOS[hyprland-qt-support]="hyprwm/hyprland-qt-support"
+          REPOS[hyprland]="hyprwm/Hyprland"
+          REPOS[hyprlock]="hyprwm/hyprlock"
+          REPOS[hypridle]="hyprwm/hypridle"
+          REPOS[hyprpaper]="hyprwm/hyprpaper"
+          REPOS[xdg-desktop-portal-hyprland]="hyprwm/xdg-desktop-portal-hyprland"
+          REPOS[hyprpolkitagent]="hyprwm/hyprpolkitagent"
+          REPOS[hyprtoolkit]="hyprwm/hyprtoolkit"
+          REPOS[hyprland-guiutils]="hyprwm/hyprland-guiutils"
+
+          # CLI tools
+          REPOS[eza]="eza-community/eza"
+          REPOS[starship]="starship/starship"
+          REPOS[lazygit]="jesseduffield/lazygit"
+          REPOS[wifitui]="shazow/wifitui"
+
+          # Other
+          REPOS[glaze]="stephenberry/glaze"
+          REPOS[uwsm]="Vladimir-csp/uwsm"
+          REPOS[quickshell]="quickshell-mirror/quickshell"
+          REPOS[regreet]="rharish101/ReGreet"
+
+          # Version sources (default is release)
+          VERSION_SOURCES[uwsm]="tag"
+          VERSION_SOURCES[quickshell]="tag"
+
+          # Define dependencies (same as build-copr-packages.yml)
+          declare -A DEPS
+          DEPS[hyprutils]=""
+          DEPS[hyprwayland-scanner]=""
+          DEPS[hyprland-protocols]=""
+          DEPS[glaze]=""
+          DEPS[uwsm]=""
+          DEPS[eza]=""
+          DEPS[starship]=""
+          DEPS[lazygit]=""
+          DEPS[quickshell]=""
+          DEPS[wifitui]=""
+          DEPS[regreet]=""
+          DEPS[hyprlang]="hyprutils"
+          DEPS[hyprgraphics]="hyprutils"
+          DEPS[aquamarine]="hyprutils hyprwayland-scanner"
+          DEPS[hyprcursor]="hyprlang"
+          DEPS[hyprland-qt-support]="hyprlang"
+          DEPS[hyprland]="aquamarine hyprcursor hyprgraphics hyprlang hyprutils glaze"
+          DEPS[hyprlock]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hypridle]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
+          DEPS[xdg-desktop-portal-hyprland]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hyprpolkitagent]="hyprutils hyprland-qt-support"
+          DEPS[hyprtoolkit]="aquamarine hyprgraphics hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hyprland-guiutils]="aquamarine hyprtoolkit hyprlang hyprutils"
+
+          # Collect updates
+          UPDATES_JSON="[]"
+
+          for pkg in "${!REPOS[@]}"; do
+            # Skip if specific package requested and this isn't it
+            if [[ -n "$INPUT_PACKAGE" && "$INPUT_PACKAGE" != "$pkg" ]]; then
+              continue
+            fi
+
+            repo="${REPOS[$pkg]}"
+            version_source="${VERSION_SOURCES[$pkg]:-release}"
+
+            echo "Checking $pkg ($repo)..."
+
+            # Get upstream version
+            if [[ "$version_source" == "tag" ]]; then
+              UPSTREAM=$(gh api "repos/$repo/tags" --jq '.[0].name' 2>/dev/null) || UPSTREAM=""
+            else
+              UPSTREAM=$(gh api "repos/$repo/releases/latest" --jq '.tag_name' 2>/dev/null) || UPSTREAM=""
+            fi
+
+            # Validate response
+            if [[ -z "$UPSTREAM" ]] || echo "$UPSTREAM" | grep -q "Not Found\|message"; then
+              echo "  Could not determine upstream version"
+              continue
+            fi
+
+            # Strip 'v' prefix
+            UPSTREAM="${UPSTREAM#v}"
+
+            # Get spec version
+            SPEC_FILE="packages/$pkg/$pkg.spec"
+            if [[ ! -f "$SPEC_FILE" ]]; then
+              echo "  Spec file not found"
+              continue
+            fi
+
+            SPEC_VERSION=$(grep "^Version:" "$SPEC_FILE" | awk '{print $2}')
+
+            if [[ -z "$SPEC_VERSION" ]]; then
+              echo "  Could not determine spec version"
+              continue
+            fi
+
+            echo "  Upstream: $UPSTREAM, Spec: $SPEC_VERSION"
+
+            # Compare versions
+            if [[ "$UPSTREAM" != "$SPEC_VERSION" ]]; then
+              echo "  -> Needs update!"
+              UPDATES_JSON=$(echo "$UPDATES_JSON" | jq -c \
+                --arg pkg "$pkg" \
+                --arg repo "$repo" \
+                --arg old "$SPEC_VERSION" \
+                --arg new "$UPSTREAM" \
+                --arg deps "${DEPS[$pkg]}" \
+                '. += [{"package": $pkg, "repo": $repo, "old_version": $old, "new_version": $new, "dependencies": $deps}]')
+            fi
+          done
+
+          echo ""
+          echo "Updates found:"
+          echo "$UPDATES_JSON" | jq .
+
+          if [[ "$UPDATES_JSON" == "[]" ]]; then
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+            echo "updates=[]" >> $GITHUB_OUTPUT
+          else
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+            echo "updates=$(echo "$UPDATES_JSON" | jq -c .)" >> $GITHUB_OUTPUT
+          fi
+
+  group-updates:
+    needs: collect-updates
+    if: needs.collect-updates.outputs.has_updates == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      groups: ${{ steps.group.outputs.groups }}
+    steps:
+      - name: Group updates by dependency chain
+        id: group
+        run: |
+          UPDATES='${{ needs.collect-updates.outputs.updates }}'
+
+          # Define dependencies for grouping
+          declare -A DEPS
+          DEPS[hyprutils]=""
+          DEPS[hyprwayland-scanner]=""
+          DEPS[hyprland-protocols]=""
+          DEPS[glaze]=""
+          DEPS[uwsm]=""
+          DEPS[eza]=""
+          DEPS[starship]=""
+          DEPS[lazygit]=""
+          DEPS[quickshell]=""
+          DEPS[wifitui]=""
+          DEPS[regreet]=""
+          DEPS[hyprlang]="hyprutils"
+          DEPS[hyprgraphics]="hyprutils"
+          DEPS[aquamarine]="hyprutils hyprwayland-scanner"
+          DEPS[hyprcursor]="hyprlang"
+          DEPS[hyprland-qt-support]="hyprlang"
+          DEPS[hyprland]="aquamarine hyprcursor hyprgraphics hyprlang hyprutils glaze"
+          DEPS[hyprlock]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hypridle]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
+          DEPS[xdg-desktop-portal-hyprland]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hyprpolkitagent]="hyprutils hyprland-qt-support"
+          DEPS[hyprtoolkit]="aquamarine hyprgraphics hyprlang hyprutils hyprwayland-scanner"
+          DEPS[hyprland-guiutils]="aquamarine hyprtoolkit hyprlang hyprutils"
+
+          # Get list of packages that need updates
+          UPDATED_PKGS=$(echo "$UPDATES" | jq -r '.[].package')
+
+          # Function to get all ancestors (dependencies) of a package
+          get_ancestors() {
+            local pkg=$1
+            local ancestors=""
+            for dep in ${DEPS[$pkg]}; do
+              ancestors="$ancestors $dep"
+              ancestors="$ancestors $(get_ancestors $dep)"
+            done
+            echo "$ancestors"
+          }
+
+          # Function to get all descendants (dependents) of a package
+          get_descendants() {
+            local pkg=$1
+            local descendants=""
+            for p in "${!DEPS[@]}"; do
+              if [[ " ${DEPS[$p]} " == *" $pkg "* ]]; then
+                descendants="$descendants $p"
+                descendants="$descendants $(get_descendants $p)"
+              fi
+            done
+            echo "$descendants"
+          }
+
+          # Build groups - packages that share dependencies go together
+          declare -A VISITED
+          GROUPS_JSON="[]"
+          GROUP_ID=0
+
+          for pkg in $UPDATED_PKGS; do
+            if [[ -n "${VISITED[$pkg]}" ]]; then
+              continue
+            fi
+
+            # Start a new group with this package
+            GROUP_PKGS="$pkg"
+            VISITED[$pkg]=1
+
+            # Add all updated packages that are ancestors or descendants
+            ancestors=$(get_ancestors "$pkg")
+            descendants=$(get_descendants "$pkg")
+            related="$ancestors $descendants"
+
+            for other in $UPDATED_PKGS; do
+              if [[ -z "${VISITED[$other]}" ]]; then
+                # Check if other is related to this package
+                if [[ " $related " == *" $other "* ]]; then
+                  GROUP_PKGS="$GROUP_PKGS $other"
+                  VISITED[$other]=1
+
+                  # Also add relatives of this newly added package
+                  other_ancestors=$(get_ancestors "$other")
+                  other_descendants=$(get_descendants "$other")
+                  for another in $UPDATED_PKGS; do
+                    if [[ -z "${VISITED[$another]}" ]]; then
+                      if [[ " $other_ancestors $other_descendants " == *" $another "* ]]; then
+                        GROUP_PKGS="$GROUP_PKGS $another"
+                        VISITED[$another]=1
+                      fi
+                    fi
+                  done
+                fi
+              fi
+            done
+
+            # Deduplicate and sort
+            GROUP_PKGS=$(echo "$GROUP_PKGS" | tr ' ' '\n' | sort -u | tr '\n' ' ' | xargs)
+
+            if [[ -n "$GROUP_PKGS" ]]; then
+              # Build group JSON with package details
+              GROUP_UPDATES="[]"
+              for gpkg in $GROUP_PKGS; do
+                PKG_DATA=$(echo "$UPDATES" | jq -c --arg pkg "$gpkg" '.[] | select(.package == $pkg)')
+                if [[ -n "$PKG_DATA" ]]; then
+                  GROUP_UPDATES=$(echo "$GROUP_UPDATES" | jq -c --argjson data "$PKG_DATA" '. += [$data]')
+                fi
+              done
+
+              GROUP_ID=$((GROUP_ID + 1))
+              GROUPS_JSON=$(echo "$GROUPS_JSON" | jq -c \
+                --argjson id "$GROUP_ID" \
+                --argjson packages "$GROUP_UPDATES" \
+                '. += [{"id": $id, "packages": $packages}]')
+            fi
+          done
+
+          echo "Grouped updates:"
+          echo "$GROUPS_JSON" | jq .
+
+          echo "groups=$(echo "$GROUPS_JSON" | jq -c .)" >> $GITHUB_OUTPUT
+
+  create-prs:
+    needs: group-updates
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
-        include:
-          # Hyprland ecosystem (all use GitHub releases)
-          - package: hyprutils
-            repo: hyprwm/hyprutils
-            version_source: release
-          - package: hyprlang
-            repo: hyprwm/hyprlang
-            version_source: release
-          - package: hyprwayland-scanner
-            repo: hyprwm/hyprwayland-scanner
-            version_source: release
-          - package: hyprgraphics
-            repo: hyprwm/hyprgraphics
-            version_source: release
-          - package: hyprcursor
-            repo: hyprwm/hyprcursor
-            version_source: release
-          - package: hyprland-protocols
-            repo: hyprwm/hyprland-protocols
-            version_source: release
-          - package: aquamarine
-            repo: hyprwm/aquamarine
-            version_source: release
-          - package: hyprland-qt-support
-            repo: hyprwm/hyprland-qt-support
-            version_source: release
-          - package: hyprland
-            repo: hyprwm/Hyprland
-            version_source: release
-          - package: hyprlock
-            repo: hyprwm/hyprlock
-            version_source: release
-          - package: hypridle
-            repo: hyprwm/hypridle
-            version_source: release
-          - package: hyprpaper
-            repo: hyprwm/hyprpaper
-            version_source: release
-          - package: xdg-desktop-portal-hyprland
-            repo: hyprwm/xdg-desktop-portal-hyprland
-            version_source: release
-          - package: hyprpolkitagent
-            repo: hyprwm/hyprpolkitagent
-            version_source: release
-          - package: hyprtoolkit
-            repo: hyprwm/hyprtoolkit
-            version_source: release
-          - package: hyprland-guiutils
-            repo: hyprwm/hyprland-guiutils
-            version_source: release
-          # CLI tools
-          - package: eza
-            repo: eza-community/eza
-            version_source: release
-          - package: starship
-            repo: starship/starship
-            version_source: release
-          - package: lazygit
-            repo: jesseduffield/lazygit
-            version_source: release
-          - package: wifitui
-            repo: shazow/wifitui
-            version_source: release
-          # Other
-          - package: glaze
-            repo: stephenberry/glaze
-            version_source: release
-          - package: uwsm
-            repo: Vladimir-csp/uwsm
-            version_source: tag
-          - package: quickshell
-            repo: quickshell-mirror/quickshell
-            version_source: tag
-          - package: regreet
-            repo: rharish101/ReGreet
-            version_source: release
-          # livesys-scripts uses our fork, skip auto-update
-          # - package: livesys-scripts
-          #   repo: binarypie-dev/livesys-scripts
-          #   version_source: tag
-
+        group: ${{ fromJson(needs.group-updates.outputs.groups) }}
     steps:
-      - name: Check if should run
-        id: should-run
-        run: |
-          if [ -n "${{ inputs.package }}" ] && [ "${{ inputs.package }}" != "${{ matrix.package }}" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-          else
-            echo "skip=false" >> $GITHUB_OUTPUT
-          fi
-
       - name: Checkout
-        if: steps.should-run.outputs.skip != 'true'
         uses: actions/checkout@v6
 
-      - name: Get upstream version
-        if: steps.should-run.outputs.skip != 'true'
-        id: upstream
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Generate group info
+        id: info
         run: |
-          VERSION_SOURCE="${{ matrix.version_source }}"
-          RESULT=""
+          PACKAGES='${{ toJson(matrix.group.packages) }}'
 
-          if [ "$VERSION_SOURCE" = "tag" ]; then
-            # Use tags API directly
-            echo "Checking tags for ${{ matrix.repo }}..."
-            RESULT=$(gh api repos/${{ matrix.repo }}/tags --jq '.[0].name' 2>/dev/null) || RESULT=""
+          # Get package names for branch name
+          PKG_NAMES=$(echo "$PACKAGES" | jq -r '.[].package' | sort | tr '\n' '-' | sed 's/-$//')
+          PKG_COUNT=$(echo "$PACKAGES" | jq 'length')
+
+          # Create summary for PR title
+          if [[ "$PKG_COUNT" -eq 1 ]]; then
+            TITLE=$(echo "$PACKAGES" | jq -r '.[0] | "pkg(\(.package)): update to \(.new_version)"')
           else
-            # Use releases API (default)
-            echo "Checking releases for ${{ matrix.repo }}..."
-            RESULT=$(gh api repos/${{ matrix.repo }}/releases/latest --jq '.tag_name' 2>/dev/null) || RESULT=""
+            FIRST_PKG=$(echo "$PACKAGES" | jq -r '.[0].package')
+            TITLE="pkg: update $FIRST_PKG and $((PKG_COUNT - 1)) related packages"
           fi
 
-          # Check if we got a valid response (not empty and not an error message)
-          if [ -z "$RESULT" ] || echo "$RESULT" | grep -q "Not Found\|message"; then
-            echo "Could not determine upstream version for ${{ matrix.package }}"
-            echo "version=" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+          # Create unique branch name using first package and date
+          BRANCH="pkg-update/${PKG_NAMES}-$(date +%Y%m%d)"
 
-          # Strip 'v' prefix if present
-          VERSION="${RESULT#v}"
-
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Upstream version: $VERSION"
-
-      - name: Get spec version
-        if: steps.should-run.outputs.skip != 'true'
-        id: spec
-        run: |
-          SPEC_FILE="packages/${{ matrix.package }}/${{ matrix.package }}.spec"
-
-          if [ ! -f "$SPEC_FILE" ]; then
-            echo "Spec file not found: $SPEC_FILE"
-            echo "version=" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Extract version from spec file
-          VERSION=$(grep "^Version:" "$SPEC_FILE" | awk '{print $2}')
-
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
-          echo "Spec version: $VERSION"
-
-      - name: Compare versions
-        if: steps.should-run.outputs.skip != 'true'
-        id: compare
-        run: |
-          UPSTREAM="${{ steps.upstream.outputs.version }}"
-          SPEC="${{ steps.spec.outputs.version }}"
-
-          if [ -z "$UPSTREAM" ]; then
-            echo "Could not determine upstream version"
-            echo "needs_update=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          if [ -z "$SPEC" ]; then
-            echo "Could not determine spec version"
-            echo "needs_update=false" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          if [ "$UPSTREAM" != "$SPEC" ]; then
-            echo "Version mismatch: upstream=$UPSTREAM, spec=$SPEC"
-            echo "needs_update=true" >> $GITHUB_OUTPUT
-          else
-            echo "Versions match: $SPEC"
-            echo "needs_update=false" >> $GITHUB_OUTPUT
-          fi
+          echo "title=$TITLE" >> $GITHUB_OUTPUT
+          echo "branch=$BRANCH" >> $GITHUB_OUTPUT
+          echo "pkg_count=$PKG_COUNT" >> $GITHUB_OUTPUT
 
       - name: Check for existing PR
-        if: steps.should-run.outputs.skip != 'true' && steps.compare.outputs.needs_update == 'true'
         id: existing-pr
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Check if a PR already exists for this package update
-          BRANCH="pkg-update/${{ matrix.package }}-${{ steps.upstream.outputs.version }}"
+          BRANCH="${{ steps.info.outputs.branch }}"
+
+          # Check for PR with this branch
           EXISTING=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null) || EXISTING=""
 
-          if [ -n "$EXISTING" ]; then
-            echo "PR #$EXISTING already exists for ${{ matrix.package }} ${{ steps.upstream.outputs.version }}"
+          if [[ -n "$EXISTING" ]]; then
+            echo "PR #$EXISTING already exists for this update group"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
-            echo "No existing PR found"
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Update spec file
-        if: steps.should-run.outputs.skip != 'true' && steps.compare.outputs.needs_update == 'true' && steps.existing-pr.outputs.exists != 'true'
+      - name: Update spec files
+        if: steps.existing-pr.outputs.exists != 'true'
         run: |
-          SPEC_FILE="packages/${{ matrix.package }}/${{ matrix.package }}.spec"
-          OLD_VERSION="${{ steps.spec.outputs.version }}"
-          NEW_VERSION="${{ steps.upstream.outputs.version }}"
-
-          # Update Version field
-          sed -i "s/^Version:.*$/Version:        $NEW_VERSION/" "$SPEC_FILE"
-
-          # Update Release back to 1 for new version
-          sed -i "s/^Release:.*$/Release:        1%{?dist}/" "$SPEC_FILE"
-
-          # Update changelog with new entry
+          PACKAGES='${{ toJson(matrix.group.packages) }}'
           DATE=$(date "+%a %b %d %Y")
-          CHANGELOG_ENTRY="* $DATE Hypercube <hypercube@binarypie.dev> - $NEW_VERSION-1\n- Update to $NEW_VERSION"
 
-          # Insert new changelog entry after %changelog line
-          sed -i "/%changelog/a\\$CHANGELOG_ENTRY" "$SPEC_FILE"
+          echo "$PACKAGES" | jq -c '.[]' | while read -r pkg_data; do
+            PKG=$(echo "$pkg_data" | jq -r '.package')
+            OLD_VERSION=$(echo "$pkg_data" | jq -r '.old_version')
+            NEW_VERSION=$(echo "$pkg_data" | jq -r '.new_version')
 
-          echo "Updated ${{ matrix.package }} from $OLD_VERSION to $NEW_VERSION"
+            SPEC_FILE="packages/$PKG/$PKG.spec"
+
+            echo "Updating $PKG: $OLD_VERSION -> $NEW_VERSION"
+
+            # Update Version field
+            sed -i "s/^Version:.*$/Version:        $NEW_VERSION/" "$SPEC_FILE"
+
+            # Update Release back to 1
+            sed -i "s/^Release:.*$/Release:        1%{?dist}/" "$SPEC_FILE"
+
+            # Add changelog entry
+            CHANGELOG_ENTRY="* $DATE Hypercube <hypercube@binarypie.dev> - $NEW_VERSION-1\n- Update to $NEW_VERSION"
+            sed -i "/%changelog/a\\$CHANGELOG_ENTRY" "$SPEC_FILE"
+          done
+
+      - name: Generate PR body
+        if: steps.existing-pr.outputs.exists != 'true'
+        id: body
+        run: |
+          PACKAGES='${{ toJson(matrix.group.packages) }}'
+
+          {
+            echo "body<<EOF"
+            echo "## Package Updates"
+            echo ""
+
+            echo "$PACKAGES" | jq -c '.[]' | while read -r pkg_data; do
+              PKG=$(echo "$pkg_data" | jq -r '.package')
+              REPO=$(echo "$pkg_data" | jq -r '.repo')
+              OLD=$(echo "$pkg_data" | jq -r '.old_version')
+              NEW=$(echo "$pkg_data" | jq -r '.new_version')
+
+              echo "### $PKG"
+              echo "- **Version:** \`$OLD\` -> \`$NEW\`"
+              echo "- **Release:** https://github.com/$REPO/releases/tag/v$NEW"
+              echo ""
+            done
+
+            echo "---"
+            echo "*This PR was automatically created by the package version checker.*"
+            echo "*Packages are grouped by dependency chain to ensure correct build order.*"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
 
       - name: Create Pull Request
-        if: steps.should-run.outputs.skip != 'true' && steps.compare.outputs.needs_update == 'true' && steps.existing-pr.outputs.exists != 'true'
+        if: steps.existing-pr.outputs.exists != 'true'
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "pkg(${{ matrix.package }}): update to ${{ steps.upstream.outputs.version }}"
-          title: "pkg(${{ matrix.package }}): update to ${{ steps.upstream.outputs.version }}"
-          body: |
-            Updates **${{ matrix.package }}** from `${{ steps.spec.outputs.version }}` to `${{ steps.upstream.outputs.version }}`
-
-            **Upstream release:** https://github.com/${{ matrix.repo }}/releases/tag/v${{ steps.upstream.outputs.version }}
-
-            ---
-            *This PR was automatically created by the package version checker.*
-          branch: "pkg-update/${{ matrix.package }}-${{ steps.upstream.outputs.version }}"
+          commit-message: "${{ steps.info.outputs.title }}"
+          title: "${{ steps.info.outputs.title }}"
+          body: ${{ steps.body.outputs.body }}
+          branch: "${{ steps.info.outputs.branch }}"
           delete-branch: true
           labels: |
             dependencies
