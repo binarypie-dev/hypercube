@@ -140,24 +140,26 @@ systemctl reboot
 
 ### Resetting Configuration
 
-Hypercube ships default configurations in `/usr/share/hypercube/config/`. If you've modified your `~/.config/` files and want to reset to defaults:
+Hypercube ships default configurations in `/usr/share/hypercube/config/`. Use the built-in commands to safely reset configs (your existing configs are backed up automatically):
 
 ```bash
+# List available configs
+ujust config-list
+
 # Reset a specific app's config (e.g., hyprland)
-rm -rf ~/.config/hypr
-cp -r /usr/share/hypercube/config/hypr ~/.config/
+ujust config-reset hypr
 
-# Or reset all Hypercube configs
-rm -rf ~/.config/{hypr,fish,starship.toml,ghostty,nvim}
-cp -r /usr/share/hypercube/config/* ~/.config/
+# Reset all Hypercube configs
+ujust config-reset
+
+# See differences between your config and defaults
+ujust config-diff hypr
+
+# See all differences
+ujust config-diff
 ```
 
-To see what the default configuration looks like without overwriting your files:
-
-```bash
-ls /usr/share/hypercube/config/
-diff -r ~/.config/hypr /usr/share/hypercube/config/hypr
-```
+Backups are saved to `~/.config/hypercube-backup-<timestamp>/`.
 
 ## What's Included
 

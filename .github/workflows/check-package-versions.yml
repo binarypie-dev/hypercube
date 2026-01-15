@@ -13,6 +13,8 @@ on:
 permissions:
   contents: write
   pull-requests: write
+  issues: write
+  id-token: write
 
 jobs:
   collect-updates:
@@ -409,6 +411,7 @@ jobs:
 
       - name: Create Pull Request
         if: steps.existing-pr.outputs.exists != 'true'
+        id: create-pr
         uses: peter-evans/create-pull-request@v8
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -420,3 +423,44 @@ jobs:
           labels: |
             dependencies
             package-update
+          author: "Claude <claude@anthropic.com>"
+          committer: "Claude <claude@anthropic.com>"
+
+      - name: Analyze and update specs with Claude
+        if: steps.existing-pr.outputs.exists != 'true' && steps.create-pr.outputs.pull-request-number
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            I need you to analyze and update RPM spec files for package version upgrades.
+
+            The following packages were updated (version bumps already applied to spec files):
+            ${{ toJson(matrix.group.packages) }}
+
+            For each package, please:
+
+            1. Fetch the upstream build configuration files to check for dependency changes:
+               - CMakeLists.txt or meson.build for C/C++ projects (Hyprland ecosystem)
+               - Cargo.toml for Rust projects (eza, starship, wifitui)
+               - go.mod for Go projects (lazygit)
+               - setup.py or pyproject.toml for Python projects (uwsm)
+
+            2. Compare the dependencies in the upstream build files against the current spec file's BuildRequires and Requires sections.
+
+            3. Check if any shared library soname versions have changed (e.g., libfoo.so.3 -> libfoo.so.4) by looking at:
+               - CMake's set_target_properties for SOVERSION
+               - The %files section of the spec for current soname expectations
+
+            4. Update the spec file if needed:
+               - Add/remove/update BuildRequires for new build dependencies
+               - Add/remove/update Requires for new runtime dependencies
+               - Update soname versions in %files section if the library major version changed
+               - Update any hardcoded paths or version references
+
+            5. If you make changes, update the changelog entry to mention what changed beyond just the version bump.
+
+            The spec files are located at: packages/<package-name>/<package-name>.spec
+
+            Focus on correctness - it's better to flag something for manual review than to make an incorrect change.
+            If you're uncertain about a change, add a comment in the PR explaining what might need manual verification.
+          claude_args: "--max-turns 10"
