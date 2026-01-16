@@ -11,6 +11,7 @@ ExcludeArch:    %{ix86}
 
 BuildRequires:  cmake
 BuildRequires:  gcc-c++
+BuildRequires:  git-core
 BuildRequires:  meson
 BuildRequires:  glaze-static
 BuildRequires:  pkgconfig(aquamarine)
@@ -144,5 +145,6 @@ cp -p subprojects/udis86/LICENSE LICENSE-udis86
 * Thu Jan 15 2026 Hypercube <hypercube@binarypie.dev> - 0.53.1-1
 - Update to 0.53.1
 - Add missing hyprwire build dependency
+- Add git-core to allow FetchContent to fetch glaze
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.52.2-1
 - Initial package for Hypercube (based on sdegler/hyprland COPR)
