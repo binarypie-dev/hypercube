@@ -174,11 +174,12 @@ jobs:
           # Source shared package configuration
           source ./scripts/packages/config.sh
 
-          # Build batches JSON from BUILD_BATCHES array
+          # Build batches JSON from BUILD_BATCHES array (in sorted order)
           echo '{"batch":[' > /tmp/batches.json
 
           first=true
-          for batch_id in "${!BUILD_BATCHES[@]}"; do
+          # Sort batch IDs numerically to ensure correct order
+          for batch_id in $(echo "${!BUILD_BATCHES[@]}" | tr ' ' '\n' | sort -n); do
             if [[ $first == false ]]; then
               echo "," >> /tmp/batches.json
             fi
