@@ -28,6 +28,25 @@ dnf5 -y install \
     curl \
     unzip \
     zip \
-    tar
+    tar \
+    qemu-img
+
+### VM management tools
+dnf5 -y install \
+    libvirt \
+    virt-install \
+    virt-manager \
+    virt-viewer
+
+### Linting and formatting
+dnf5 -y install \
+    ShellCheck \
+    shfmt
+
+### Container signing
+dnf5 -y install cosign
+
+### Enable libvirtd for VM management
+systemctl enable libvirtd.service
 
 echo "DX tooling installed successfully"
