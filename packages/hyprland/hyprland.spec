@@ -113,7 +113,8 @@ cp -p subprojects/udis86/LICENSE LICENSE-udis86
     -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
     -DNO_TESTS=TRUE \
-    -DBUILD_TESTING=FALSE
+    -DBUILD_TESTING=FALSE \
+    -DFETCHCONTENT_SOURCE_DIR_GLAZE=%{_includedir}
 %cmake_build
 
 %install
@@ -144,6 +145,6 @@ cp -p subprojects/udis86/LICENSE LICENSE-udis86
 * Thu Jan 15 2026 Hypercube <hypercube@binarypie.dev> - 0.53.1-1
 - Update to 0.53.1
 - Add missing hyprwire build dependency
-- Fix glaze dependency: use glaze-devel instead of glaze-static
+- Fix glaze dependency: use glaze-devel and set FETCHCONTENT_SOURCE_DIR_GLAZE
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.52.2-1
 - Initial package for Hypercube (based on sdegler/hyprland COPR)
