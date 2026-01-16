@@ -13,7 +13,7 @@ BuildRequires:  cmake
 BuildRequires:  gcc-c++
 BuildRequires:  git-core
 BuildRequires:  meson
-BuildRequires:  glaze-static
+BuildRequires:  glaze-devel
 BuildRequires:  pkgconfig(aquamarine)
 BuildRequires:  pkgconfig(cairo)
 BuildRequires:  pkgconfig(egl)
@@ -125,6 +125,7 @@ cp -p subprojects/udis86/LICENSE LICENSE-udis86
 %{_bindir}/[Hh]yprland
 %{_bindir}/hyprctl
 %{_bindir}/hyprpm
+%{_bindir}/start-hyprland
 %{_datadir}/hypr/
 %{_datadir}/wayland-sessions/hyprland.desktop
 %{_datadir}/xdg-desktop-portal/hyprland-portals.conf
@@ -142,9 +143,9 @@ cp -p subprojects/udis86/LICENSE LICENSE-udis86
 %{_includedir}/hyprland/
 
 %changelog
-* Thu Jan 15 2026 Hypercube <hypercube@binarypie.dev> - 0.53.1-1
+* Thu Jan 16 2026 Hypercube <hypercube@binarypie.dev> - 0.53.1-1
 - Update to 0.53.1
 - Add missing hyprwire build dependency
-- Add git-core to allow FetchContent to fetch glaze
+- Add start-hyprland watchdog binary
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.52.2-1
 - Initial package for Hypercube (based on sdegler/hyprland COPR)
