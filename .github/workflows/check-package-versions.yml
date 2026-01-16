@@ -26,134 +26,59 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Collect all package updates
         id: collect
         env:
           GH_TOKEN: ${{ github.token }}
           INPUT_PACKAGE: ${{ inputs.package }}
         run: |
-          # Define packages with their upstream repos and version sources
-          declare -A REPOS
-          declare -A VERSION_SOURCES
+          # Source shared package configuration
+          source ./scripts/packages/config.sh
 
-          # Hyprland ecosystem
-          REPOS[hyprutils]="hyprwm/hyprutils"
-          REPOS[hyprlang]="hyprwm/hyprlang"
-          REPOS[hyprwayland-scanner]="hyprwm/hyprwayland-scanner"
-          REPOS[hyprgraphics]="hyprwm/hyprgraphics"
-          REPOS[hyprcursor]="hyprwm/hyprcursor"
-          REPOS[hyprland-protocols]="hyprwm/hyprland-protocols"
-          REPOS[hyprwire]="hyprwm/hyprwire"
-          REPOS[aquamarine]="hyprwm/aquamarine"
-          REPOS[hyprland-qt-support]="hyprwm/hyprland-qt-support"
-          REPOS[hyprland]="hyprwm/Hyprland"
-          REPOS[hyprlock]="hyprwm/hyprlock"
-          REPOS[hypridle]="hyprwm/hypridle"
-          REPOS[hyprpaper]="hyprwm/hyprpaper"
-          REPOS[xdg-desktop-portal-hyprland]="hyprwm/xdg-desktop-portal-hyprland"
-          REPOS[hyprpolkitagent]="hyprwm/hyprpolkitagent"
-          REPOS[hyprtoolkit]="hyprwm/hyprtoolkit"
-          REPOS[hyprland-guiutils]="hyprwm/hyprland-guiutils"
-
-          # CLI tools
-          REPOS[eza]="eza-community/eza"
-          REPOS[starship]="starship/starship"
-          REPOS[lazygit]="jesseduffield/lazygit"
-          REPOS[wifitui]="shazow/wifitui"
-
-          # Other
-          REPOS[glaze]="stephenberry/glaze"
-          REPOS[uwsm]="Vladimir-csp/uwsm"
-          REPOS[quickshell]="quickshell-mirror/quickshell"
-          REPOS[regreet]="rharish101/ReGreet"
-
-          # Version sources (default is release)
-          VERSION_SOURCES[uwsm]="tag"
-          VERSION_SOURCES[quickshell]="tag"
-
-          # Define dependencies (same as build-copr-packages.yml)
-          declare -A DEPS
-          DEPS[hyprutils]=""
-          DEPS[hyprwayland-scanner]=""
-          DEPS[hyprland-protocols]=""
-          DEPS[hyprwire]=""
-          DEPS[glaze]=""
-          DEPS[uwsm]=""
-          DEPS[eza]=""
-          DEPS[starship]=""
-          DEPS[lazygit]=""
-          DEPS[quickshell]=""
-          DEPS[wifitui]=""
-          DEPS[regreet]=""
-          DEPS[hyprlang]="hyprutils"
-          DEPS[hyprgraphics]="hyprutils"
-          DEPS[aquamarine]="hyprutils hyprwayland-scanner"
-          DEPS[hyprcursor]="hyprlang"
-          DEPS[hyprland-qt-support]="hyprlang"
-          DEPS[hyprland]="aquamarine hyprcursor hyprgraphics hyprlang hyprutils glaze"
-          DEPS[hyprlock]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hypridle]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner hyprwire hyprtoolkit"
-          DEPS[xdg-desktop-portal-hyprland]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hyprpolkitagent]="hyprutils hyprland-qt-support"
-          DEPS[hyprtoolkit]="aquamarine hyprgraphics hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hyprland-guiutils]="aquamarine hyprtoolkit hyprlang hyprutils"
-
-          # Collect updates
+          # Use check-upstream-versions.sh script to get updates
           UPDATES_JSON="[]"
 
-          for pkg in "${!REPOS[@]}"; do
-            # Skip if specific package requested and this isn't it
-            if [[ -n "$INPUT_PACKAGE" && "$INPUT_PACKAGE" != "$pkg" ]]; then
+          # Get list of packages to check
+          if [[ -n "$INPUT_PACKAGE" ]]; then
+            PACKAGES_TO_CHECK="$INPUT_PACKAGE"
+          else
+            PACKAGES_TO_CHECK="${!PACKAGE_REPOS[@]}"
+          fi
+
+          echo "Checking packages for upstream updates..."
+          echo ""
+
+          for pkg in $PACKAGES_TO_CHECK; do
+            echo "Checking $pkg..."
+
+            # Get spec version (version only, strip release)
+            SPEC_VER=$(./scripts/packages/get-spec-version.sh "$pkg" 2>/dev/null | sed 's/-[^-]*$//')
+            if [[ -z "$SPEC_VER" ]]; then
+              echo "  Could not get spec version"
               continue
             fi
-
-            repo="${REPOS[$pkg]}"
-            version_source="${VERSION_SOURCES[$pkg]:-release}"
-
-            echo "Checking $pkg ($repo)..."
 
             # Get upstream version
-            if [[ "$version_source" == "tag" ]]; then
-              UPSTREAM=$(gh api "repos/$repo/tags" --jq '.[0].name' 2>/dev/null) || UPSTREAM=""
-            else
-              UPSTREAM=$(gh api "repos/$repo/releases/latest" --jq '.tag_name' 2>/dev/null) || UPSTREAM=""
-            fi
-
-            # Validate response
-            if [[ -z "$UPSTREAM" ]] || echo "$UPSTREAM" | grep -q "Not Found\|message"; then
-              echo "  Could not determine upstream version"
+            UPSTREAM_VER=$(./scripts/packages/get-upstream-version.sh "$pkg" 2>/dev/null)
+            if [[ -z "$UPSTREAM_VER" ]]; then
+              echo "  Could not get upstream version"
               continue
             fi
 
-            # Strip 'v' prefix
-            UPSTREAM="${UPSTREAM#v}"
-
-            # Get spec version
-            SPEC_FILE="packages/$pkg/$pkg.spec"
-            if [[ ! -f "$SPEC_FILE" ]]; then
-              echo "  Spec file not found"
-              continue
-            fi
-
-            SPEC_VERSION=$(grep "^Version:" "$SPEC_FILE" | awk '{print $2}')
-
-            if [[ -z "$SPEC_VERSION" ]]; then
-              echo "  Could not determine spec version"
-              continue
-            fi
-
-            echo "  Upstream: $UPSTREAM, Spec: $SPEC_VERSION"
+            echo "  Spec: $SPEC_VER, Upstream: $UPSTREAM_VER"
 
             # Compare versions
-            if [[ "$UPSTREAM" != "$SPEC_VERSION" ]]; then
+            if [[ "$SPEC_VER" != "$UPSTREAM_VER" ]]; then
               echo "  -> Needs update!"
               UPDATES_JSON=$(echo "$UPDATES_JSON" | jq -c \
                 --arg pkg "$pkg" \
-                --arg repo "$repo" \
-                --arg old "$SPEC_VERSION" \
-                --arg new "$UPSTREAM" \
-                --arg deps "${DEPS[$pkg]}" \
+                --arg repo "${PACKAGE_REPOS[$pkg]}" \
+                --arg old "$SPEC_VER" \
+                --arg new "$UPSTREAM_VER" \
+                --arg deps "${PACKAGE_DEPS[$pkg]:-}" \
                 '. += [{"package": $pkg, "repo": $repo, "old_version": $old, "new_version": $new, "dependencies": $deps}]')
             fi
           done
@@ -177,38 +102,18 @@ jobs:
     outputs:
       groups: ${{ steps.group.outputs.groups }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
       - name: Group updates by dependency chain
         id: group
         run: |
           UPDATES='${{ needs.collect-updates.outputs.updates }}'
 
-          # Define dependencies for grouping
-          declare -A DEPS
-          DEPS[hyprutils]=""
-          DEPS[hyprwayland-scanner]=""
-          DEPS[hyprland-protocols]=""
-          DEPS[hyprwire]=""
-          DEPS[glaze]=""
-          DEPS[uwsm]=""
-          DEPS[eza]=""
-          DEPS[starship]=""
-          DEPS[lazygit]=""
-          DEPS[quickshell]=""
-          DEPS[wifitui]=""
-          DEPS[regreet]=""
-          DEPS[hyprlang]="hyprutils"
-          DEPS[hyprgraphics]="hyprutils"
-          DEPS[aquamarine]="hyprutils hyprwayland-scanner"
-          DEPS[hyprcursor]="hyprlang"
-          DEPS[hyprland-qt-support]="hyprlang"
-          DEPS[hyprland]="aquamarine hyprcursor hyprgraphics hyprlang hyprutils glaze"
-          DEPS[hyprlock]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hypridle]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner hyprwire hyprtoolkit"
-          DEPS[xdg-desktop-portal-hyprland]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hyprpolkitagent]="hyprutils hyprland-qt-support"
-          DEPS[hyprtoolkit]="aquamarine hyprgraphics hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hyprland-guiutils]="aquamarine hyprtoolkit hyprlang hyprutils"
+          # Source shared package configuration
+          source ./scripts/packages/config.sh
+
+          # Use PACKAGE_DEPS from shared config
 
           # Get list of packages that need updates
           UPDATED_PKGS=$(echo "$UPDATES" | jq -r '.[].package')
@@ -217,7 +122,7 @@ jobs:
           get_ancestors() {
             local pkg=$1
             local ancestors=""
-            for dep in ${DEPS[$pkg]}; do
+            for dep in ${PACKAGE_DEPS[$pkg]:-}; do
               ancestors="$ancestors $dep"
               ancestors="$ancestors $(get_ancestors $dep)"
             done
@@ -228,8 +133,8 @@ jobs:
           get_descendants() {
             local pkg=$1
             local descendants=""
-            for p in "${!DEPS[@]}"; do
-              if [[ " ${DEPS[$p]} " == *" $pkg "* ]]; then
+            for p in "${!PACKAGE_DEPS[@]}"; do
+              if [[ " ${PACKAGE_DEPS[$p]} " == *" $pkg "* ]]; then
                 descendants="$descendants $p"
                 descendants="$descendants $(get_descendants $p)"
               fi
@@ -315,6 +220,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq
 
       - name: Generate group info
         id: info

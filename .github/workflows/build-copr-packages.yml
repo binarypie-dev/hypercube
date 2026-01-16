@@ -63,53 +63,26 @@ jobs:
             echo "sha=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Detect changed packages
         id: detect
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Define all packages and their dependencies
-          declare -A DEPS
-          DEPS[hyprutils]=""
-          DEPS[hyprwayland-scanner]=""
-          DEPS[hyprland-protocols]=""
-          DEPS[hyprwire]=""
-          DEPS[glaze]=""
-          DEPS[uwsm]=""
-          DEPS[eza]=""
-          DEPS[starship]=""
-          DEPS[lazygit]=""
-          DEPS[quickshell]=""
-          DEPS[livesys-scripts]=""
-          DEPS[wifitui]=""
-          DEPS[regreet]=""
-          DEPS[hyprlang]="hyprutils"
-          DEPS[hyprgraphics]="hyprutils"
-          DEPS[aquamarine]="hyprutils hyprwayland-scanner"
-          DEPS[hyprcursor]="hyprlang"
-          DEPS[hyprland-qt-support]="hyprlang"
-          DEPS[hyprland]="aquamarine hyprcursor hyprgraphics hyprlang hyprutils glaze"
-          DEPS[hyprlock]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hypridle]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner hyprwire hyprtoolkit"
-          DEPS[xdg-desktop-portal-hyprland]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hyprpolkitagent]="hyprutils hyprland-qt-support"
-          DEPS[hyprtoolkit]="aquamarine hyprgraphics hyprlang hyprutils hyprwayland-scanner"
-          DEPS[hyprland-guiutils]="aquamarine hyprtoolkit hyprlang hyprutils"
+          # Source shared package configuration
+          source ./scripts/packages/config.sh
 
-          # Define batch order (packages in same batch can build in parallel)
-          BATCH1="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui regreet"
-          BATCH2="hyprlang hyprgraphics aquamarine"
-          BATCH3="hyprcursor hyprland-qt-support"
-          BATCH4="hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprpolkitagent hyprtoolkit"
-          BATCH5="hyprpaper hyprland-guiutils"
+          # Package dependencies are now available via PACKAGE_DEPS
+          # Build batches are available via BUILD_BATCHES
 
           # Function to get all downstream dependents of a package
           get_dependents() {
             local pkg=$1
             local dependents=""
-            for p in "${!DEPS[@]}"; do
-              if [[ " ${DEPS[$p]} " == *" $pkg "* ]]; then
+            for p in "${!PACKAGE_DEPS[@]}"; do
+              if [[ " ${PACKAGE_DEPS[$p]} " == *" $pkg "* ]]; then
                 dependents="$dependents $p"
                 # Recursively get dependents of dependents
                 dependents="$dependents $(get_dependents $p)"
@@ -121,7 +94,7 @@ jobs:
           # Determine which packages to build
           if [[ "${{ inputs.rebuild_all }}" == "true" ]]; then
             echo "Rebuilding all packages..."
-            CHANGED_PKGS="${!DEPS[*]}"
+            CHANGED_PKGS="${!PACKAGE_DEPS[*]}"
           elif [[ -n "${{ inputs.packages }}" ]]; then
             echo "Using manually specified packages..."
             CHANGED_PKGS=$(echo "${{ inputs.packages }}" | tr ',' ' ')
@@ -154,84 +127,17 @@ jobs:
           echo "Checking which packages actually need building..."
           echo ""
 
-          # Filter out packages that are already at the correct version in COPR
-          NEEDS_BUILD=""
-          for pkg in $CHANGED_PKGS; do
-            SPEC_FILE="packages/$pkg/$pkg.spec"
-            if [[ ! -f "$SPEC_FILE" ]]; then
-              echo "  $pkg: spec file not found, skipping"
-              continue
-            fi
+          # Use the check-copr-versions script to filter packages
+          if [[ -z "$CHANGED_PKGS" ]]; then
+            NEEDS_BUILD=""
+          else
+            # Run the version check script
+            SCRIPT_OUTPUT=$(./scripts/packages/check-copr-versions.sh $CHANGED_PKGS 2>&1)
+            echo "$SCRIPT_OUTPUT"
 
-            SPEC_VERSION=$(grep "^Version:" "$SPEC_FILE" | awk '{print $2}')
-            SPEC_RELEASE=$(grep "^Release:" "$SPEC_FILE" | awk '{print $2}' | sed 's/%{?dist}//')
-
-            if [[ -z "$SPEC_VERSION" ]]; then
-              echo "  $pkg: could not determine spec version, will build"
-              NEEDS_BUILD="$NEEDS_BUILD $pkg"
-              continue
-            fi
-
-            echo "  $pkg: spec has version $SPEC_VERSION-$SPEC_RELEASE"
-
-            # Query COPR build history API for the latest successful build
-            echo "    Querying COPR API for latest successful build..."
-            COPR_API_URL="https://copr.fedorainfracloud.org/api_3/package?ownername=binarypie&projectname=hypercube&packagename=$pkg&with_latest_build=True"
-
-            COPR_API_RESPONSE=$(curl -sf "$COPR_API_URL" 2>/dev/null)
-
-            if [[ -z "$COPR_API_RESPONSE" ]]; then
-              echo "    COPR: Failed to query API, will build"
-              NEEDS_BUILD="$NEEDS_BUILD $pkg"
-              continue
-            fi
-
-            # Extract the latest succeeded build's source_package (which contains NVR)
-            # The API returns builds array, we want the first one with state "succeeded"
-            BUILDS_JSON=$(echo "$COPR_API_RESPONSE" | jq -r '.builds' 2>/dev/null)
-
-            if [[ -z "$BUILDS_JSON" || "$BUILDS_JSON" == "null" ]]; then
-              echo "    COPR: No builds found in API response, will build"
-              NEEDS_BUILD="$NEEDS_BUILD $pkg"
-              continue
-            fi
-
-            # Find the latest successful build and extract its NVR
-            LATEST_NVR=""
-            while IFS= read -r build; do
-              STATE=$(echo "$build" | jq -r '.state' 2>/dev/null)
-              if [[ "$STATE" == "succeeded" ]]; then
-                SOURCE_PKG=$(echo "$build" | jq -r '.source_package.name' 2>/dev/null)
-                if [[ -n "$SOURCE_PKG" && "$SOURCE_PKG" != "null" ]]; then
-                  # source_package.name is the NVR (e.g., "starship-1.24.2-1.fc43")
-                  LATEST_NVR="$SOURCE_PKG"
-                  break
-                fi
-              fi
-            done < <(echo "$BUILDS_JSON" | jq -c '.[]' 2>/dev/null)
-
-            if [[ -z "$LATEST_NVR" ]]; then
-              echo "    COPR: No successful builds found, will build"
-              NEEDS_BUILD="$NEEDS_BUILD $pkg"
-              continue
-            fi
-
-            # Extract version-release from NVR (format: package-version-release.fc43)
-            # Remove package name prefix and .fc43 suffix
-            COPR_VR=$(echo "$LATEST_NVR" | sed "s/^$pkg-//" | sed 's/\.fc43$//')
-            echo "    COPR: has version $COPR_VR (from latest successful build)"
-
-            COPR_VERSION="$COPR_VR"
-
-            # Compare spec version-release with COPR version-release
-            SPEC_VR="${SPEC_VERSION}-${SPEC_RELEASE}"
-            if [[ "$COPR_VERSION" == "$SPEC_VR" ]]; then
-              echo "    -> Versions match, skipping build"
-            else
-              echo "    -> Versions differ (spec: $SPEC_VR vs copr: $COPR_VERSION), will build"
-              NEEDS_BUILD="$NEEDS_BUILD $pkg"
-            fi
-          done
+            # Extract packages that need building from the script output
+            NEEDS_BUILD=$(echo "$SCRIPT_OUTPUT" | grep "^NEEDS_BUILD_JSON=" | sed 's/^NEEDS_BUILD_JSON=//' | jq -r '.[]' | tr '\n' ' ')
+          fi
 
           echo ""
           echo "Packages that need building: $NEEDS_BUILD"
@@ -265,18 +171,29 @@ jobs:
             exit 0
           fi
 
-          # Define batches with their packages
-          cat > /tmp/batches.json << 'EOF'
-          {
-            "batch": [
-              {"id": 1, "packages": ["hyprutils", "hyprwayland-scanner", "hyprland-protocols", "hyprwire", "glaze", "uwsm", "eza", "starship", "lazygit", "quickshell", "livesys-scripts", "wifitui", "regreet"]},
-              {"id": 2, "packages": ["hyprlang", "hyprgraphics", "aquamarine"]},
-              {"id": 3, "packages": ["hyprcursor", "hyprland-qt-support"]},
-              {"id": 4, "packages": ["hyprland", "hyprlock", "hypridle", "xdg-desktop-portal-hyprland", "hyprpolkitagent", "hyprtoolkit"]},
-              {"id": 5, "packages": ["hyprpaper", "hyprland-guiutils"]}
-            ]
-          }
-          EOF
+          # Source shared package configuration
+          source ./scripts/packages/config.sh
+
+          # Build batches JSON from BUILD_BATCHES array
+          echo '{"batch":[' > /tmp/batches.json
+
+          first=true
+          for batch_id in "${!BUILD_BATCHES[@]}"; do
+            if [[ $first == false ]]; then
+              echo "," >> /tmp/batches.json
+            fi
+            first=false
+
+            # Convert space-separated packages to JSON array
+            packages_json=$(echo "${BUILD_BATCHES[$batch_id]}" | tr ' ' '\n' | jq -R . | jq -sc .)
+
+            jq -n \
+              --argjson id "$batch_id" \
+              --argjson packages "$packages_json" \
+              '{id: $id, packages: $packages}' >> /tmp/batches.json
+          done
+
+          echo ']}' >> /tmp/batches.json
 
           # Filter batches to only include packages that need building
           FILTERED=$(jq -c --argjson pkgs "$PACKAGES" '
