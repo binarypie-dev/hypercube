@@ -1,0 +1,42 @@
+#!/bin/bash
+# nvim-launcher - Launch neovim from nvim-dev container
+#
+# If nvim isn't exported yet, prompts user to set it up
+
+NVIM_PATH="$HOME/.local/bin/nvim"
+
+if [ -x "$NVIM_PATH" ]; then
+    exec "$NVIM_PATH" "$@"
+else
+    echo "Neovim Development Environment"
+    echo "==============================="
+    echo ""
+    echo "nvim-dev is not set up yet."
+    echo ""
+    echo "This will:"
+    echo "  1. Create the nvim-dev container (~2GB download on first run)"
+    echo "  2. Export nvim to ~/.local/bin"
+    echo ""
+    read -p "Set up now? [Y/n] " -n 1 -r
+    echo ""
+
+    if [[ $REPLY =~ ^[Nn]$ ]]; then
+        echo "Setup cancelled. Run 'just nvim-setup' when ready."
+        read -p "Press Enter to close..."
+        exit 0
+    fi
+
+    echo ""
+    just nvim-setup
+
+    echo ""
+    if [ -x "$NVIM_PATH" ]; then
+        echo "Setup complete! Launching nvim..."
+        sleep 1
+        exec "$NVIM_PATH" "$@"
+    else
+        echo "Setup may have failed. Try running 'just nvim-setup' manually."
+        read -p "Press Enter to close..."
+        exit 1
+    fi
+fi

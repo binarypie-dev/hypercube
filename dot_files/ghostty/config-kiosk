@@ -1,0 +1,76 @@
+# Ghostty Kiosk Mode Configuration
+# Used for launching TUI applications as standalone "apps"
+# - All keybindings disabled (no tabs, splits, etc.)
+# - Window closes when the application exits
+# - Runs as separate instance from main ghostty
+
+# ----------------------------------------------------------------
+# KIOSK MODE BEHAVIOR
+# ----------------------------------------------------------------
+
+# Run as separate instance so app windows are independent
+gtk-single-instance = false
+
+# Close window immediately when command exits
+wait-after-command = false
+
+# Disable all default keybindings
+keybind = clear
+
+# ----------------------------------------------------------------
+# APPEARANCE - Minimal chrome, matches main config
+# ----------------------------------------------------------------
+
+window-theme = ghostty
+window-decoration = none
+gtk-titlebar = false
+
+# ----------------------------------------------------------------
+# FONT CONFIGURATION
+# ----------------------------------------------------------------
+
+font-family = JetBrains Mono
+font-size = 13
+
+# ----------------------------------------------------------------
+# TOKYO NIGHT MOON COLOR SCHEME
+# ----------------------------------------------------------------
+
+background = #222436
+foreground = #c8d3f5
+cursor-color = #c8d3f5
+cursor-text = #222436
+selection-background = #2f334d
+selection-foreground = #c8d3f5
+
+# Black
+palette = 0=#1e2030
+palette = 8=#444a73
+
+# Red
+palette = 1=#ff757f
+palette = 9=#ff757f
+
+# Green
+palette = 2=#c3e88d
+palette = 10=#c3e88d
+
+# Yellow
+palette = 3=#ffc777
+palette = 11=#ffc777
+
+# Blue
+palette = 4=#82aaff
+palette = 12=#65bcff
+
+# Magenta/Purple
+palette = 5=#c099ff
+palette = 13=#fca7ea
+
+# Cyan
+palette = 6=#86e1fc
+palette = 14=#86e1fc
+
+# White
+palette = 7=#c8d3f5
+palette = 15=#c8d3f5

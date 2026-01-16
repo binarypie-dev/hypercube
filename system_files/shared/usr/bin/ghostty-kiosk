@@ -1,0 +1,18 @@
+#!/bin/bash
+# ghostty-kiosk - Launch a TUI application in kiosk mode
+#
+# Usage: ghostty-kiosk <command> [args...]
+#
+# Launches the specified command in a ghostty window with:
+# - All keybindings disabled (no tabs, splits, shortcuts)
+# - Window closes automatically when the command exits
+# - Runs as a separate instance from the main ghostty
+
+if [ $# -eq 0 ]; then
+    echo "Usage: ghostty-kiosk <command> [args...]" >&2
+    exit 1
+fi
+
+exec ghostty \
+    --config-file=/usr/share/hypercube/config/ghostty/config-kiosk \
+    --command="$*"
