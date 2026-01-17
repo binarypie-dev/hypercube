@@ -1,6 +1,6 @@
 #!/bin/bash
 # Hypercube Base System
-# Installs core system components, display manager (greetd + regreet), and hardware support
+# Installs core system components, display manager (greetd + vimgreet), and hardware support
 
 set -ouex pipefail
 
@@ -12,14 +12,16 @@ dnf5 -y clean all
 ### Enable Hypercube COPR for custom packages
 dnf5 -y copr enable binarypie/hypercube
 
-### Display Manager: greetd + regreet
-# regreet from binarypie/hypercube COPR
-# cage is a minimal Wayland compositor to host regreet and the first-boot wizard
+### Display Manager: greetd + vimgreet
+# vimgreet from binarypie/hypercube COPR
+# cage is a minimal Wayland compositor to host vimgreet and the first-boot wizard
+# foot is a lightweight terminal for running vimgreet with proper colors/cursor
 dnf5 -y install \
     greetd \
     greetd-selinux \
     cage \
-    regreet
+    foot \
+    vimgreet
 
 ### Desktop Portals & Integration
 dnf5 -y install \

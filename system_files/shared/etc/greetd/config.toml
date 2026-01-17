@@ -3,13 +3,12 @@
 vt = 1
 
 [default_session]
-# Run regreet in cage (minimal Wayland compositor) with custom CSS
-command = "/usr/sbin/cage -s -- /usr/sbin/regreet --style /etc/greetd/regreet.css"
+# Run vimgreet in cage with foot (lightweight terminal for colors/cursor support)
+command = "cage -s -- foot --config=/usr/share/hypercube/config/foot/foot-kiosk.ini vimgreet"
 user = "greeter"
 
 [initial_session]
-# First boot wizard - runs once as root, then exits to show regreet
+# First boot wizard - runs once as root, then exits to show vimgreet
 # Check if regular users exist (UID >= 1000) - if so, skip wizard and remove this block
-# Set XDG_RUNTIME_DIR for quickshell/Qt to work properly as root
-command = "sh -c 'if getent passwd | awk -F: \"\\$3 >= 1000 && \\$3 < 65534\" | grep -q .; then sed -i \"/^\\[initial_session\\]/,\\$d\" /etc/greetd/config.toml; exit 0; fi; mkdir -p /run/user/0 && export XDG_RUNTIME_DIR=/run/user/0; /usr/sbin/cage -s -- /usr/sbin/quickshell -p /usr/share/hypercube/config/quickshell/welcome-mode.qml'"
+command = "sh -c 'if getent passwd | awk -F: \"\\$3 >= 1000 && \\$3 < 65534\" | grep -q .; then sed -i \"/^\\[initial_session\\]/,\\$d\" /etc/greetd/config.toml; exit 0; fi; mkdir -p /run/user/0 && export XDG_RUNTIME_DIR=/run/user/0; cage -s -- quickshell -p /usr/share/hypercube/config/quickshell/welcome-mode.qml'"
 user = "root"
