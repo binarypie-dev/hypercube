@@ -13,14 +13,12 @@ dnf5 -y clean all
 dnf5 -y copr enable binarypie/hypercube
 
 ### Display Manager: greetd + vimgreet
-# vimgreet from binarypie/hypercube COPR
-# cage is a minimal Wayland compositor to host vimgreet and the first-boot wizard
-# foot is a lightweight terminal for running vimgreet with proper colors/cursor
+# vimgreet from binarypie/hypercube COPR (runs directly on TTY)
+# cage is a minimal Wayland compositor for the first-boot wizard
 dnf5 -y install \
     greetd \
     greetd-selinux \
     cage \
-    foot \
     vimgreet
 
 ### Desktop Portals & Integration

@@ -3,8 +3,8 @@
 vt = 1
 
 [default_session]
-# Run vimgreet in cage with foot (lightweight terminal for colors/cursor support)
-command = "cage -s -- foot --config=/usr/share/hypercube/config/foot/foot-kiosk.ini vimgreet"
+# Run vimgreet directly on the TTY (no Wayland compositor needed)
+command = "vimgreet"
 user = "greeter"
 
 [initial_session]
