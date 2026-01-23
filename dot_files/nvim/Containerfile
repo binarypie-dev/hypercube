@@ -92,7 +92,8 @@ RUN brew install \
     jq \
     yq \
     bat \
-    eza
+    eza \
+    just
 
 # =============================================================================
 # LAYER 4: Languages via Homebrew
