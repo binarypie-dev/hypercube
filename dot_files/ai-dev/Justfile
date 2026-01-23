@@ -1,0 +1,243 @@
+# AI Development Environment (Sandboxed Podman Container)
+# Uses entrypoint-based UID/GID mapping for correct permissions
+
+local_image := "localhost/ai-dev"
+remote_image := "ghcr.io/binarypie-dev/ai-dev:latest"
+
+# Common podman run flags (UID 0 inside = host user in rootless podman)
+podman_flags := "--rm -it --user 0:0 --security-opt label=disable"
+
+# Default recipe - show help
+default:
+    @just --list
+
+# =============================================================================
+# Image Building
+# =============================================================================
+
+# Build the container image locally
+build:
+    @echo "Building ai-dev image locally..."
+    podman build -t {{local_image}} .
+    @echo "Done! Image: {{local_image}}"
+
+# Build without cache
+build-no-cache:
+    @echo "Building ai-dev image (no cache)..."
+    podman build --no-cache -t {{local_image}} .
+    @echo "Done! Image: {{local_image}}"
+
+# Pull the remote image
+pull:
+    podman pull {{remote_image}}
+
+# Push to GHCR (requires: podman login ghcr.io)
+push:
+    podman tag {{local_image}} {{remote_image}}
+    podman push {{remote_image}}
+
+# =============================================================================
+# Usage
+# =============================================================================
+
+# Run Claude Code in the current directory
+claude *args:
+    #!/usr/bin/bash
+    set -euo pipefail
+    mkdir -p "$HOME/.claude" "$HOME/.config/claude"
+    exec podman run {{podman_flags}} \
+        -e HOME="$HOME" \
+        -v "$(pwd):$(pwd):rw" \
+        -v "$HOME/.claude:$HOME/.claude:rw" \
+        -v "$HOME/.config/claude:$HOME/.config/claude:rw" \
+        -w "$(pwd)" \
+        {{local_image}} \
+        claude {{args}}
+
+# Run Gemini CLI in the current directory
+gemini *args:
+    #!/usr/bin/bash
+    set -euo pipefail
+    mkdir -p "$HOME/.gemini"
+    env_flags=""
+    for var in $(env | grep -E '^(GOOGLE_|GEMINI_)' | cut -d= -f1); do
+        env_flags="$env_flags -e $var"
+    done
+    exec podman run {{podman_flags}} \
+        -e HOME="$HOME" \
+        $env_flags \
+        -v "$(pwd):$(pwd):rw" \
+        -v "$HOME/.gemini:$HOME/.gemini:rw" \
+        -w "$(pwd)" \
+        {{local_image}} \
+        gemini {{args}}
+
+# Enter the container interactively
+enter:
+    #!/usr/bin/bash
+    set -euo pipefail
+    mkdir -p "$HOME/.claude" "$HOME/.config/claude" "$HOME/.gemini"
+    env_flags=""
+    for var in $(env | grep -E '^(GOOGLE_|GEMINI_|ANTHROPIC_)' | cut -d= -f1); do
+        env_flags="$env_flags -e $var"
+    done
+    exec podman run {{podman_flags}} \
+        -e HOME="$HOME" \
+        $env_flags \
+        -v "$(pwd):$(pwd):rw" \
+        -v "$HOME/.claude:$HOME/.claude:rw" \
+        -v "$HOME/.config/claude:$HOME/.config/claude:rw" \
+        -v "$HOME/.gemini:$HOME/.gemini:rw" \
+        -w "$(pwd)" \
+        {{local_image}}
+
+# =============================================================================
+# Installation (wrapper scripts to ~/.local/bin)
+# =============================================================================
+
+# Install wrapper scripts for claude and gemini to ~/.local/bin
+install:
+    #!/usr/bin/bash
+    set -euo pipefail
+    mkdir -p "$HOME/.local/bin"
+
+    cat > "$HOME/.local/bin/claude" << 'WRAPPER'
+    #!/usr/bin/bash
+    set -euo pipefail
+    mkdir -p "$HOME/.claude" "$HOME/.config/claude"
+    exec podman run --rm -it \
+        --user 0:0 \
+        --security-opt label=disable \
+        -e HOME="$HOME" \
+        -v "$(pwd):$(pwd):rw" \
+        -v "$HOME/.claude:$HOME/.claude:rw" \
+        -v "$HOME/.config/claude:$HOME/.config/claude:rw" \
+        -w "$(pwd)" \
+        ghcr.io/binarypie-dev/ai-dev:latest \
+        claude "$@"
+    WRAPPER
+    chmod +x "$HOME/.local/bin/claude"
+
+    cat > "$HOME/.local/bin/gemini" << 'WRAPPER'
+    #!/usr/bin/bash
+    set -euo pipefail
+    mkdir -p "$HOME/.gemini"
+    env_flags=""
+    for var in $(env | grep -E '^(GOOGLE_|GEMINI_)' | cut -d= -f1); do
+        env_flags="$env_flags -e $var"
+    done
+    exec podman run --rm -it \
+        --user 0:0 \
+        --security-opt label=disable \
+        -e HOME="$HOME" \
+        $env_flags \
+        -v "$(pwd):$(pwd):rw" \
+        -v "$HOME/.gemini:$HOME/.gemini:rw" \
+        -w "$(pwd)" \
+        ghcr.io/binarypie-dev/ai-dev:latest \
+        gemini "$@"
+    WRAPPER
+    chmod +x "$HOME/.local/bin/gemini"
+
+    echo "Installed wrapper scripts to ~/.local/bin/claude and ~/.local/bin/gemini"
+
+# Install wrapper scripts pointing to local image
+install-local:
+    #!/usr/bin/bash
+    set -euo pipefail
+    mkdir -p "$HOME/.local/bin"
+
+    cat > "$HOME/.local/bin/claude" << 'WRAPPER'
+    #!/usr/bin/bash
+    set -euo pipefail
+    mkdir -p "$HOME/.claude" "$HOME/.config/claude"
+    exec podman run --rm -it \
+        --user 0:0 \
+        --security-opt label=disable \
+        -e HOME="$HOME" \
+        -v "$(pwd):$(pwd):rw" \
+        -v "$HOME/.claude:$HOME/.claude:rw" \
+        -v "$HOME/.config/claude:$HOME/.config/claude:rw" \
+        -w "$(pwd)" \
+        localhost/ai-dev \
+        claude "$@"
+    WRAPPER
+    chmod +x "$HOME/.local/bin/claude"
+
+    cat > "$HOME/.local/bin/gemini" << 'WRAPPER'
+    #!/usr/bin/bash
+    set -euo pipefail
+    mkdir -p "$HOME/.gemini"
+    env_flags=""
+    for var in $(env | grep -E '^(GOOGLE_|GEMINI_)' | cut -d= -f1); do
+        env_flags="$env_flags -e $var"
+    done
+    exec podman run --rm -it \
+        --user 0:0 \
+        --security-opt label=disable \
+        -e HOME="$HOME" \
+        $env_flags \
+        -v "$(pwd):$(pwd):rw" \
+        -v "$HOME/.gemini:$HOME/.gemini:rw" \
+        -w "$(pwd)" \
+        localhost/ai-dev \
+        gemini "$@"
+    WRAPPER
+    chmod +x "$HOME/.local/bin/gemini"
+
+    echo "Installed wrapper scripts (local image) to ~/.local/bin/claude and ~/.local/bin/gemini"
+
+# Remove wrapper scripts from ~/.local/bin
+uninstall:
+    #!/usr/bin/bash
+    set -euo pipefail
+    rm -f "$HOME/.local/bin/claude"
+    rm -f "$HOME/.local/bin/gemini"
+    echo "Removed wrapper scripts from ~/.local/bin"
+
+# =============================================================================
+# Setup & Cleanup
+# =============================================================================
+
+# Full setup: pull image + install wrappers
+setup: pull install
+    @echo ""
+    @echo "Setup complete! Run 'claude' or 'gemini' to use the AI assistants."
+
+# Remove local image
+clean:
+    #!/usr/bin/bash
+    set -euo pipefail
+    podman rmi {{local_image}} 2>/dev/null && echo "Removed {{local_image}}" || echo "No local image to remove"
+
+# =============================================================================
+# Testing
+# =============================================================================
+
+# Test the built image works correctly
+test-build: build
+    @echo "Testing container..."
+    podman run {{podman_flags}} -e HOME="$HOME" {{local_image}} claude --version
+    podman run {{podman_flags}} -e HOME="$HOME" {{local_image}} gemini --version
+    @echo ""
+    @echo "All tests passed!"
+
+# Debug: show container environment, paths, and auth state
+debug:
+    #!/usr/bin/bash
+    set -euo pipefail
+    mkdir -p "$HOME/.claude" "$HOME/.config/claude" "$HOME/.gemini"
+    env_flags=""
+    for var in $(env | grep -E '^(GOOGLE_|GEMINI_|ANTHROPIC_)' | cut -d= -f1); do
+        env_flags="$env_flags -e $var"
+    done
+    podman run {{podman_flags}} \
+        -e HOME="$HOME" \
+        $env_flags \
+        -v "$(pwd):$(pwd):rw" \
+        -v "$HOME/.claude:$HOME/.claude:rw" \
+        -v "$HOME/.config/claude:$HOME/.config/claude:rw" \
+        -v "$HOME/.gemini:$HOME/.gemini:rw" \
+        -w "$(pwd)" \
+        {{local_image}} \
+        --ai-dev-debug
