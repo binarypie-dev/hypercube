@@ -1,0 +1,37 @@
+# AI Development Environment (Sandboxed Podman Container)
+# Pre-built image with Claude Code and Gemini CLI
+#
+# Build: podman build -t ai-dev .
+# Run:   podman run --rm -it --user 0:0 --security-opt label=disable \
+#          -e HOME=$HOME -v "$(pwd):$(pwd):rw" -w "$(pwd)" localhost/ai-dev
+
+FROM ghcr.io/binarypie-dev/nvim-dev:latest
+
+# =============================================================================
+# LAYER 1: Claude Code (native install)
+# =============================================================================
+USER linuxbrew
+WORKDIR /home/linuxbrew
+
+RUN curl -fsSL https://claude.ai/install.sh | bash
+
+# =============================================================================
+# LAYER 2: Gemini CLI via npm
+# =============================================================================
+RUN npm install -g @google/gemini-cli
+
+# =============================================================================
+# LAYER 3: Entrypoint script (sets PATH, execs command)
+# =============================================================================
+USER root
+COPY ai-entrypoint.sh /usr/local/bin/ai-entrypoint.sh
+RUN chmod +x /usr/local/bin/ai-entrypoint.sh
+
+# In rootless podman, --user 0:0 maps to host UID (no privilege escalation)
+ENTRYPOINT ["/usr/local/bin/ai-entrypoint.sh"]
+CMD ["bash"]
+
+# Labels for GitHub Container Registry
+LABEL org.opencontainers.image.source="https://github.com/binarypie/hypercube"
+LABEL org.opencontainers.image.description="AI development environment with Claude Code and Gemini CLI"
+LABEL org.opencontainers.image.licenses="MIT"

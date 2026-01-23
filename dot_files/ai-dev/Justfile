@@ -1,0 +1,113 @@
+# AI Development Environment (Sandboxed Podman Container)
+# Uses scripts/ for shared logic between local dev and system install
+
+local_image := "localhost/ai-dev"
+remote_image := "ghcr.io/binarypie-dev/ai-dev:latest"
+
+# Default recipe - show help
+default:
+    @just --list
+
+# =============================================================================
+# Image Building
+# =============================================================================
+
+# Build the container image locally
+build:
+    @echo "Building ai-dev image locally..."
+    podman build -t {{local_image}} .
+    @echo "Done! Image: {{local_image}}"
+
+# Build without cache
+build-no-cache:
+    @echo "Building ai-dev image (no cache)..."
+    podman build --no-cache -t {{local_image}} .
+    @echo "Done! Image: {{local_image}}"
+
+# Pull the remote image
+pull:
+    podman pull {{remote_image}}
+
+# Push to GHCR (requires: podman login ghcr.io)
+push:
+    podman tag {{local_image}} {{remote_image}}
+    podman push {{remote_image}}
+
+# =============================================================================
+# Usage (local image)
+# =============================================================================
+
+# Run Claude Code in the current directory
+claude *args:
+    AI_DEV_IMAGE={{local_image}} ./scripts/claude.sh {{args}}
+
+# Run Gemini CLI in the current directory
+gemini *args:
+    AI_DEV_IMAGE={{local_image}} ./scripts/gemini.sh {{args}}
+
+# Enter the container interactively
+enter:
+    AI_DEV_IMAGE={{local_image}} ./scripts/enter.sh
+
+# =============================================================================
+# Installation (wrapper scripts to ~/.local/bin)
+# =============================================================================
+
+# Install wrapper scripts using remote image
+install:
+    #!/usr/bin/bash
+    set -euo pipefail
+    mkdir -p "$HOME/.local/bin"
+    cp scripts/claude.sh "$HOME/.local/bin/claude"
+    cp scripts/gemini.sh "$HOME/.local/bin/gemini"
+    chmod +x "$HOME/.local/bin/claude" "$HOME/.local/bin/gemini"
+    echo "Installed ~/.local/bin/claude and ~/.local/bin/gemini (image: {{remote_image}})"
+
+# Install wrapper scripts using local image
+install-local:
+    #!/usr/bin/bash
+    set -euo pipefail
+    mkdir -p "$HOME/.local/bin"
+    sed 's|ghcr.io/binarypie-dev/ai-dev:latest|localhost/ai-dev|' scripts/claude.sh > "$HOME/.local/bin/claude"
+    sed 's|ghcr.io/binarypie-dev/ai-dev:latest|localhost/ai-dev|' scripts/gemini.sh > "$HOME/.local/bin/gemini"
+    chmod +x "$HOME/.local/bin/claude" "$HOME/.local/bin/gemini"
+    echo "Installed ~/.local/bin/claude and ~/.local/bin/gemini (image: {{local_image}})"
+
+# Remove wrapper scripts from ~/.local/bin
+uninstall:
+    #!/usr/bin/bash
+    set -euo pipefail
+    rm -f "$HOME/.local/bin/claude"
+    rm -f "$HOME/.local/bin/gemini"
+    echo "Removed wrapper scripts from ~/.local/bin"
+
+# =============================================================================
+# Setup & Cleanup
+# =============================================================================
+
+# Full setup: pull image + install wrappers
+setup: pull install
+    @echo ""
+    @echo "Setup complete! Run 'claude' or 'gemini' to use the AI assistants."
+
+# Remove local image
+clean:
+    #!/usr/bin/bash
+    set -euo pipefail
+    podman rmi {{local_image}} 2>/dev/null && echo "Removed {{local_image}}" || echo "No local image to remove"
+
+# =============================================================================
+# Testing
+# =============================================================================
+
+# Test the built image works correctly
+test-build: build
+    @echo "Testing container..."
+    AI_DEV_IMAGE={{local_image}} ./scripts/claude.sh --version
+    AI_DEV_IMAGE={{local_image}} ./scripts/gemini.sh --version
+    @echo ""
+    @echo "All tests passed!"
+
+# Debug: show container environment, paths, and auth state
+debug:
+    AI_DEV_IMAGE={{local_image}} ./scripts/enter.sh --ai-dev-debug

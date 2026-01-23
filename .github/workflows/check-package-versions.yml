@@ -253,13 +253,14 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          BRANCH="${{ steps.info.outputs.branch }}"
+          TITLE="${{ steps.info.outputs.title }}"
 
-          # Check for PR with this branch
-          EXISTING=$(gh pr list --head "$BRANCH" --json number --jq '.[0].number' 2>/dev/null) || EXISTING=""
+          # Check for open PR with the same title
+          EXISTING=$(gh pr list --state open --search "in:title $TITLE" --json number,title \
+            --jq ".[] | select(.title == \"$TITLE\") | .number" 2>/dev/null | head -1) || EXISTING=""
 
           if [[ -n "$EXISTING" ]]; then
-            echo "PR #$EXISTING already exists for this update group"
+            echo "PR #$EXISTING already exists with title: $TITLE"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
             echo "exists=false" >> $GITHUB_OUTPUT
