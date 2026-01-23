@@ -1,8 +1,8 @@
-# Build and publish nvim-dev container image
-# Triggered on changes to dot_files/nvim/ or manual dispatch
-# Image published to: ghcr.io/binarypie-dev/nvim-dev:latest
+# Build and publish ai-dev container image
+# Triggered on changes to dot_files/ai-dev/ or manual dispatch
+# Image published to: ghcr.io/binarypie-dev/ai-dev:latest
 
-name: Build nvim-dev Image
+name: Build ai-dev Image
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,19 +13,19 @@ on:
     branches:
       - main
     paths:
-      - 'dot_files/nvim/Containerfile'
-      - '.github/workflows/build-nvim-dev.yml'
+      - 'dot_files/ai-dev/**'
+      - '.github/workflows/build-ai-dev.yml'
   pull_request:
     paths:
-      - 'dot_files/nvim/Containerfile'
-      - '.github/workflows/build-nvim-dev.yml'
+      - 'dot_files/ai-dev/**'
+      - '.github/workflows/build-ai-dev.yml'
   workflow_dispatch:
   schedule:
     # Rebuild daily to get updated packages
     - cron: '0 6 * * *'
 
 env:
-  IMAGE_NAME: nvim-dev
+  IMAGE_NAME: ai-dev
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
 
 jobs:
@@ -63,8 +63,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
-          context: dot_files/nvim
-          file: dot_files/nvim/Containerfile
+          context: dot_files/ai-dev
+          file: dot_files/ai-dev/Containerfile
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -74,12 +74,15 @@ jobs:
       - name: Generate build summary
         if: github.event_name != 'pull_request'
         run: |
-          echo "## nvim-dev Image Built" >> $GITHUB_STEP_SUMMARY
+          echo "## ai-dev Image Built" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Image:** \`${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Usage" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "distrobox create --name nvim-dev --image ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
-          echo "distrobox enter nvim-dev" >> $GITHUB_STEP_SUMMARY
+          echo "# Run Claude Code" >> $GITHUB_STEP_SUMMARY
+          echo "podman run --rm -it --user root --security-opt label=disable \\" >> $GITHUB_STEP_SUMMARY
+          echo "  -e HOST_UID=\$(id -u) -e HOST_GID=\$(id -g) -e HOME=\$HOME \\" >> $GITHUB_STEP_SUMMARY
+          echo "  -v \"\$(pwd):\$(pwd):rw\" -w \"\$(pwd)\" \\" >> $GITHUB_STEP_SUMMARY
+          echo "  ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest claude" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

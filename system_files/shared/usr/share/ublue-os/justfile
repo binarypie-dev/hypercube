@@ -26,3 +26,4 @@ import "/usr/share/ublue-os/just/50-akmods.just"
 # =============================================================================
 import? "/usr/share/ublue-os/just/60-hypercube.just"
 import? "/usr/share/ublue-os/just/61-nvim.just"
+import? "/usr/share/ublue-os/just/62-ai.just"
