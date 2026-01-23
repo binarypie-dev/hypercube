@@ -2,18 +2,19 @@
 # Hypercube AI development environment commands
 
 ai_image := "ghcr.io/binarypie-dev/ai-dev:latest"
-ai_podman_flags := "--rm -it --user 0:0 --security-opt label=disable"
+ai_podman_flags := "--rm -it --init --user 0:0 --security-opt label=disable"
 
 # Run Claude Code in the current directory
 ai-claude *args:
     #!/usr/bin/bash
     set -euo pipefail
-    mkdir -p "$HOME/.claude" "$HOME/.config/claude"
+    mkdir -p "$HOME/.claude"
+    touch "$HOME/.claude.json"
     exec podman run {{ai_podman_flags}} \
         -e HOME="$HOME" \
         -v "$(pwd):$(pwd):rw" \
         -v "$HOME/.claude:$HOME/.claude:rw" \
-        -v "$HOME/.config/claude:$HOME/.config/claude:rw" \
+        -v "$HOME/.claude.json:$HOME/.claude.json:rw" \
         -w "$(pwd)" \
         {{ai_image}} \
         claude {{args}}
@@ -40,7 +41,8 @@ ai-gemini *args:
 ai-dev:
     #!/usr/bin/bash
     set -euo pipefail
-    mkdir -p "$HOME/.claude" "$HOME/.config/claude" "$HOME/.gemini"
+    mkdir -p "$HOME/.claude" "$HOME/.gemini"
+    touch "$HOME/.claude.json"
     env_flags=""
     for var in $(env | grep -E '^(GOOGLE_|GEMINI_|ANTHROPIC_)' | cut -d= -f1); do
         env_flags="$env_flags -e $var"
@@ -50,7 +52,7 @@ ai-dev:
         $env_flags \
         -v "$(pwd):$(pwd):rw" \
         -v "$HOME/.claude:$HOME/.claude:rw" \
-        -v "$HOME/.config/claude:$HOME/.config/claude:rw" \
+        -v "$HOME/.claude.json:$HOME/.claude.json:rw" \
         -v "$HOME/.gemini:$HOME/.gemini:rw" \
         -w "$(pwd)" \
         {{ai_image}}
@@ -64,45 +66,39 @@ ai-setup:
     podman pull {{ai_image}}
 
     mkdir -p "$HOME/.local/bin"
-
-    cat > "$HOME/.local/bin/claude" << 'WRAPPER'
-    #!/usr/bin/bash
-    set -euo pipefail
-    mkdir -p "$HOME/.claude" "$HOME/.config/claude"
-    exec podman run --rm -it \
-        --user 0:0 \
-        --security-opt label=disable \
-        -e HOME="$HOME" \
-        -v "$(pwd):$(pwd):rw" \
-        -v "$HOME/.claude:$HOME/.claude:rw" \
-        -v "$HOME/.config/claude:$HOME/.config/claude:rw" \
-        -w "$(pwd)" \
-        ghcr.io/binarypie-dev/ai-dev:latest \
-        claude "$@"
-    WRAPPER
+    printf '%s\n' '#!/usr/bin/bash' \
+        'set -euo pipefail' \
+        'mkdir -p "$HOME/.claude"' \
+        'touch "$HOME/.claude.json"' \
+        'exec podman run --rm -it --init \' \
+        '    --user 0:0 \' \
+        '    --security-opt label=disable \' \
+        '    -e HOME="$HOME" \' \
+        '    -v "$(pwd):$(pwd):rw" \' \
+        '    -v "$HOME/.claude:$HOME/.claude:rw" \' \
+        '    -v "$HOME/.claude.json:$HOME/.claude.json:rw" \' \
+        '    -w "$(pwd)" \' \
+        '    ghcr.io/binarypie-dev/ai-dev:latest \' \
+        '    claude "$@"' > "$HOME/.local/bin/claude"
     chmod +x "$HOME/.local/bin/claude"
-
-    cat > "$HOME/.local/bin/gemini" << 'WRAPPER'
-    #!/usr/bin/bash
-    set -euo pipefail
-    mkdir -p "$HOME/.gemini"
-    env_flags=""
-    for var in $(env | grep -E '^(GOOGLE_|GEMINI_)' | cut -d= -f1); do
-        env_flags="$env_flags -e $var"
-    done
-    exec podman run --rm -it \
-        --user 0:0 \
-        --security-opt label=disable \
-        -e HOME="$HOME" \
-        $env_flags \
-        -v "$(pwd):$(pwd):rw" \
-        -v "$HOME/.gemini:$HOME/.gemini:rw" \
-        -w "$(pwd)" \
-        ghcr.io/binarypie-dev/ai-dev:latest \
-        gemini "$@"
-    WRAPPER
+    printf '%s\n' '#!/usr/bin/bash' \
+        'set -euo pipefail' \
+        'mkdir -p "$HOME/.gemini"' \
+        'env_flags=""' \
+        'for var in $(env | grep -E '"'"'^(GOOGLE_|GEMINI_)'"'"' | cut -d= -f1); do' \
+        '    env_flags="$env_flags -e $var"' \
+        'done' \
+        'exec podman run --rm -it --init \' \
+        '    --user 0:0 \' \
+        '    --security-opt label=disable \' \
+        '    -e HOME="$HOME" \' \
+        '    $env_flags \' \
+        '    -v "$(pwd):$(pwd):rw" \' \
+        '    -v "$HOME/.gemini:$HOME/.gemini:rw" \' \
+        '    -w "$(pwd)" \' \
+        '    ghcr.io/binarypie-dev/ai-dev:latest \' \
+        '    gemini "$@"' > "$HOME/.local/bin/gemini"
     chmod +x "$HOME/.local/bin/gemini"
-
     echo ""
     echo "Setup complete! You can now run 'claude' and 'gemini' directly."
 
