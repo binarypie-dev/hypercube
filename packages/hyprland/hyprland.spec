@@ -1,5 +1,5 @@
 Name:           hyprland
-Version:        0.53.1
+Version:        0.53.2
 Release:        1%{?dist}
 Summary:        Dynamic tiling Wayland compositor that doesn't sacrifice on its looks
 
@@ -143,6 +143,8 @@ cp -p subprojects/udis86/LICENSE LICENSE-udis86
 %{_includedir}/hyprland/
 
 %changelog
+* Sat Jan 24 2026 Hypercube <hypercube@binarypie.dev> - 0.53.2-1
+- Update to 0.53.2
 * Thu Jan 16 2026 Hypercube <hypercube@binarypie.dev> - 0.53.1-1
 - Update to 0.53.1
 - Add missing hyprwire build dependency
