@@ -1,5 +1,5 @@
 Name:           hyprtoolkit
-Version:        0.5.2
+Version:        0.5.3
 Release:        1%{?dist}
 Summary:        A modern C++ Wayland-native GUI toolkit
 
@@ -61,6 +61,8 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Sat Jan 24 2026 Hypercube <hypercube@binarypie.dev> - 0.5.3-1
+- Update to 0.5.3
 * Thu Jan 15 2026 Hypercube <hypercube@binarypie.dev> - 0.5.2-1
 - Update to 0.5.2
 - Update soname from 4 to 5
