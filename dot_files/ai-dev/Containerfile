@@ -20,8 +20,7 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 # =============================================================================
 # LAYER 2: Gemini CLI via npm
 # =============================================================================
-RUN --mount=type=cache,target=/home/linuxbrew/.npm/_cacache,uid=1001,gid=1001 \
-    npm install -g @google/gemini-cli
+RUN npm install -g @google/gemini-cli
 
 # =============================================================================
 # LAYER 3: Entrypoint script (sets PATH, execs command)
