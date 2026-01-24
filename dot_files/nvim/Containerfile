@@ -150,9 +150,12 @@ RUN --mount=type=cache,target=/home/linuxbrew/.cache/Homebrew,uid=1001,gid=1001 
 
 # =============================================================================
 # LAYER 8: Go tools (as linuxbrew user)
+# Pre-create GOPATH so the cache mount doesn't leave parents root-owned
 # =============================================================================
 ENV GOPATH="/home/linuxbrew/go"
 ENV PATH="${GOPATH}/bin:${PATH}"
+
+RUN mkdir -p ${GOPATH}/bin ${GOPATH}/pkg/mod/cache
 
 RUN --mount=type=cache,target=/home/linuxbrew/go/pkg/mod/cache,uid=1001,gid=1001 \
     go install golang.org/x/tools/gopls@latest \
@@ -174,13 +177,15 @@ RUN --mount=type=cache,target=/home/linuxbrew/.cache/pip,uid=1001,gid=1001 \
 
 # =============================================================================
 # LAYER 10: Node.js/npm tools (as linuxbrew user)
+# Pre-create .npm so the cache mount doesn't leave parent root-owned
 # =============================================================================
 ENV NPM_CONFIG_PREFIX="/home/linuxbrew/.npm-global"
 ENV PATH="${NPM_CONFIG_PREFIX}/bin:${PATH}"
 
+RUN mkdir -p /home/linuxbrew/.npm ${NPM_CONFIG_PREFIX}
+
 RUN --mount=type=cache,target=/home/linuxbrew/.npm/_cacache,uid=1001,gid=1001 \
-    mkdir -p ${NPM_CONFIG_PREFIX} \
-    && npm install -g \
+    npm install -g \
     neovim \
     typescript \
     typescript-language-server \
