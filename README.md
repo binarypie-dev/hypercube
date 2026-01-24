@@ -49,7 +49,6 @@
 | Package | Status |
 |---------|--------|
 | quickshell | [![quickshell](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/quickshell/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/quickshell/) |
-| regreet | [![regreet](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/regreet/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/regreet/) |
 | livesys-scripts | [![livesys-scripts](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/livesys-scripts/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/livesys-scripts/) |
 
 </details>
@@ -90,7 +89,7 @@ Tokyo Night color scheme everywhere:
 - Terminal emulators
 - Neovim and all CLI tools
 - Plymouth boot animation
-- ReGreet login screen
+- Hypercube greeter
 - System-wide dark mode enforced
 
 ## Screenshots

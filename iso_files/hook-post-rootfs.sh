@@ -118,14 +118,13 @@ grep -q '^livesys_session=' /etc/sysconfig/livesys || echo 'livesys_session=hypr
 systemctl disable rpm-ostree-countme.service || true
 systemctl disable bootloader-update.service || true
 systemctl disable rpm-ostreed-automatic.timer || true
-# flatpak-preinstall is now a user service, no need to disable
 systemctl disable hypercube-first-boot.service || true
 
-# Remove first-boot wizard from greetd config for live environment
-# The initial_session runs the Quickshell wizard which is for installed systems only
+# Remove onboarding wizard from greetd config for live environment
+# The initial_session runs hypercube-onboard which is for installed systems only
 # On live ISO, we want livesys to handle the session (boots into Hyprland with installer)
 if [[ -f /etc/greetd/config.toml ]]; then
-    sed -i '/^\[initial_session\]/,/^$/d' /etc/greetd/config.toml
+    sed -i '/^\[initial_session\]/,$d' /etc/greetd/config.toml
     echo "Removed greetd initial_session for live environment"
 fi
 

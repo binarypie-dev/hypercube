@@ -4,9 +4,7 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-import "../modules/common" as Common
-
-// System updates and flatpak preinstall management
+// System updates management
 Singleton {
     id: root
 
@@ -17,16 +15,8 @@ Singleton {
     property string lastChecked: ""
     property string error: ""
 
-    // Flatpak preinstall status
-    property bool preinstallCompleted: Common.Config.preinstallCompleted
-    property bool preinstallRunning: false
-    property string preinstallStatus: ""
-    property var preinstallLog: []
-    property int preinstallTotal: 0
-    property int preinstallCurrent: 0
-
     // Whether we need user attention
-    property bool needsAttention: !preinstallCompleted || updateCount > 0
+    property bool needsAttention: updateCount > 0
 
     // Update query script
     readonly property string updateQueryScript: "
@@ -60,17 +50,6 @@ Singleton {
         echo \"lastChecked=$(date '+%Y-%m-%d %H:%M')\"
     "
 
-    // Count preinstall files script
-    readonly property string countPreinstallScript: `
-        PREINSTALL_DIR="/usr/share/flatpak/preinstall.d"
-        if [[ -d "$PREINSTALL_DIR" ]]; then
-            count=$(ls -1 "$PREINSTALL_DIR"/*.preinstall 2>/dev/null | wc -l)
-            echo "total=$count"
-        else
-            echo "total=0"
-        fi
-    `
-
     Process {
         id: updateProcess
         command: ["sh", "-c", root.updateQueryScript]
@@ -78,60 +57,6 @@ Singleton {
         onExited: root.parseUpdateOutput()
         onRunningChanged: {
             if (running) checking = true
-        }
-    }
-
-    Process {
-        id: countProcess
-        command: ["sh", "-c", root.countPreinstallScript]
-        running: false
-        onExited: {
-            const output = stdout || ""
-            const match = output.match(/total=(\d+)/)
-            if (match) {
-                root.preinstallTotal = parseInt(match[1]) || 0
-            }
-        }
-    }
-
-    Process {
-        id: preinstallProcess
-        command: ["/usr/libexec/flatpak-preinstall"]
-        running: false
-
-        stdout: SplitParser {
-            splitMarker: "\n"
-            onRead: data => {
-                if (data.trim() === "") return
-                root.preinstallLog = [...root.preinstallLog, data]
-                root.preinstallStatus = data
-
-                // Track progress
-                if (data.startsWith("Installing:") || data.startsWith("Already installed:")) {
-                    root.preinstallCurrent++
-                }
-            }
-        }
-
-        onRunningChanged: {
-            if (running) {
-                root.preinstallRunning = true
-                root.preinstallLog = []
-                root.preinstallStatus = "Starting flatpak preinstall..."
-                root.preinstallCurrent = 0
-            }
-        }
-
-        onExited: {
-            root.preinstallRunning = false
-            if (exitCode === 0) {
-                root.preinstallStatus = "Preinstall complete"
-                root.preinstallCompleted = true
-                Common.Config.preinstallCompleted = true
-                Common.Config.save()
-            } else {
-                root.preinstallStatus = "Preinstall failed (exit code: " + exitCode + ")"
-            }
         }
     }
 
@@ -175,25 +100,6 @@ Singleton {
         }
     }
 
-    // Run flatpak preinstall
-    function runPreinstall() {
-        if (!preinstallRunning) {
-            preinstallProcess.running = true
-        }
-    }
-
-    // Reset preinstall status (to allow re-running)
-    function resetPreinstall() {
-        preinstallCompleted = false
-        Common.Config.preinstallCompleted = false
-        Common.Config.save()
-    }
-
-    // Count preinstall files
-    function countPreinstallApps() {
-        countProcess.running = true
-    }
-
     // Auto-check timer (every 6 hours)
     Timer {
         interval: 6 * 60 * 60 * 1000
@@ -203,37 +109,6 @@ Singleton {
         onTriggered: checkUpdates()
     }
 
-    // On startup, count preinstall apps and check if we should auto-run
-    Component.onCompleted: {
-        countPreinstallApps()
-        // Try to auto-run preinstall if network is already connected
-        autoPreinstallTimer.start()
-    }
-
-    // Auto-run preinstall when network becomes available
-    Connections {
-        target: Network
-
-        function onConnectedChanged() {
-            if (Network.connected && !root.preinstallCompleted && !root.preinstallRunning) {
-                // Small delay to let network settle
-                autoPreinstallTimer.start()
-            }
-        }
-    }
-
-    // Timer to auto-run preinstall (gives network time to settle)
-    Timer {
-        id: autoPreinstallTimer
-        interval: 3000  // 3 seconds
-        onTriggered: {
-            if (Network.connected && !root.preinstallCompleted && !root.preinstallRunning) {
-                console.log("Updates: Auto-starting preinstall...")
-                runPreinstall()
-            }
-        }
-    }
-
     // Summary string
     function summary(): string {
         if (checking) return "Checking for updates..."
@@ -241,11 +116,5 @@ Singleton {
         if (updateCount === 0) return "System is up to date"
         if (updateCount === 1) return "1 update available"
         return updateCount + " updates available"
-    }
-
-    // Preinstall progress (0-100)
-    function preinstallProgress(): real {
-        if (preinstallTotal === 0) return 0
-        return (preinstallCurrent / preinstallTotal) * 100
     }
 }

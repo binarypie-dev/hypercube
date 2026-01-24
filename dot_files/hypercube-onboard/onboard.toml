@@ -1,0 +1,56 @@
+# Hypercube Onboarding Configuration
+# Used by hypercube-onboard during first boot (greetd initial_session)
+
+[user]
+# User creation settings
+groups = ["wheel"]
+shell = "/usr/bin/fish"
+min_password_length = 8
+
+[locale]
+# Default locale settings
+language = "en_US.UTF-8"
+keyboard_layout = "us"
+
+[timezone]
+# Timezone preferences
+use_ntp = true
+
+[completion]
+# What to do when onboarding finishes
+action = "reboot"
+remove_initial_session = true
+
+[updates]
+# System updates to run during onboarding
+
+[[updates.commands]]
+description = "System update"
+command = "dnf5 -y upgrade"
+
+[[updates.commands]]
+description = "Flatpak update"
+command = "flatpak update --system --noninteractive"
+
+[flatpaks]
+# Optional user flatpak packages (user can select during onboard)
+
+[[flatpaks.optional]]
+name = "Steam"
+id = "com.valvesoftware.Steam"
+
+[[flatpaks.optional]]
+name = "Discord"
+id = "com.discordapp.Discord"
+
+[[flatpaks.optional]]
+name = "Spotify"
+id = "com.spotify.Client"
+
+[[flatpaks.optional]]
+name = "VS Code"
+id = "com.visualstudio.code"
+
+[[flatpaks.optional]]
+name = "OBS Studio"
+id = "com.obsproject.Studio"

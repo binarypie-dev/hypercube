@@ -10,8 +10,7 @@ echo "Running Hypercube validation tests..."
 REQUIRED_PACKAGES=(
   # Display manager
   "greetd"
-  "vimgreet"
-  "cage"
+  "hypercube-utils"
   # Hyprland stack
   "hyprland"
   "hyprlock"
