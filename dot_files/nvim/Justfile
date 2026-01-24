@@ -13,15 +13,15 @@ default:
 # Image Building
 # =============================================================================
 
-# Build the container image locally
+# Build the container image locally (uses layer cache + download caches)
 build:
     @echo "Building nvim-dev image locally..."
-    podman build -t {{local_image}} .
+    podman build --layers -t {{local_image}} .
     @echo "Done! Image: {{local_image}}"
 
-# Build without cache
+# Rebuild all layers (download caches still persist via cache mounts)
 build-no-cache:
-    @echo "Building nvim-dev image (no cache)..."
+    @echo "Building nvim-dev image (no layer cache, download caches preserved)..."
     podman build --no-cache -t {{local_image}} .
     @echo "Done! Image: {{local_image}}"
 
