@@ -21,51 +21,50 @@ PanelWindow {
         left: true
     }
 
-    margins.top: Common.Appearance.sizes.barHeight
+    margins.top: Common.Appearance.sizes.barHeight + Common.Appearance.spacing.small
+    margins.bottom: Common.Appearance.spacing.small
+    margins.left: Common.Appearance.spacing.small
 
     implicitWidth: Common.Appearance.sizes.sidebarWidth
     color: "transparent"
 
     visible: Root.GlobalStates.sidebarLeftOpen
 
-    // Focus app search when sidebar opens
     onVisibleChanged: {
         if (visible && appViewLoader.item) {
             appViewLoader.item.focusSearch()
         }
     }
 
-    // Request keyboard focus from compositor
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "sidebar"
 
-    // Background
-    Rectangle {
+    // TUI Panel container
+    Common.TuiPanel {
         anchors.fill: parent
-        color: Qt.rgba(
-            Common.Appearance.m3colors.surface.r,
-            Common.Appearance.m3colors.surface.g,
-            Common.Appearance.m3colors.surface.b,
-            Common.Appearance.panelOpacity
-        )
-    }
+        title: Root.GlobalStates.sidebarLeftView === "apps" ? "[ Applications ]" : "[ System Updates ]"
+        keyHints: [
+            { key: "Esc", action: "close" },
+            { key: "/", action: "search" },
+            { key: "j/k", action: "navigate" },
+            { key: "Enter", action: "select" }
+        ]
 
-    // Application View (shown when sidebarLeftView === "apps")
-    Loader {
-        id: appViewLoader
-        anchors.fill: parent
-        anchors.margins: Common.Appearance.spacing.medium
-        active: Root.GlobalStates.sidebarLeftView === "apps"
-        source: "ApplicationView.qml"
-        onLoaded: item.focusSearch()
-    }
+        // Application View
+        Loader {
+            id: appViewLoader
+            anchors.fill: parent
+            active: Root.GlobalStates.sidebarLeftView === "apps"
+            source: "ApplicationView.qml"
+            onLoaded: item.focusSearch()
+        }
 
-    // Update View (shown when sidebarLeftView === "updates")
-    Loader {
-        anchors.fill: parent
-        anchors.margins: Common.Appearance.spacing.medium
-        active: Root.GlobalStates.sidebarLeftView === "updates"
-        source: "UpdateView.qml"
+        // Update View
+        Loader {
+            anchors.fill: parent
+            active: Root.GlobalStates.sidebarLeftView === "updates"
+            source: "UpdateView.qml"
+        }
     }
 }

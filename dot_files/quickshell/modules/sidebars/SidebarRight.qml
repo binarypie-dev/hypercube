@@ -21,90 +21,132 @@ PanelWindow {
         right: true
     }
 
-    margins.top: Common.Appearance.sizes.barHeight
+    margins.top: Common.Appearance.sizes.barHeight + Common.Appearance.spacing.small
+    margins.bottom: Common.Appearance.spacing.small
+    margins.right: Common.Appearance.spacing.small
 
     implicitWidth: Common.Appearance.sizes.sidebarWidth
     color: "transparent"
 
     visible: Root.GlobalStates.sidebarRightOpen
 
-    // Allow keyboard focus for text input in sidebars
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "sidebar"
 
-    // Background
-    Rectangle {
-        anchors.fill: parent
-        color: Qt.rgba(
-            Common.Appearance.m3colors.surface.r,
-            Common.Appearance.m3colors.surface.g,
-            Common.Appearance.m3colors.surface.b,
-            Common.Appearance.panelOpacity
-        )
+    // Get title based on current view
+    property string viewTitle: {
+        switch (Root.GlobalStates.sidebarRightView) {
+            case "network": return "[ Network ]"
+            case "bluetooth": return "[ Bluetooth ]"
+            case "audio": return "[ Audio ]"
+            case "calendar": return "[ Calendar ]"
+            case "notifications": return "[ Notifications ]"
+            case "power": return "[ Power ]"
+            case "weather": return "[ Weather ]"
+            default: return "[ Settings ]"
+        }
     }
 
-    // Network View (shown when sidebarRightView === "network")
-    Loader {
-        anchors.fill: parent
-        anchors.margins: Common.Appearance.spacing.medium
-        active: Root.GlobalStates.sidebarRightView === "network"
-        source: "NetworkView.qml"
+    // Get keyboard hints based on current view
+    property var viewHints: {
+        switch (Root.GlobalStates.sidebarRightView) {
+            case "network":
+                return [
+                    { key: "Esc", action: "close" },
+                    { key: "j/k", action: "navigate" },
+                    { key: "Enter", action: "connect" }
+                ]
+            case "bluetooth":
+                return [
+                    { key: "Esc", action: "close" },
+                    { key: "j/k", action: "navigate" },
+                    { key: "Enter", action: "pair" }
+                ]
+            case "audio":
+                return [
+                    { key: "Esc", action: "close" },
+                    { key: "m", action: "mute" },
+                    { key: "+/-", action: "volume" }
+                ]
+            case "notifications":
+                return [
+                    { key: "Esc", action: "close" },
+                    { key: "d", action: "dismiss" },
+                    { key: "D", action: "clear all" }
+                ]
+            case "power":
+                return [
+                    { key: "Esc", action: "close" },
+                    { key: "s", action: "suspend" },
+                    { key: "r", action: "reboot" },
+                    { key: "p", action: "poweroff" }
+                ]
+            default:
+                return [{ key: "Esc", action: "close" }]
+        }
     }
 
-    // Bluetooth View (shown when sidebarRightView === "bluetooth")
-    Loader {
+    // TUI Panel container
+    Common.TuiPanel {
         anchors.fill: parent
-        anchors.margins: Common.Appearance.spacing.medium
-        active: Root.GlobalStates.sidebarRightView === "bluetooth"
-        source: "BluetoothView.qml"
-    }
+        title: root.viewTitle
+        keyHints: root.viewHints
 
-    // Audio View (shown when sidebarRightView === "audio")
-    Loader {
-        anchors.fill: parent
-        anchors.margins: Common.Appearance.spacing.medium
-        active: Root.GlobalStates.sidebarRightView === "audio"
-        source: "AudioView.qml"
-    }
+        // Network View
+        Loader {
+            anchors.fill: parent
+            active: Root.GlobalStates.sidebarRightView === "network"
+            source: "NetworkView.qml"
+        }
 
-    // Calendar View (shown when sidebarRightView === "calendar")
-    Loader {
-        anchors.fill: parent
-        anchors.margins: Common.Appearance.spacing.medium
-        active: Root.GlobalStates.sidebarRightView === "calendar"
-        source: "CalendarView.qml"
-    }
+        // Bluetooth View
+        Loader {
+            anchors.fill: parent
+            active: Root.GlobalStates.sidebarRightView === "bluetooth"
+            source: "BluetoothView.qml"
+        }
 
-    // Notifications View (shown when sidebarRightView === "notifications")
-    Loader {
-        anchors.fill: parent
-        anchors.margins: Common.Appearance.spacing.medium
-        active: Root.GlobalStates.sidebarRightView === "notifications"
-        source: "NotificationsView.qml"
-    }
+        // Audio View
+        Loader {
+            anchors.fill: parent
+            active: Root.GlobalStates.sidebarRightView === "audio"
+            source: "AudioView.qml"
+        }
 
-    // Power View (shown when sidebarRightView === "power")
-    Loader {
-        anchors.fill: parent
-        anchors.margins: Common.Appearance.spacing.medium
-        active: Root.GlobalStates.sidebarRightView === "power"
-        source: "PowerView.qml"
-    }
+        // Calendar View
+        Loader {
+            anchors.fill: parent
+            active: Root.GlobalStates.sidebarRightView === "calendar"
+            source: "CalendarView.qml"
+        }
 
-    // Weather View (shown when sidebarRightView === "weather")
-    Loader {
-        anchors.fill: parent
-        anchors.margins: Common.Appearance.spacing.medium
-        active: Root.GlobalStates.sidebarRightView === "weather"
-        source: "WeatherView.qml"
-    }
+        // Notifications View
+        Loader {
+            anchors.fill: parent
+            active: Root.GlobalStates.sidebarRightView === "notifications"
+            source: "NotificationsView.qml"
+        }
 
-    // Default Content (shown when sidebarRightView === "default")
-    Loader {
-        anchors.fill: parent
-        anchors.margins: Common.Appearance.spacing.medium
-        active: Root.GlobalStates.sidebarRightView === "default"
-        source: "DefaultView.qml"
+        // Power View
+        Loader {
+            anchors.fill: parent
+            active: Root.GlobalStates.sidebarRightView === "power"
+            source: "PowerView.qml"
+        }
+
+        // Weather View
+        Loader {
+            anchors.fill: parent
+            active: Root.GlobalStates.sidebarRightView === "weather"
+            source: "WeatherView.qml"
+        }
+
+        // Default Content
+        Loader {
+            anchors.fill: parent
+            active: Root.GlobalStates.sidebarRightView === "default"
+            source: "DefaultView.qml"
+        }
     }
 }

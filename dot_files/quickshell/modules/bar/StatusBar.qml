@@ -8,6 +8,7 @@ import "../common" as Common
 import "../../services" as Services
 import "../../" as Root
 
+// Lualine-inspired status bar with vim-style segments
 PanelWindow {
     id: root
 
@@ -23,131 +24,236 @@ PanelWindow {
     implicitHeight: Common.Appearance.sizes.barHeight
     color: "transparent"
 
-    // Bar should be above click catchers so it's always clickable
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "statusbar"
 
-    // Bar button component
-    component BarButton: MouseArea {
-        id: button
-
-        property string icon: ""
-        property string buttonText: ""
-        property string tooltip: ""
-        property bool highlighted: false
-        property color textColor: Common.Appearance.m3colors.onSurfaceVariant
-
-        Layout.preferredHeight: 28
-        // Icon-only buttons get minimal padding, buttons with text get more
-        Layout.preferredWidth: button.buttonText === ""
-            ? 28
-            : buttonContent.implicitWidth + Common.Appearance.spacing.small * 2
-
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-
-        Rectangle {
-            anchors.fill: parent
-            radius: Common.Appearance.rounding.small
-            color: button.containsMouse
-                ? Common.Appearance.m3colors.surfaceVariant
-                : "transparent"
-
-            Behavior on color {
-                ColorAnimation { duration: 150 }
+    // Current "mode" based on shell state
+    property string currentMode: {
+        if (Root.GlobalStates.sidebarLeftOpen) {
+            return Root.GlobalStates.sidebarLeftView === "apps" ? "APPS" : "UPDATES"
+        }
+        if (Root.GlobalStates.sidebarRightOpen) {
+            switch (Root.GlobalStates.sidebarRightView) {
+                case "audio": return "AUDIO"
+                case "bluetooth": return "BLUETOOTH"
+                case "network": return "NETWORK"
+                case "calendar": return "CALENDAR"
+                case "notifications": return "NOTIFY"
+                case "power": return "POWER"
+                case "weather": return "WEATHER"
+                default: return "NORMAL"
             }
         }
+        return "NORMAL"
+    }
+
+    property color modeColor: {
+        if (currentMode === "NORMAL") return Common.Appearance.colors.modeNormal
+        if (currentMode === "APPS" || currentMode === "UPDATES") return Common.Appearance.colors.modeInsert
+        return Common.Appearance.colors.modeVisual
+    }
+
+    // Segment component - lualine style section
+    component Segment: Rectangle {
+        id: segment
+        property string segmentText: ""
+        property string icon: ""
+        property color segmentColor: Common.Appearance.colors.bgHighlight
+        property color textColor: Common.Appearance.colors.fg
+        property bool showSeparator: true
+        property bool isActive: false
+        property bool clickable: false
+        signal clicked()
+
+        color: segmentColor
+        implicitWidth: segmentContent.implicitWidth + Common.Appearance.spacing.medium * 2
+        implicitHeight: parent.height
 
         RowLayout {
-            id: buttonContent
+            id: segmentContent
             anchors.centerIn: parent
-            spacing: Common.Appearance.spacing.tiny
+            spacing: Common.Appearance.spacing.small
 
             Common.Icon {
-                visible: button.icon !== ""
-                name: button.icon
-                size: Common.Appearance.sizes.iconMedium
-                color: button.highlighted
-                    ? Common.Appearance.m3colors.primary
-                    : button.textColor
+                visible: segment.icon !== ""
+                name: segment.icon
+                size: Common.Appearance.sizes.iconSmall
+                color: segment.isActive ? Common.Appearance.colors.blue : segment.textColor
             }
 
             Text {
-                visible: button.buttonText !== ""
-                text: button.buttonText
-                font.family: Common.Appearance.fonts.main
-                font.pixelSize: Common.Appearance.fontSize.normal
-                color: button.highlighted
-                    ? Common.Appearance.m3colors.primary
-                    : button.textColor
+                visible: segment.segmentText !== ""
+                text: segment.segmentText
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: Common.Appearance.fontSize.small
+                font.bold: segment.isActive
+                color: segment.isActive ? Common.Appearance.colors.blue : segment.textColor
+            }
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: segment.clickable
+            cursorShape: segment.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
+            hoverEnabled: segment.clickable
+            onClicked: segment.clicked()
+
+            Rectangle {
+                anchors.fill: parent
+                color: parent.containsMouse ? Qt.rgba(1, 1, 1, 0.05) : "transparent"
+            }
+        }
+
+        // Right separator
+        Text {
+            visible: segment.showSeparator
+            anchors.right: parent.right
+            anchors.rightMargin: -width / 2
+            anchors.verticalCenter: parent.verticalCenter
+            text: Common.Appearance.separators.right
+            font.family: Common.Appearance.fonts.mono
+            font.pixelSize: parent.height
+            color: segment.segmentColor
+            z: 1
+        }
+    }
+
+    // Icon-only segment for tray items
+    component IconSegment: Rectangle {
+        id: iconSeg
+        property string icon: ""
+        property color iconColor: Common.Appearance.colors.fgDark
+        property color segmentColor: Common.Appearance.colors.bgHighlight
+        property bool clickable: false
+        property bool showBadge: false
+        property color badgeColor: Common.Appearance.colors.error
+        signal clicked()
+
+        color: segmentColor
+        implicitWidth: Common.Appearance.sizes.barHeight
+        implicitHeight: parent.height
+
+        Common.Icon {
+            anchors.centerIn: parent
+            name: iconSeg.icon
+            size: Common.Appearance.sizes.iconSmall
+            color: iconSeg.iconColor
+        }
+
+        // Badge indicator
+        Rectangle {
+            visible: iconSeg.showBadge
+            width: 6
+            height: 6
+            radius: 3
+            color: iconSeg.badgeColor
+            anchors.top: parent.top
+            anchors.right: parent.right
+            anchors.topMargin: 6
+            anchors.rightMargin: 8
+        }
+
+        MouseArea {
+            anchors.fill: parent
+            enabled: iconSeg.clickable
+            cursorShape: iconSeg.clickable ? Qt.PointingHandCursor : Qt.ArrowCursor
+            hoverEnabled: iconSeg.clickable
+            onClicked: iconSeg.clicked()
+
+            Rectangle {
+                anchors.fill: parent
+                color: parent.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
             }
         }
     }
 
-    // Bar indicator (icon only, no interaction)
-    component BarIndicator: Item {
-        property string icon: ""
-        property string tooltip: ""
-        property color iconColor: Common.Appearance.m3colors.onSurfaceVariant
-
-        Layout.preferredHeight: 28
-        Layout.preferredWidth: 28
-
-        Common.Icon {
-            anchors.centerIn: parent
-            name: parent.icon
-            size: Common.Appearance.sizes.iconMedium
-            color: parent.iconColor
-        }
+    // Helper properties for screen position
+    property bool isLeftmost: {
+        if (Quickshell.screens.length === 1) return true
+        return targetScreen === Root.GlobalStates.leftmostScreen
+    }
+    property bool isRightmost: {
+        if (Quickshell.screens.length === 1) return true
+        return targetScreen === Root.GlobalStates.rightmostScreen
     }
 
     // Bar background
     Rectangle {
         anchors.fill: parent
         color: Qt.rgba(
-            Common.Appearance.m3colors.surface.r,
-            Common.Appearance.m3colors.surface.g,
-            Common.Appearance.m3colors.surface.b,
+            Common.Appearance.colors.bgDark.r,
+            Common.Appearance.colors.bgDark.g,
+            Common.Appearance.colors.bgDark.b,
             Common.Appearance.panelOpacity
         )
 
-    }
-
-    // Helper properties for screen position (reactive to screen changes)
-    property bool isLeftmost: {
-        // Single monitor case
-        if (Quickshell.screens.length === 1) return true
-        // Multi-monitor: check against leftmost screen
-        return targetScreen === Root.GlobalStates.leftmostScreen
-    }
-    property bool isRightmost: {
-        // Single monitor case
-        if (Quickshell.screens.length === 1) return true
-        // Multi-monitor: check against rightmost screen
-        return targetScreen === Root.GlobalStates.rightmostScreen
+        // Bottom border line
+        Rectangle {
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            height: 1
+            color: Common.Appearance.colors.border
+        }
     }
 
     // Bar content
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: Common.Appearance.spacing.medium
-        anchors.rightMargin: Common.Appearance.spacing.medium
-        spacing: Common.Appearance.spacing.small
+        spacing: 0
 
-        // Left section - Launcher button (only on leftmost screen)
-        BarButton {
+        // ═══════════════════════════════════════════════════════════════
+        // LEFT SECTION - Mode indicator + navigation
+        // ═══════════════════════════════════════════════════════════════
+
+        // Mode indicator (vim-style)
+        Rectangle {
+            visible: root.isLeftmost
+            color: root.modeColor
+            implicitWidth: modeText.implicitWidth + Common.Appearance.spacing.large * 2
+            implicitHeight: parent.height
+
+            Text {
+                id: modeText
+                anchors.centerIn: parent
+                text: root.currentMode
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: Common.Appearance.fontSize.small
+                font.bold: true
+                color: Common.Appearance.colors.bg
+            }
+
+            // Powerline separator
+            Text {
+                anchors.left: parent.right
+                anchors.leftMargin: -1
+                anchors.verticalCenter: parent.verticalCenter
+                text: Common.Appearance.separators.left
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: parent.height
+                color: root.modeColor
+                z: 1
+            }
+        }
+
+        // Apps button
+        IconSegment {
             visible: root.isLeftmost
             icon: Common.Icons.icons.apps
-            tooltip: "Applications"
+            segmentColor: Common.Appearance.colors.bgHighlight
+            iconColor: Root.GlobalStates.sidebarLeftView === "apps" && Root.GlobalStates.sidebarLeftOpen
+                ? Common.Appearance.colors.blue
+                : Common.Appearance.colors.fgDark
+            clickable: true
             onClicked: Root.GlobalStates.toggleSidebarLeft(root.targetScreen, "apps")
         }
 
-        // Updates button (only on leftmost screen, shows indicator when attention needed)
+        // Updates button
         MouseArea {
             id: updatesButton
             visible: root.isLeftmost
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 28
+            implicitWidth: Common.Appearance.sizes.barHeight
+            implicitHeight: parent.height
             hoverEnabled: true
             cursorShape: Qt.PointingHandCursor
             onClicked: Root.GlobalStates.toggleSidebarLeft(root.targetScreen, "updates")
@@ -157,13 +263,11 @@ PanelWindow {
 
             Rectangle {
                 anchors.fill: parent
-                radius: Common.Appearance.rounding.small
-                color: updatesButton.containsMouse
-                    ? Common.Appearance.m3colors.surfaceVariant
-                    : "transparent"
+                color: Common.Appearance.colors.bgHighlight
 
-                Behavior on color {
-                    ColorAnimation { duration: 150 }
+                Rectangle {
+                    anchors.fill: parent
+                    color: updatesButton.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
                 }
             }
 
@@ -174,10 +278,10 @@ PanelWindow {
                     : (updatesButton.needsAttention
                         ? Common.Icons.icons.download
                         : Common.Icons.icons.checkCircle)
-                size: Common.Appearance.sizes.iconMedium
+                size: Common.Appearance.sizes.iconSmall
                 color: updatesButton.needsAttention
-                    ? Common.Appearance.m3colors.primary
-                    : Common.Appearance.m3colors.onSurfaceVariant
+                    ? Common.Appearance.colors.green
+                    : Common.Appearance.colors.fgDark
 
                 RotationAnimation on rotation {
                     running: updatesButton.isRunning
@@ -189,15 +293,36 @@ PanelWindow {
             }
         }
 
-        // Spacer
+        // Separator after left section
+        Rectangle {
+            visible: root.isLeftmost
+            width: 1
+            height: parent.height
+            color: Common.Appearance.colors.border
+        }
+
+        // ═══════════════════════════════════════════════════════════════
+        // CENTER SECTION - Spacer (could show workspace info later)
+        // ═══════════════════════════════════════════════════════════════
         Item { Layout.fillWidth: true }
 
-        // Right section - System indicators (only on rightmost screen)
+        // ═══════════════════════════════════════════════════════════════
+        // RIGHT SECTION - System indicators
+        // ═══════════════════════════════════════════════════════════════
+
+        // Separator before right section
+        Rectangle {
+            visible: root.isRightmost
+            width: 1
+            height: parent.height
+            color: Common.Appearance.colors.border
+        }
+
+        // System tray
         RowLayout {
             visible: root.isRightmost
-            spacing: 2
+            spacing: 0
 
-            // System tray icons
             Repeater {
                 model: SystemTray.items
 
@@ -205,84 +330,72 @@ PanelWindow {
                     id: trayItemArea
                     required property var modelData
 
-                    Layout.preferredHeight: 28
-                    Layout.preferredWidth: 28
+                    implicitWidth: Common.Appearance.sizes.barHeight
+                    implicitHeight: Common.Appearance.sizes.barHeight
                     hoverEnabled: true
                     cursorShape: Qt.PointingHandCursor
 
-                    // Check if icon has unsupported custom path (e.g. "icon_name?path=/some/path")
                     property bool hasCustomPath: modelData.icon && modelData.icon.includes("?path=")
 
-                    // Resolve icon source - handle paths, icon names, skip unsupported custom paths
                     property string iconSource: {
                         const icon = modelData.icon
                         if (!icon || icon === "") return ""
-                        // Skip icons with custom paths - Quickshell doesn't support them
                         if (icon.includes("?path=")) return ""
-                        // Already a full path or URL
                         if (icon.startsWith("/")) return "file://" + icon
                         if (icon.startsWith("file://") || icon.startsWith("image://")) return icon
-                        // Icon name - try Qt icon provider
                         return "image://icon/" + icon
                     }
 
-                    // Datacube fallback lookup using app title
                     property string datacubeIcon: Services.IconResolver.getIcon(modelData.title)
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: Common.Appearance.rounding.small
-                        color: trayItemArea.containsMouse
-                            ? Common.Appearance.m3colors.surfaceVariant
-                            : "transparent"
+                        color: Common.Appearance.colors.bgHighlight
 
-                        Behavior on color {
-                            ColorAnimation { duration: 150 }
+                        Rectangle {
+                            anchors.fill: parent
+                            color: trayItemArea.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
                         }
                     }
 
-                    // Track if primary icon failed (Error, Null status, or has unsupported custom path)
                     property bool primaryFailed: trayItemArea.hasCustomPath || primaryTrayIcon.status === Image.Error || primaryTrayIcon.status === Image.Null || trayItemArea.iconSource === ""
 
-                    // Primary icon from tray item
                     Image {
                         id: primaryTrayIcon
                         anchors.centerIn: parent
-                        width: Common.Appearance.sizes.iconMedium
-                        height: Common.Appearance.sizes.iconMedium
-                        sourceSize: Qt.size(Common.Appearance.sizes.iconMedium, Common.Appearance.sizes.iconMedium)
+                        width: Common.Appearance.sizes.iconSmall
+                        height: Common.Appearance.sizes.iconSmall
+                        sourceSize: Qt.size(Common.Appearance.sizes.iconSmall, Common.Appearance.sizes.iconSmall)
                         source: trayItemArea.iconSource
                         smooth: true
                         visible: status === Image.Ready
                     }
 
-                    // Datacube fallback icon
                     Image {
                         id: fallbackTrayIcon
                         anchors.centerIn: parent
-                        width: Common.Appearance.sizes.iconMedium
-                        height: Common.Appearance.sizes.iconMedium
-                        sourceSize: Qt.size(Common.Appearance.sizes.iconMedium, Common.Appearance.sizes.iconMedium)
+                        width: Common.Appearance.sizes.iconSmall
+                        height: Common.Appearance.sizes.iconSmall
+                        sourceSize: Qt.size(Common.Appearance.sizes.iconSmall, Common.Appearance.sizes.iconSmall)
                         source: trayItemArea.primaryFailed ? trayItemArea.datacubeIcon : ""
                         smooth: true
                         visible: trayItemArea.primaryFailed && status === Image.Ready
                     }
 
-                    // Last resort: letter icon
                     Rectangle {
                         anchors.centerIn: parent
-                        width: Common.Appearance.sizes.iconMedium
-                        height: Common.Appearance.sizes.iconMedium
-                        radius: Common.Appearance.rounding.small
-                        color: Common.Appearance.m3colors.primaryContainer
+                        width: Common.Appearance.sizes.iconSmall
+                        height: Common.Appearance.sizes.iconSmall
+                        radius: Common.Appearance.rounding.tiny
+                        color: Common.Appearance.colors.bgVisual
                         visible: trayItemArea.primaryFailed && fallbackTrayIcon.status !== Image.Ready
 
                         Text {
                             anchors.centerIn: parent
                             text: trayItemArea.modelData.title ? trayItemArea.modelData.title.charAt(0).toUpperCase() : "?"
-                            font.pixelSize: 10
+                            font.pixelSize: 9
                             font.bold: true
-                            color: Common.Appearance.m3colors.onPrimaryContainer
+                            color: Common.Appearance.colors.fg
                         }
                     }
 
@@ -290,16 +403,13 @@ PanelWindow {
 
                     onClicked: (mouse) => {
                         if (mouse.button === Qt.RightButton || (trayItemArea.modelData.onlyMenu && trayItemArea.modelData.hasMenu)) {
-                            // Right click or menu-only item: show menu
                             if (trayItemArea.modelData.hasMenu) {
-                                // Map coordinates to window
                                 const pos = trayItemArea.mapToItem(null, 0, trayItemArea.height)
                                 trayItemArea.modelData.display(root, pos.x, pos.y)
                             }
                         } else if (mouse.button === Qt.MiddleButton) {
                             trayItemArea.modelData.secondaryActivate()
                         } else {
-                            // Left click: activate
                             trayItemArea.modelData.activate()
                         }
                     }
@@ -309,211 +419,304 @@ PanelWindow {
                     }
                 }
             }
+        }
 
-            // Camera Privacy indicator
-            BarButton {
-                visible: Services.Privacy.cameraInUse
-                icon: Common.Icons.icons.camera
-                textColor: Common.Appearance.m3colors.error
-                tooltip: "Camera in use"
-            }
+        // Separator
+        Rectangle {
+            visible: root.isRightmost && SystemTray.items.length > 0
+            width: 1
+            height: parent.height
+            color: Common.Appearance.colors.border
+        }
 
-            // Audio (mic + output combined)
-            MouseArea {
-                id: audioButton
-                Layout.preferredHeight: 28
-                Layout.preferredWidth: 56  // Two 28px icons
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "audio")
+        // Camera Privacy indicator
+        IconSegment {
+            visible: root.isRightmost && Services.Privacy.cameraInUse
+            icon: Common.Icons.icons.camera
+            iconColor: Common.Appearance.colors.error
+            segmentColor: Common.Appearance.colors.bgHighlight
+        }
+
+        // Audio segment (mic + speaker)
+        MouseArea {
+            visible: root.isRightmost
+            implicitWidth: audioContent.implicitWidth + Common.Appearance.spacing.medium * 2
+            implicitHeight: parent.height
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "audio")
+
+            Rectangle {
+                anchors.fill: parent
+                color: Common.Appearance.colors.bgHighlight
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: Common.Appearance.rounding.small
-                    color: audioButton.containsMouse
-                        ? Common.Appearance.m3colors.surfaceVariant
-                        : "transparent"
+                    color: parent.parent.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
+                }
+            }
 
-                    Behavior on color {
-                        ColorAnimation { duration: 150 }
-                    }
+            RowLayout {
+                id: audioContent
+                anchors.centerIn: parent
+                spacing: Common.Appearance.spacing.small
+
+                Common.Icon {
+                    name: Services.Audio.micMuted
+                        ? Common.Icons.icons.micOff
+                        : Common.Icons.icons.mic
+                    size: Common.Appearance.sizes.iconSmall
+                    color: Services.Privacy.micInUse
+                        ? Common.Appearance.colors.error
+                        : (Services.Audio.micMuted ? Common.Appearance.colors.comment : Common.Appearance.colors.fgDark)
                 }
 
-                RowLayout {
-                    id: audioButtonContent
+                Common.Icon {
+                    name: Services.Audio.muted
+                        ? Common.Icons.icons.volumeOff
+                        : Common.Icons.volumeIcon(Services.Audio.volume * 100, false)
+                    size: Common.Appearance.sizes.iconSmall
+                    color: Services.Audio.muted ? Common.Appearance.colors.comment : Common.Appearance.colors.fgDark
+                }
+            }
+        }
+
+        // Bluetooth
+        IconSegment {
+            visible: root.isRightmost && Services.BluetoothStatus.available
+            icon: Services.BluetoothStatus.powered
+                ? (Services.BluetoothStatus.connected
+                    ? Common.Icons.icons.bluetoothConnected
+                    : Common.Icons.icons.bluetooth)
+                : Common.Icons.icons.bluetoothOff
+            iconColor: Services.BluetoothStatus.connected
+                ? Common.Appearance.colors.blue
+                : (Services.BluetoothStatus.powered ? Common.Appearance.colors.fgDark : Common.Appearance.colors.comment)
+            segmentColor: Common.Appearance.colors.bgHighlight
+            clickable: true
+            onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "bluetooth")
+        }
+
+        // Network
+        IconSegment {
+            visible: root.isRightmost && Common.Config.showNetwork
+            icon: {
+                if (!Services.Network.connected) {
+                    return Services.Network.wifiAvailable ? Common.Icons.icons.wifiOff : Common.Icons.icons.ethernetOff
+                }
+                if (Services.Network.type === "wifi") {
+                    return Common.Icons.wifiIcon(Services.Network.strength, true)
+                }
+                return Common.Icons.icons.ethernet
+            }
+            iconColor: Services.Network.connected ? Common.Appearance.colors.fgDark : Common.Appearance.colors.comment
+            segmentColor: Common.Appearance.colors.bgHighlight
+            clickable: true
+            onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "network")
+        }
+
+        // Notifications
+        IconSegment {
+            visible: root.isRightmost
+            icon: Root.GlobalStates.doNotDisturb
+                ? Common.Icons.icons.doNotDisturb
+                : Common.Icons.icons.notification
+            iconColor: Root.GlobalStates.unreadNotificationCount > 0 && !Root.GlobalStates.doNotDisturb
+                ? Common.Appearance.colors.orange
+                : Common.Appearance.colors.fgDark
+            segmentColor: Common.Appearance.colors.bgHighlight
+            clickable: true
+            showBadge: Root.GlobalStates.unreadNotificationCount > 0 && !Root.GlobalStates.doNotDisturb
+            badgeColor: Common.Appearance.colors.orange
+            onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "notifications")
+        }
+
+        // Separator before clock
+        Rectangle {
+            visible: root.isRightmost
+            width: 1
+            height: parent.height
+            color: Common.Appearance.colors.border
+        }
+
+        // Clock segment (prominent)
+        MouseArea {
+            visible: root.isRightmost
+            implicitWidth: clockContent.implicitWidth + Common.Appearance.spacing.large * 2
+            implicitHeight: parent.height
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "calendar")
+
+            Rectangle {
+                anchors.fill: parent
+                color: Common.Appearance.colors.bgHighlight
+
+                Rectangle {
                     anchors.fill: parent
-                    spacing: 0
+                    color: parent.parent.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
+                }
+            }
 
-                    Item {
-                        Layout.preferredWidth: 28
-                        Layout.preferredHeight: 28
+            RowLayout {
+                id: clockContent
+                anchors.centerIn: parent
+                spacing: Common.Appearance.spacing.small
 
-                        Common.Icon {
-                            anchors.centerIn: parent
-                            name: Services.Audio.micMuted
-                                ? Common.Icons.icons.micOff
-                                : Common.Icons.icons.mic
-                            size: Common.Appearance.sizes.iconMedium
-                            color: Services.Privacy.micInUse
-                                ? Common.Appearance.m3colors.error
-                                : Common.Appearance.m3colors.onSurfaceVariant
-                        }
-                    }
+                Text {
+                    text: Services.DateTime.timeString
+                    font.family: Common.Appearance.fonts.mono
+                    font.pixelSize: Common.Appearance.fontSize.small
+                    font.bold: true
+                    color: Common.Appearance.colors.fg
+                }
 
-                    Item {
-                        Layout.preferredWidth: 28
-                        Layout.preferredHeight: 28
+                Text {
+                    text: Common.Appearance.separators.pipe
+                    font.family: Common.Appearance.fonts.mono
+                    font.pixelSize: Common.Appearance.fontSize.small
+                    color: Common.Appearance.colors.comment
+                }
 
-                        Common.Icon {
-                            anchors.centerIn: parent
-                            name: Services.Audio.muted
-                                ? Common.Icons.icons.volumeOff
-                                : Common.Icons.volumeIcon(Services.Audio.volume * 100, false)
-                            size: Common.Appearance.sizes.iconMedium
-                            color: Common.Appearance.m3colors.onSurfaceVariant
-                        }
+                Text {
+                    text: Services.DateTime.shortDateString
+                    font.family: Common.Appearance.fonts.mono
+                    font.pixelSize: Common.Appearance.fontSize.small
+                    color: Common.Appearance.colors.fgDark
+                }
+            }
+
+            onContainsMouseChanged: {
+                if (containsMouse) {
+                    Root.GlobalStates.osdType = "tooltip"
+                    Root.GlobalStates.osdTooltipText = Services.DateTime.fullDateTimeString
+                    Root.GlobalStates.osdVisible = true
+                } else {
+                    if (Root.GlobalStates.osdType === "tooltip") {
+                        Root.GlobalStates.osdVisible = false
                     }
                 }
             }
 
-            // Bluetooth
-            BarButton {
-                visible: Services.BluetoothStatus.available
-                icon: Services.BluetoothStatus.powered
-                    ? (Services.BluetoothStatus.connected
-                        ? Common.Icons.icons.bluetoothConnected
-                        : Common.Icons.icons.bluetooth)
-                    : Common.Icons.icons.bluetoothOff
-                tooltip: Services.BluetoothStatus.powered
-                    ? (Services.BluetoothStatus.connected
-                        ? "Bluetooth: " + Services.BluetoothStatus.connectedDeviceName
-                        : "Bluetooth: On")
-                    : "Bluetooth: Off"
-                textColor: Services.BluetoothStatus.connected
-                    ? Common.Appearance.m3colors.primary
-                    : Common.Appearance.m3colors.onSurfaceVariant
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "bluetooth")
+            Timer {
+                interval: 1000
+                running: true
+                repeat: true
+                triggeredOnStart: true
+                onTriggered: Services.DateTime.update()
             }
+        }
 
-            // Network
-            BarButton {
-                visible: Common.Config.showNetwork
-                icon: {
-                    if (!Services.Network.connected) {
-                        return Services.Network.wifiAvailable ? Common.Icons.icons.wifiOff : Common.Icons.icons.ethernetOff
-                    }
-                    if (Services.Network.type === "wifi") {
-                        return Common.Icons.wifiIcon(Services.Network.strength, true)
-                    }
-                    return Common.Icons.icons.ethernet
-                }
-                tooltip: Services.Network.connected
-                    ? Services.Network.name
-                    : "Disconnected"
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "network")
-            }
+        // Weather segment (if enabled)
+        MouseArea {
+            visible: root.isRightmost && Common.Config.showWeather
+            implicitWidth: weatherContent.implicitWidth + Common.Appearance.spacing.medium * 2
+            implicitHeight: parent.height
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "weather")
 
-            // Notifications bell
-            BarButton {
-                icon: Root.GlobalStates.doNotDisturb
-                    ? Common.Icons.icons.doNotDisturb
-                    : Common.Icons.icons.notification
-                tooltip: Root.GlobalStates.doNotDisturb
-                    ? "Do Not Disturb"
-                    : (Root.GlobalStates.unreadNotificationCount > 0
-                        ? Root.GlobalStates.unreadNotificationCount + " notifications"
-                        : "Notifications")
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "notifications")
-                textColor: Root.GlobalStates.unreadNotificationCount > 0 && !Root.GlobalStates.doNotDisturb
-                    ? Common.Appearance.m3colors.orange
-                    : Common.Appearance.m3colors.onSurfaceVariant
-            }
+            Rectangle {
+                anchors.fill: parent
+                color: Common.Appearance.colors.bgHighlight
 
-            // Calendar / Date-Time
-            BarButton {
-                id: clockButton
-                icon: Common.Icons.icons.calendar
-                buttonText: Services.DateTime.shortDateString + " " + Services.DateTime.timeString
-                tooltip: Services.DateTime.fullDateTimeString
-
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "calendar")
-
-                // Show tooltip OSD on hover
-                onContainsMouseChanged: {
-                    if (containsMouse) {
-                        Root.GlobalStates.osdType = "tooltip"
-                        Root.GlobalStates.osdTooltipText = Services.DateTime.fullDateTimeString
-                        Root.GlobalStates.osdVisible = true
-                    } else {
-                        if (Root.GlobalStates.osdType === "tooltip") {
-                            Root.GlobalStates.osdVisible = false
-                        }
-                    }
-                }
-
-                Timer {
-                    interval: 1000
-                    running: true
-                    repeat: true
-                    triggeredOnStart: true
-                    onTriggered: Services.DateTime.update()
+                Rectangle {
+                    anchors.fill: parent
+                    color: parent.parent.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
                 }
             }
 
-            // Weather (if enabled)
-            BarButton {
-                visible: Common.Config.showWeather
-                icon: Services.Weather.ready
-                    ? Common.Icons.weatherIcon(Services.Weather.condition, Services.Weather.isNight)
-                    : Common.Icons.icons.cloudy
-                buttonText: Services.Weather.ready ? Services.Weather.temperature : "--°"
-                tooltip: Services.Weather.ready ? Services.Weather.description : "Loading weather..."
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "weather")
+            RowLayout {
+                id: weatherContent
+                anchors.centerIn: parent
+                spacing: Common.Appearance.spacing.small
+
+                Common.Icon {
+                    name: Services.Weather.ready
+                        ? Common.Icons.weatherIcon(Services.Weather.condition, Services.Weather.isNight)
+                        : Common.Icons.icons.cloudy
+                    size: Common.Appearance.sizes.iconSmall
+                    color: Common.Appearance.colors.cyan
+                }
+
+                Text {
+                    text: Services.Weather.ready ? Services.Weather.temperature : "--°"
+                    font.family: Common.Appearance.fonts.mono
+                    font.pixelSize: Common.Appearance.fontSize.small
+                    color: Common.Appearance.colors.fgDark
+                }
+            }
+        }
+
+        // Separator before power
+        Rectangle {
+            visible: root.isRightmost
+            width: 1
+            height: parent.height
+            color: Common.Appearance.colors.border
+        }
+
+        // Power/Battery segment (rightmost, colored)
+        MouseArea {
+            visible: root.isRightmost
+            implicitWidth: powerContent.implicitWidth + Common.Appearance.spacing.medium * 2
+            implicitHeight: parent.height
+            hoverEnabled: true
+            cursorShape: Qt.PointingHandCursor
+            onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "power")
+
+            property color powerColor: {
+                if (Services.Battery.present) {
+                    if (Services.Battery.percent <= 20 && !Services.Battery.charging) {
+                        return Common.Appearance.colors.error
+                    }
+                    if (Services.Battery.pluggedIn) {
+                        return Common.Appearance.colors.green
+                    }
+                }
+                return Common.Appearance.colors.magenta
             }
 
-            // Power button (shows battery on laptops, power icon on desktops)
-            BarButton {
-                icon: {
-                    if (Services.Battery.present) {
-                        // Laptop with battery
-                        if (Services.Battery.pluggedIn && Services.Battery.percent >= 95) {
-                            // Fully charged and plugged in
-                            return Common.Icons.icons.plug
-                        } else if (Services.Battery.charging) {
-                            return Common.Icons.icons.batteryCharging
-                        } else {
-                            return Common.Icons.batteryIcon(Services.Battery.percent, false)
-                        }
-                    }
-                    // Desktop - no battery
-                    return Common.Icons.icons.power
+            Rectangle {
+                anchors.fill: parent
+                color: parent.powerColor
+
+                Rectangle {
+                    anchors.fill: parent
+                    color: parent.parent.containsMouse ? Qt.rgba(0, 0, 0, 0.1) : "transparent"
                 }
-                buttonText: Services.Battery.present ? Services.Battery.percent + "%" : ""
-                tooltip: {
-                    if (Services.Battery.present) {
-                        if (Services.Battery.pluggedIn && Services.Battery.percent >= 95) {
-                            return "Fully charged"
-                        } else if (Services.Battery.charging) {
-                            return "Charging: " + Services.Battery.percent + "%"
-                        } else {
-                            const timeStr = Services.Battery.timeRemainingString()
-                            return "Battery: " + Services.Battery.percent + "%" + (timeStr ? " (" + timeStr + " remaining)" : "")
+            }
+
+            RowLayout {
+                id: powerContent
+                anchors.centerIn: parent
+                spacing: Common.Appearance.spacing.small
+
+                Common.Icon {
+                    name: {
+                        if (Services.Battery.present) {
+                            if (Services.Battery.pluggedIn && Services.Battery.percent >= 95) {
+                                return Common.Icons.icons.plug
+                            } else if (Services.Battery.charging) {
+                                return Common.Icons.icons.batteryCharging
+                            } else {
+                                return Common.Icons.batteryIcon(Services.Battery.percent, false)
+                            }
                         }
+                        return Common.Icons.icons.power
                     }
-                    return "Power options"
+                    size: Common.Appearance.sizes.iconSmall
+                    color: Common.Appearance.colors.bg
                 }
-                textColor: {
-                    if (Services.Battery.present) {
-                        if (Services.Battery.percent <= 20 && !Services.Battery.charging) {
-                            return Common.Appearance.m3colors.error
-                        }
-                        if (Services.Battery.pluggedIn) {
-                            return Common.Appearance.m3colors.primary
-                        }
-                    }
-                    return Common.Appearance.m3colors.onSurfaceVariant
+
+                Text {
+                    visible: Services.Battery.present
+                    text: Services.Battery.percent + "%"
+                    font.family: Common.Appearance.fonts.mono
+                    font.pixelSize: Common.Appearance.fontSize.small
+                    font.bold: true
+                    color: Common.Appearance.colors.bg
                 }
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "power")
             }
         }
     }

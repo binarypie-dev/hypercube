@@ -2,160 +2,135 @@ pragma Singleton
 
 import QtQuick
 
-// Material Design 3 theming system with Tokyonight defaults
+// Neovim/TUI-inspired theming system with Tokyo Night colors
 QtObject {
     id: root
 
     // Dark mode toggle
     property bool darkMode: true
 
-    // Tokyonight color palette mapped to Material Design 3 roles
-    readonly property var m3colors: darkMode ? darkPalette : lightPalette
+    // Tokyo Night color palette (direct colors, no MD3 abstraction)
+    readonly property var colors: darkMode ? darkPalette : lightPalette
 
     readonly property var darkPalette: ({
-        // Primary colors (Tokyonight blue)
-        primary: "#7aa2f7",
-        onPrimary: "#1a1b26",
-        primaryContainer: "#3d59a1",
-        onPrimaryContainer: "#c0caf5",
+        // Core background colors
+        bg: "#1a1b26",
+        bgDark: "#16161e",
+        bgHighlight: "#292e42",
+        bgVisual: "#33467c",
 
-        // Secondary colors (Tokyonight green)
-        secondary: "#9ece6a",
-        onSecondary: "#1a1b26",
-        secondaryContainer: "#4a5e3a",
-        onSecondaryContainer: "#c0caf5",
+        // Foreground colors
+        fg: "#c0caf5",
+        fgDark: "#a9b1d6",
+        fgGutter: "#3b4261",
 
-        // Tertiary colors (Tokyonight purple)
-        tertiary: "#bb9af7",
-        onTertiary: "#1a1b26",
-        tertiaryContainer: "#6a4c93",
-        onTertiaryContainer: "#c0caf5",
+        // Border colors
+        border: "#414868",
+        borderHighlight: "#7aa2f7",
 
-        // Error colors (Tokyonight red)
-        error: "#f7768e",
-        onError: "#1a1b26",
-        errorContainer: "#8c4351",
-        onErrorContainer: "#ffc0c8",
-
-        // Background and surface
-        background: "#1a1b26",
-        onBackground: "#c0caf5",
-        surface: "#1a1b26",
-        onSurface: "#c0caf5",
-        surfaceVariant: "#24283b",
-        onSurfaceVariant: "#a9b1d6",
-
-        // Outline
-        outline: "#33467c",
-        outlineVariant: "#292e42",
-
-        // Inverse
-        inverseSurface: "#c0caf5",
-        inverseOnSurface: "#1a1b26",
-        inversePrimary: "#3d59a1",
-
-        // Additional Tokyonight colors
+        // Accent colors (matching Neovim Tokyo Night)
+        blue: "#7aa2f7",
         cyan: "#7dcfff",
+        green: "#9ece6a",
+        magenta: "#bb9af7",
         orange: "#ff9e64",
+        red: "#f7768e",
         yellow: "#e0af68",
-        magenta: "#ff007c",
         teal: "#1abc9c",
-        comment: "#565f89"
+
+        // Semantic colors
+        comment: "#565f89",
+        error: "#f7768e",
+        warning: "#e0af68",
+        info: "#7dcfff",
+        hint: "#1abc9c",
+
+        // Git colors
+        gitAdd: "#449dab",
+        gitChange: "#6183bb",
+        gitDelete: "#914c54",
+
+        // Mode colors (like Neovim mode indicators)
+        modeNormal: "#7aa2f7",
+        modeInsert: "#9ece6a",
+        modeVisual: "#bb9af7",
+        modeReplace: "#f7768e",
+        modeCommand: "#e0af68"
     })
 
     readonly property var lightPalette: ({
-        // Primary colors
-        primary: "#3d59a1",
-        onPrimary: "#ffffff",
-        primaryContainer: "#d0e4ff",
-        onPrimaryContainer: "#001d36",
+        // Core background colors
+        bg: "#d5d6db",
+        bgDark: "#cbccd1",
+        bgHighlight: "#b7b8bd",
+        bgVisual: "#99a0b5",
 
-        // Secondary colors
-        secondary: "#4a5e3a",
-        onSecondary: "#ffffff",
-        secondaryContainer: "#cce8b5",
-        onSecondaryContainer: "#0e2000",
+        // Foreground colors
+        fg: "#343b58",
+        fgDark: "#4c5372",
+        fgGutter: "#9699a3",
 
-        // Tertiary colors
-        tertiary: "#6a4c93",
-        onTertiary: "#ffffff",
-        tertiaryContainer: "#eddcff",
-        onTertiaryContainer: "#25005a",
+        // Border colors
+        border: "#9699a3",
+        borderHighlight: "#2e7de9",
 
-        // Error colors
-        error: "#ba1a1a",
-        onError: "#ffffff",
-        errorContainer: "#ffdad6",
-        onErrorContainer: "#410002",
+        // Accent colors
+        blue: "#2e7de9",
+        cyan: "#007197",
+        green: "#587539",
+        magenta: "#9854f1",
+        orange: "#b15c00",
+        red: "#f52a65",
+        yellow: "#8c6c3e",
+        teal: "#118c74",
 
-        // Background and surface
-        background: "#d5d6db",
-        onBackground: "#343338",
-        surface: "#f8f9ff",
-        onSurface: "#1a1b26",
-        surfaceVariant: "#e0e2ec",
-        onSurfaceVariant: "#44464f",
+        // Semantic colors
+        comment: "#848cb5",
+        error: "#f52a65",
+        warning: "#8c6c3e",
+        info: "#007197",
+        hint: "#118c74",
 
-        // Outline
-        outline: "#74777f",
-        outlineVariant: "#c4c6d0",
+        // Git colors
+        gitAdd: "#387068",
+        gitChange: "#506d9b",
+        gitDelete: "#c47981",
 
-        // Inverse
-        inverseSurface: "#2f3033",
-        inverseOnSurface: "#f1f0f4",
-        inversePrimary: "#9ecaff",
-
-        // Additional colors
-        cyan: "#0891b2",
-        orange: "#c2410c",
-        yellow: "#a16207",
-        magenta: "#be185d",
-        teal: "#0d9488",
-        comment: "#6b7280"
+        // Mode colors
+        modeNormal: "#2e7de9",
+        modeInsert: "#587539",
+        modeVisual: "#9854f1",
+        modeReplace: "#f52a65",
+        modeCommand: "#8c6c3e"
     })
 
-    // Surface layers (MD3 elevation)
-    function surfaceLayer(level: int): color {
-        const base = m3colors.surface
-        const tint = m3colors.primary
-        const alphas = [0, 0.05, 0.08, 0.11, 0.12, 0.14]
-        const alpha = alphas[Math.min(level, 5)]
-        return Qt.tint(base, Qt.rgba(
-            parseInt(tint.slice(1, 3), 16) / 255,
-            parseInt(tint.slice(3, 5), 16) / 255,
-            parseInt(tint.slice(5, 7), 16) / 255,
-            alpha
-        ))
+    // No surface layer tinting - just use flat colors with optional transparency
+    function surfaceColor(level: int): color {
+        switch (level) {
+            case 0: return colors.bg
+            case 1: return colors.bgDark
+            case 2: return colors.bgHighlight
+            case 3: return colors.bgVisual
+            default: return colors.bg
+        }
     }
 
-    // Animation durations
+    // Animation durations (snappier, more vim-like)
     readonly property var animation: ({
-        // Expressive animations (spatial)
-        expressiveFast: 200,
-        expressive: 350,
-        expressiveSlow: 500,
-
-        // Emphasized animations
-        emphasized: 500,
-        emphasizedAccel: 200,
-        emphasizedDecel: 400,
-
-        // Standard animations
-        standard: 300,
-        standardAccel: 200,
-        standardDecel: 300
+        instant: 50,
+        fast: 100,
+        normal: 150,
+        slow: 250
     })
 
     // Easing curves
     readonly property var easing: ({
-        emphasized: Easing.BezierSpline,
-        emphasizedParams: [0.2, 0, 0, 1],
         standard: Easing.OutCubic,
         decelerate: Easing.OutQuart,
         accelerate: Easing.InQuart
     })
 
-    // Typography
+    // Typography - monospace throughout for TUI aesthetic
     readonly property var fonts: ({
         main: "JetBrains Mono",
         title: "JetBrains Mono",
@@ -163,52 +138,100 @@ QtObject {
     })
 
     readonly property var fontSize: ({
-        smallest: 10,
+        tiny: 10,
         small: 12,
-        normal: 14,
-        large: 16,
-        title: 20,
-        headline: 24,
-        display: 32
+        normal: 13,
+        large: 14,
+        title: 14,
+        headline: 16,
+        display: 20
     })
 
-    // Spacing and rounding
+    // Spacing (tighter for TUI aesthetic)
     readonly property var spacing: ({
-        tiny: 4,
-        small: 8,
-        medium: 12,
-        large: 16,
-        xlarge: 24,
-        xxlarge: 32
-    })
-
-    readonly property var rounding: ({
-        none: 0,
+        tiny: 2,
         small: 4,
         medium: 8,
         large: 12,
         xlarge: 16,
+        xxlarge: 24
+    })
+
+    // Rounding - minimal to none for TUI aesthetic
+    readonly property var rounding: ({
+        none: 0,
+        tiny: 2,
+        small: 3,
+        medium: 4,
+        large: 6,
         full: 9999
+    })
+
+    // Border widths
+    readonly property var borderWidth: ({
+        none: 0,
+        thin: 1,
+        normal: 1,
+        thick: 2
     })
 
     // Component sizes
     readonly property var sizes: ({
-        barHeight: 36,
-        sidebarWidth: 380,
-        osdWidth: 300,
-        osdHeight: 48,
+        barHeight: 28,
+        sidebarWidth: 400,
+        osdWidth: 280,
+        osdHeight: 40,
         launcherWidth: 600,
         launcherHeight: 500,
         notificationWidth: 380,
-        iconSmall: 16,
-        iconMedium: 20,
-        iconLarge: 24,
-        iconXLarge: 32
+        iconTiny: 12,
+        iconSmall: 14,
+        iconMedium: 16,
+        iconLarge: 20,
+        iconXLarge: 24
     })
 
     // Transparency settings
-    property real panelOpacity: 0.85
-    property real overlayOpacity: 0.95
+    property real panelOpacity: 0.92
+    property real overlayOpacity: 0.96
+
+    // Lualine-style separator characters
+    readonly property var separators: ({
+        // Powerline style
+        left: "",
+        right: "",
+        leftThin: "",
+        rightThin: "",
+        // Simple style
+        pipe: "│",
+        slashForward: "/",
+        slashBack: "\\",
+        // Block style
+        block: "█",
+        blockHalf: "▌"
+    })
+
+    // Box drawing characters for TUI borders
+    readonly property var box: ({
+        topLeft: "┌",
+        topRight: "┐",
+        bottomLeft: "└",
+        bottomRight: "┘",
+        horizontal: "─",
+        vertical: "│",
+        teeLeft: "├",
+        teeRight: "┤",
+        teeUp: "┴",
+        teeDown: "┬",
+        cross: "┼",
+        // Double line variants
+        dTopLeft: "╔",
+        dTopRight: "╗",
+        dBottomLeft: "╚",
+        dBottomRight: "╝",
+        dHorizontal: "═",
+        dVertical: "║"
+    })
 
     // Helper function to get contrasting text color
     function contrastText(backgroundColor: color): color {
@@ -216,6 +239,60 @@ QtObject {
         const g = backgroundColor.g
         const b = backgroundColor.b
         const luminance = 0.299 * r + 0.587 * g + 0.114 * b
-        return luminance > 0.5 ? m3colors.onBackground : m3colors.background
+        return luminance > 0.5 ? colors.bg : colors.fg
+    }
+
+    // Helper for mode-based colors
+    function modeColor(mode: string): color {
+        switch (mode) {
+            case "normal": return colors.modeNormal
+            case "insert": return colors.modeInsert
+            case "visual": return colors.modeVisual
+            case "replace": return colors.modeReplace
+            case "command": return colors.modeCommand
+            default: return colors.modeNormal
+        }
+    }
+
+    // Legacy compatibility aliases for m3colors (maps to new colors)
+    readonly property var m3colors: ({
+        primary: colors.blue,
+        onPrimary: colors.bg,
+        primaryContainer: colors.bgVisual,
+        onPrimaryContainer: colors.fg,
+        secondary: colors.green,
+        onSecondary: colors.bg,
+        secondaryContainer: colors.bgHighlight,
+        onSecondaryContainer: colors.fg,
+        tertiary: colors.magenta,
+        onTertiary: colors.bg,
+        tertiaryContainer: colors.bgHighlight,
+        onTertiaryContainer: colors.fg,
+        error: colors.error,
+        onError: colors.bg,
+        errorContainer: colors.bgHighlight,
+        onErrorContainer: colors.error,
+        background: colors.bg,
+        onBackground: colors.fg,
+        surface: colors.bg,
+        onSurface: colors.fg,
+        surfaceVariant: colors.bgHighlight,
+        onSurfaceVariant: colors.fgDark,
+        outline: colors.border,
+        outlineVariant: colors.fgGutter,
+        inverseSurface: colors.fg,
+        inverseOnSurface: colors.bg,
+        inversePrimary: colors.bgVisual,
+        cyan: colors.cyan,
+        orange: colors.orange,
+        yellow: colors.yellow,
+        magenta: colors.magenta,
+        teal: colors.teal,
+        comment: colors.comment
+    })
+
+    // Helper for backward compatibility - surface layer without tinting
+    function surfaceLayer(level: int): color {
+        return surfaceColor(level)
     }
 }
