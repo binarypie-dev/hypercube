@@ -186,7 +186,7 @@ QtObject {
         launcherHeight: 500,
         notificationWidth: 380,
         iconTiny: 12,
-        iconSmall: 14,
+        iconSmall: 16,
         iconMedium: 16,
         iconLarge: 20,
         iconXLarge: 24
