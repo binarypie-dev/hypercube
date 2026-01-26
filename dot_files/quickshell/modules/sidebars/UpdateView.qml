@@ -8,7 +8,7 @@ import "../common" as Common
 import "../../" as Root
 import "../../services" as Services
 
-// System updates and setup view for the left sidebar
+// System updates view for the left sidebar
 ColumnLayout {
     id: root
     spacing: Common.Appearance.spacing.large
@@ -20,7 +20,7 @@ ColumnLayout {
 
         Text {
             Layout.fillWidth: true
-            text: "System Setup"
+            text: "System Updates"
             font.family: Common.Appearance.fonts.main
             font.pixelSize: Common.Appearance.fontSize.headline
             font.weight: Font.Medium
@@ -46,209 +46,6 @@ ColumnLayout {
                 name: Common.Icons.icons.close
                 size: Common.Appearance.sizes.iconMedium
                 color: Common.Appearance.m3colors.onSurface
-            }
-        }
-    }
-
-    // Network warning (if no network and preinstall not done)
-    Rectangle {
-        visible: !Services.Network.connected && !Services.Updates.preinstallCompleted
-        Layout.fillWidth: true
-        Layout.preferredHeight: networkWarningContent.implicitHeight + Common.Appearance.spacing.medium * 2
-        radius: Common.Appearance.rounding.large
-        color: Common.Appearance.m3colors.errorContainer
-
-        RowLayout {
-            id: networkWarningContent
-            anchors.fill: parent
-            anchors.margins: Common.Appearance.spacing.medium
-            spacing: Common.Appearance.spacing.medium
-
-            Common.Icon {
-                name: Common.Icons.icons.wifiOff
-                size: Common.Appearance.sizes.iconLarge
-                color: Common.Appearance.m3colors.onErrorContainer
-            }
-
-            ColumnLayout {
-                Layout.fillWidth: true
-                spacing: 2
-
-                Text {
-                    text: "No Network Connection"
-                    font.family: Common.Appearance.fonts.main
-                    font.pixelSize: Common.Appearance.fontSize.normal
-                    font.weight: Font.Medium
-                    color: Common.Appearance.m3colors.onErrorContainer
-                }
-
-                Text {
-                    Layout.fillWidth: true
-                    text: "Connect to the internet to install default applications."
-                    font.family: Common.Appearance.fonts.main
-                    font.pixelSize: Common.Appearance.fontSize.small
-                    color: Common.Appearance.m3colors.onErrorContainer
-                    wrapMode: Text.WordWrap
-                    opacity: 0.8
-                }
-            }
-        }
-    }
-
-    // Flatpak Preinstall Card
-    Rectangle {
-        Layout.fillWidth: true
-        Layout.preferredHeight: preinstallContent.implicitHeight + Common.Appearance.spacing.medium * 2
-        radius: Common.Appearance.rounding.large
-        color: Common.Appearance.m3colors.surfaceVariant
-
-        ColumnLayout {
-            id: preinstallContent
-            anchors.fill: parent
-            anchors.margins: Common.Appearance.spacing.medium
-            spacing: Common.Appearance.spacing.medium
-
-            // Header row
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Common.Appearance.spacing.medium
-
-                Common.Icon {
-                    name: Services.Updates.preinstallCompleted
-                        ? Common.Icons.icons.checkCircle
-                        : Common.Icons.icons.download
-                    size: Common.Appearance.sizes.iconLarge
-                    color: Services.Updates.preinstallCompleted
-                        ? Common.Appearance.m3colors.primary
-                        : Common.Appearance.m3colors.onSurfaceVariant
-                }
-
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    spacing: 2
-
-                    Text {
-                        text: "Default Applications"
-                        font.family: Common.Appearance.fonts.main
-                        font.pixelSize: Common.Appearance.fontSize.normal
-                        font.weight: Font.Medium
-                        color: Common.Appearance.m3colors.onSurface
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: Services.Updates.preinstallCompleted
-                            ? "Installed"
-                            : (Services.Updates.preinstallRunning
-                                ? Services.Updates.preinstallStatus
-                                : Services.Updates.preinstallTotal + " apps ready to install")
-                        font.family: Common.Appearance.fonts.main
-                        font.pixelSize: Common.Appearance.fontSize.small
-                        color: Common.Appearance.m3colors.onSurfaceVariant
-                        elide: Text.ElideRight
-                    }
-                }
-            }
-
-            // Progress bar (when running)
-            Rectangle {
-                visible: Services.Updates.preinstallRunning
-                Layout.fillWidth: true
-                Layout.preferredHeight: 4
-                radius: 2
-                color: Common.Appearance.m3colors.surfaceVariant
-                border.width: 1
-                border.color: Common.Appearance.m3colors.outline
-
-                Rectangle {
-                    width: parent.width * (Services.Updates.preinstallProgress() / 100)
-                    height: parent.height
-                    radius: 2
-                    color: Common.Appearance.m3colors.primary
-
-                    Behavior on width {
-                        NumberAnimation { duration: 200 }
-                    }
-                }
-            }
-
-            // Action button
-            MouseArea {
-                visible: !Services.Updates.preinstallRunning
-                Layout.fillWidth: true
-                Layout.preferredHeight: 40
-                cursorShape: Qt.PointingHandCursor
-                hoverEnabled: true
-                enabled: Services.Network.connected || Services.Updates.preinstallCompleted
-
-                onClicked: {
-                    if (Services.Updates.preinstallCompleted) {
-                        // Reset and allow re-running
-                        Services.Updates.resetPreinstall()
-                    } else {
-                        Services.Updates.runPreinstall()
-                    }
-                }
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: Common.Appearance.rounding.medium
-                    color: parent.containsMouse
-                        ? Common.Appearance.m3colors.primary
-                        : Common.Appearance.m3colors.primaryContainer
-                    opacity: parent.enabled ? 1 : 0.5
-                }
-
-                Text {
-                    anchors.centerIn: parent
-                    text: Services.Updates.preinstallCompleted
-                        ? "Reinstall Default Apps"
-                        : "Install Now"
-                    font.family: Common.Appearance.fonts.main
-                    font.pixelSize: Common.Appearance.fontSize.normal
-                    font.weight: Font.Medium
-                    color: parent.containsMouse
-                        ? Common.Appearance.m3colors.onPrimary
-                        : Common.Appearance.m3colors.onPrimaryContainer
-                }
-            }
-
-            // Log output (when running or just completed)
-            Rectangle {
-                visible: Services.Updates.preinstallRunning || (Services.Updates.preinstallLog.length > 0 && !Services.Updates.preinstallCompleted)
-                Layout.fillWidth: true
-                Layout.preferredHeight: 120
-                radius: Common.Appearance.rounding.small
-                color: Common.Appearance.m3colors.surface
-                clip: true
-
-                ListView {
-                    id: logView
-                    anchors.fill: parent
-                    anchors.margins: Common.Appearance.spacing.small
-                    anchors.rightMargin: Common.Appearance.spacing.small + 8  // Room for scrollbar
-                    model: Services.Updates.preinstallLog
-                    spacing: 2
-                    boundsBehavior: Flickable.StopAtBounds
-
-                    delegate: Text {
-                        required property string modelData
-                        width: logView.width
-                        text: modelData
-                        font.family: Common.Appearance.fonts.mono
-                        font.pixelSize: Common.Appearance.fontSize.smallest
-                        color: Common.Appearance.m3colors.onSurfaceVariant
-                        wrapMode: Text.WrapAnywhere
-                    }
-
-                    onCountChanged: {
-                        positionViewAtEnd()
-                    }
-
-                    ScrollBar.vertical: ScrollBar {
-                        policy: ScrollBar.AsNeeded
-                    }
-                }
             }
         }
     }

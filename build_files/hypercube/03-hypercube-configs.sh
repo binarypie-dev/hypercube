@@ -78,10 +78,6 @@ install -Dm644 "${CONFIG_DIR}/gtk-4.0/settings.ini" /etc/xdg/gtk-4.0/settings.in
 install -Dm644 "${CONFIG_DIR}/qt6ct/qt6ct.conf" /etc/xdg/qt6ct/qt6ct.conf
 install -Dm644 "${CONFIG_DIR}/qt6ct/colors/TokyoNight.conf" /usr/share/qt6ct/colors/TokyoNight.conf
 
-### ReGreet login greeter configuration (Tokyo Night themed)
-install -Dm644 "${CONFIG_DIR}/regreet/regreet.toml" /etc/greetd/regreet.toml
-install -Dm644 "${CONFIG_DIR}/regreet/regreet.css" /etc/greetd/regreet.css
-
 ### Enable xdg-desktop-portal-gtk for dark mode detection (Firefox, etc.)
 # This portal provides the org.freedesktop.appearance.color-scheme setting
 systemctl --global enable xdg-desktop-portal-gtk.service

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Hypercube Base System
-# Installs core system components, display manager (greetd + regreet), and hardware support
+# Installs core system components, display manager (greetd + hypercube-utils), and hardware support
 
 set -ouex pipefail
 
@@ -12,14 +12,12 @@ dnf5 -y clean all
 ### Enable Hypercube COPR for custom packages
 dnf5 -y copr enable binarypie/hypercube
 
-### Display Manager: greetd + regreet
-# regreet from binarypie/hypercube COPR
-# cage is a minimal Wayland compositor to host regreet and the first-boot wizard
+### Display Manager: greetd + hypercube-utils
+# hypercube-utils provides hypercube-greeter and hypercube-onboard (run directly on TTY)
 dnf5 -y install \
     greetd \
     greetd-selinux \
-    cage \
-    regreet
+    hypercube-utils
 
 ### Desktop Portals & Integration
 dnf5 -y install \
@@ -84,7 +82,7 @@ dnf5 -y install \
     gvfs-gphoto2 \
     gvfs-smb
 
-### Flatpak (ensure latest version for preinstall.d support)
+### Flatpak
 dnf5 -y install flatpak
 
 ### Homebrew integration (from ublue COPR)
