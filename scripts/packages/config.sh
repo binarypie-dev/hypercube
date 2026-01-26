@@ -33,7 +33,6 @@ declare -gA PACKAGE_REPOS=(
     [glaze]="stephenberry/glaze"
     [uwsm]="Vladimir-csp/uwsm"
     [quickshell]="quickshell-mirror/quickshell"
-    [regreet]="rharish101/ReGreet"
 )
 
 # Version source (release or tag, default is release)
@@ -57,7 +56,6 @@ declare -gA PACKAGE_DEPS=(
     [quickshell]=""
     [livesys-scripts]=""
     [wifitui]=""
-    [regreet]=""
 
     # Packages with dependencies
     [hyprlang]="hyprutils"
@@ -77,7 +75,7 @@ declare -gA PACKAGE_DEPS=(
 
 # Build batches (packages in same batch can build in parallel)
 declare -gA BUILD_BATCHES=(
-    [1]="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui regreet"
+    [1]="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui"
     [2]="hyprlang hyprgraphics aquamarine"
     [3]="hyprcursor hyprland-qt-support"
     [4]="hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprpolkitagent hyprtoolkit"

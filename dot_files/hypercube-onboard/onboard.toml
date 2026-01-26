@@ -1,0 +1,29 @@
+# Hypercube Onboarding Configuration
+# Used by hypercube-onboard during first boot (greetd initial_session)
+
+[user]
+# User creation settings
+groups = ["wheel"]
+shell = "/usr/bin/fish"
+min_password_length = 8
+
+[locale]
+# Default locale settings
+language = "en_US.UTF-8"
+keyboard_layout = "us"
+
+[timezone]
+# Timezone preferences
+use_ntp = true
+
+[completion]
+# What to do when onboarding finishes
+action = "reboot"
+remove_initial_session = true
+
+[updates]
+# System updates to run during onboarding
+
+[[updates.commands]]
+description = "System update"
+command = "ujust update"
