@@ -26,8 +26,8 @@ Rectangle {
     border.width: Appearance.borderWidth.thin
     border.color: Appearance.colors.border
 
-    // Sharp corners for TUI look
-    radius: Appearance.rounding.tiny
+    // Match Hyprland window rounding
+    radius: Appearance.rounding.window
 
     // Layout
     ColumnLayout {

@@ -21,7 +21,10 @@ PanelWindow {
         left: true
     }
 
-    margins.bottom: Common.Appearance.spacing.small
+    // Match Hyprland gaps_out (20) for floating window look
+    margins.top: 20
+    margins.bottom: 20
+    margins.left: 20
 
     implicitWidth: Common.Appearance.sizes.sidebarWidth
     color: "transparent"

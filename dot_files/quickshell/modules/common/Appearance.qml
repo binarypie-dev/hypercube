@@ -164,6 +164,7 @@ QtObject {
         small: 3,
         medium: 4,
         large: 6,
+        window: 10,  // Match Hyprland window rounding
         full: 9999
     })
 
