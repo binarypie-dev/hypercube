@@ -102,6 +102,7 @@ systemctl enable bluetooth.service
 systemctl enable power-profiles-daemon.service
 systemctl enable flatpak-add-flathub.service
 systemctl enable iwd.service
+systemctl enable hypercube-migrate.service
 
 ### Disable services we don't need
 systemctl disable gdm.service 2>/dev/null || true

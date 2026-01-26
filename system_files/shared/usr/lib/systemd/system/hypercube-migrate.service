@@ -1,0 +1,13 @@
+[Unit]
+Description=Hypercube System Migrations
+DefaultDependencies=no
+Before=greetd.service
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/just --justfile /usr/share/ublue-os/justfile migrate
+RemainAfterExit=true
+
+[Install]
+WantedBy=multi-user.target
