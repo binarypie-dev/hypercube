@@ -229,40 +229,38 @@ jobs:
         run: |
           PACKAGES='${{ toJson(matrix.group.packages) }}'
 
-          # Get package names for branch name
-          PKG_NAMES=$(echo "$PACKAGES" | jq -r '.[].package' | sort | tr '\n' '-' | sed 's/-$//')
+          # Get package info for branch name
           PKG_COUNT=$(echo "$PACKAGES" | jq 'length')
 
-          # Create summary for PR title
+          # Create summary for PR title and branch name
           if [[ "$PKG_COUNT" -eq 1 ]]; then
-            TITLE=$(echo "$PACKAGES" | jq -r '.[0] | "pkg(\(.package)): update to \(.new_version)"')
+            PKG_NAME=$(echo "$PACKAGES" | jq -r '.[0].package')
+            NEW_VERSION=$(echo "$PACKAGES" | jq -r '.[0].new_version')
+            TITLE="pkg(${PKG_NAME}): update to ${NEW_VERSION}"
+            BRANCH="pkg-update/${PKG_NAME}-v${NEW_VERSION}"
           else
+            # For multiple packages, use first package name and combine versions
             FIRST_PKG=$(echo "$PACKAGES" | jq -r '.[0].package')
+            VERSIONS=$(echo "$PACKAGES" | jq -r '.[].new_version' | sort | tr '\n' '-' | sed 's/-$//')
             TITLE="pkg: update $FIRST_PKG and $((PKG_COUNT - 1)) related packages"
+            BRANCH="pkg-update/${FIRST_PKG}-group-v${VERSIONS}"
           fi
-
-          # Create unique branch name using first package and date
-          BRANCH="pkg-update/${PKG_NAMES}-$(date +%Y%m%d)"
 
           echo "title=$TITLE" >> $GITHUB_OUTPUT
           echo "branch=$BRANCH" >> $GITHUB_OUTPUT
           echo "pkg_count=$PKG_COUNT" >> $GITHUB_OUTPUT
 
-      - name: Check for existing PR
+      - name: Check for existing branch
         id: existing-pr
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          TITLE="${{ steps.info.outputs.title }}"
+          BRANCH="${{ steps.info.outputs.branch }}"
 
-          # Check for open PR with the same title
-          EXISTING=$(gh pr list --state open --search "in:title $TITLE" --json number,title \
-            --jq ".[] | select(.title == \"$TITLE\") | .number" 2>/dev/null | head -1) || EXISTING=""
-
-          if [[ -n "$EXISTING" ]]; then
-            echo "PR #$EXISTING already exists with title: $TITLE"
+          # Check if branch already exists (locally or remotely)
+          if git ls-remote --heads origin "$BRANCH" | grep -q .; then
+            echo "Branch '$BRANCH' already exists - skipping PR creation"
             echo "exists=true" >> $GITHUB_OUTPUT
           else
+            echo "Branch '$BRANCH' does not exist - will create PR"
             echo "exists=false" >> $GITHUB_OUTPUT
           fi
 
@@ -272,7 +270,8 @@ jobs:
           PACKAGES='${{ toJson(matrix.group.packages) }}'
           DATE=$(date "+%a %b %d %Y")
 
-          echo "$PACKAGES" | jq -c '.[]' | while read -r pkg_data; do
+          # Use process substitution to avoid subshell issues
+          while read -r pkg_data; do
             PKG=$(echo "$pkg_data" | jq -r '.package')
             OLD_VERSION=$(echo "$pkg_data" | jq -r '.old_version')
             NEW_VERSION=$(echo "$pkg_data" | jq -r '.new_version')
@@ -290,7 +289,7 @@ jobs:
             # Add changelog entry
             CHANGELOG_ENTRY="* $DATE Hypercube <hypercube@binarypie.dev> - $NEW_VERSION-1\n- Update to $NEW_VERSION"
             sed -i "/%changelog/a\\$CHANGELOG_ENTRY" "$SPEC_FILE"
-          done
+          done < <(echo "$PACKAGES" | jq -c '.[]')
 
       - name: Generate PR body
         if: steps.existing-pr.outputs.exists != 'true'
@@ -303,7 +302,8 @@ jobs:
             echo "## Package Updates"
             echo ""
 
-            echo "$PACKAGES" | jq -c '.[]' | while read -r pkg_data; do
+            # Use process substitution to avoid subshell issues with while loop
+            while read -r pkg_data; do
               PKG=$(echo "$pkg_data" | jq -r '.package')
               REPO=$(echo "$pkg_data" | jq -r '.repo')
               OLD=$(echo "$pkg_data" | jq -r '.old_version')
@@ -313,7 +313,7 @@ jobs:
               echo "- **Version:** \`$OLD\` -> \`$NEW\`"
               echo "- **Release:** https://github.com/$REPO/releases/tag/v$NEW"
               echo ""
-            done
+            done < <(echo "$PACKAGES" | jq -c '.[]')
 
             echo "---"
             echo "*This PR was automatically created by the package version checker.*"
