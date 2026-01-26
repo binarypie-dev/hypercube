@@ -338,6 +338,70 @@ jobs:
           author: "Claude <claude@anthropic.com>"
           committer: "Claude <claude@anthropic.com>"
 
+      - name: Fetch upstream build files
+        if: steps.existing-pr.outputs.exists != 'true' && steps.create-pr.outputs.pull-request-number
+        id: upstream
+        run: |
+          PACKAGES='${{ toJson(matrix.group.packages) }}'
+          mkdir -p .upstream-build-files
+
+          # Define build file patterns for different project types
+          declare -A BUILD_FILES=(
+            # Rust projects
+            [eza]="Cargo.toml"
+            [starship]="Cargo.toml"
+            [wifitui]="Cargo.toml"
+            # Go projects
+            [lazygit]="go.mod"
+            # Python projects
+            [uwsm]="pyproject.toml"
+            # Default for Hyprland ecosystem is CMakeLists.txt
+          )
+
+          UPSTREAM_CONTENT=""
+
+          while read -r pkg_data; do
+            PKG=$(echo "$pkg_data" | jq -r '.package')
+            REPO=$(echo "$pkg_data" | jq -r '.repo')
+            VERSION=$(echo "$pkg_data" | jq -r '.new_version')
+
+            # Determine which build file to fetch
+            BUILD_FILE="${BUILD_FILES[$PKG]:-CMakeLists.txt}"
+
+            echo "Fetching $BUILD_FILE for $PKG v$VERSION from $REPO..."
+
+            # Try to fetch the build file
+            URL="https://raw.githubusercontent.com/${REPO}/v${VERSION}/${BUILD_FILE}"
+            CONTENT=$(curl -sL "$URL" 2>/dev/null)
+
+            if [[ -z "$CONTENT" || "$CONTENT" == "404"* ]]; then
+              # Try without 'v' prefix
+              URL="https://raw.githubusercontent.com/${REPO}/${VERSION}/${BUILD_FILE}"
+              CONTENT=$(curl -sL "$URL" 2>/dev/null)
+            fi
+
+            if [[ -n "$CONTENT" && "$CONTENT" != "404"* ]]; then
+              # Save to file for Claude to read
+              echo "$CONTENT" > ".upstream-build-files/${PKG}-${BUILD_FILE//\//-}"
+              UPSTREAM_CONTENT="${UPSTREAM_CONTENT}
+
+          === ${PKG} (${BUILD_FILE}) ===
+          ${CONTENT}
+          "
+              echo "  ✓ Fetched successfully"
+            else
+              echo "  ✗ Could not fetch $BUILD_FILE"
+              UPSTREAM_CONTENT="${UPSTREAM_CONTENT}
+
+          === ${PKG} (${BUILD_FILE}) ===
+          [Could not fetch - manual verification required]
+          "
+            fi
+          done < <(echo "$PACKAGES" | jq -c '.[]')
+
+          # Save all content to a file for the prompt
+          echo "$UPSTREAM_CONTENT" > .upstream-build-files/all-content.txt
+
       - name: Analyze and update specs with Claude
         if: steps.existing-pr.outputs.exists != 'true' && steps.create-pr.outputs.pull-request-number
         uses: anthropics/claude-code-action@v1
@@ -349,13 +413,12 @@ jobs:
             The following packages were updated (version bumps already applied to spec files):
             ${{ toJson(matrix.group.packages) }}
 
+            The upstream build configuration files have been pre-fetched and saved to `.upstream-build-files/`.
+            Read the file `.upstream-build-files/all-content.txt` to see all the upstream build files.
+
             For each package, please:
 
-            1. Fetch the upstream build configuration files to check for dependency changes:
-               - CMakeLists.txt or meson.build for C/C++ projects (Hyprland ecosystem)
-               - Cargo.toml for Rust projects (eza, starship, wifitui)
-               - go.mod for Go projects (lazygit)
-               - setup.py or pyproject.toml for Python projects (uwsm)
+            1. Read the upstream build configuration from `.upstream-build-files/all-content.txt`
 
             2. Compare the dependencies in the upstream build files against the current spec file's BuildRequires and Requires sections.
 
