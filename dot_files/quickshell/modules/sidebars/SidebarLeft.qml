@@ -21,9 +21,7 @@ PanelWindow {
         left: true
     }
 
-    margins.top: Common.Appearance.sizes.barHeight + Common.Appearance.spacing.small
     margins.bottom: Common.Appearance.spacing.small
-    margins.left: Common.Appearance.spacing.small
 
     implicitWidth: Common.Appearance.sizes.sidebarWidth
     color: "transparent"
@@ -43,13 +41,6 @@ PanelWindow {
     // TUI Panel container
     Common.TuiPanel {
         anchors.fill: parent
-        title: Root.GlobalStates.sidebarLeftView === "apps" ? "[ Applications ]" : "[ System Updates ]"
-        keyHints: [
-            { key: "Esc", action: "close" },
-            { key: "/", action: "search" },
-            { key: "j/k", action: "navigate" },
-            { key: "Enter", action: "select" }
-        ]
 
         // Application View
         Loader {

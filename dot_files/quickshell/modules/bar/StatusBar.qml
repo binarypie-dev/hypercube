@@ -47,6 +47,9 @@ PanelWindow {
         return "NORMAL"
     }
 
+    // Display text for mode indicator (shows all active workspaces when in NORMAL mode)
+    property string modeDisplayText: currentMode === "NORMAL" ? Services.Hyprland.allWorkspaces : currentMode
+
     property color modeColor: {
         if (currentMode === "NORMAL") return Common.Appearance.colors.modeNormal
         if (currentMode === "APPS" || currentMode === "UPDATES") return Common.Appearance.colors.modeInsert
@@ -192,7 +195,7 @@ PanelWindow {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            height: 1
+            height: 0
             color: Common.Appearance.colors.border
         }
     }
@@ -216,7 +219,7 @@ PanelWindow {
             Text {
                 id: modeText
                 anchors.centerIn: parent
-                text: root.currentMode
+                text: root.modeDisplayText
                 font.family: Common.Appearance.fonts.mono
                 font.pixelSize: Common.Appearance.fontSize.small
                 font.bold: true
@@ -296,7 +299,7 @@ PanelWindow {
         // Separator after left section
         Rectangle {
             visible: root.isLeftmost
-            width: 1
+            width: 0
             height: parent.height
             color: Common.Appearance.colors.border
         }
@@ -313,7 +316,7 @@ PanelWindow {
         // Separator before right section
         Rectangle {
             visible: root.isRightmost
-            width: 1
+            width: 0
             height: parent.height
             color: Common.Appearance.colors.border
         }
@@ -424,7 +427,7 @@ PanelWindow {
         // Separator
         Rectangle {
             visible: root.isRightmost && SystemTray.items.length > 0
-            width: 1
+            width: 0
             height: parent.height
             color: Common.Appearance.colors.border
         }
@@ -534,7 +537,7 @@ PanelWindow {
         // Separator before clock
         Rectangle {
             visible: root.isRightmost
-            width: 1
+            width: 0
             height: parent.height
             color: Common.Appearance.colors.border
         }
@@ -651,7 +654,7 @@ PanelWindow {
         // Separator before power
         Rectangle {
             visible: root.isRightmost
-            width: 1
+            width: 0
             height: parent.height
             color: Common.Appearance.colors.border
         }

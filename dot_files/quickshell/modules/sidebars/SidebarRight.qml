@@ -21,9 +21,7 @@ PanelWindow {
         right: true
     }
 
-    margins.top: Common.Appearance.sizes.barHeight + Common.Appearance.spacing.small
     margins.bottom: Common.Appearance.spacing.small
-    margins.right: Common.Appearance.spacing.small
 
     implicitWidth: Common.Appearance.sizes.sidebarWidth
     color: "transparent"
@@ -34,64 +32,9 @@ PanelWindow {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.namespace: "sidebar"
 
-    // Get title based on current view
-    property string viewTitle: {
-        switch (Root.GlobalStates.sidebarRightView) {
-            case "network": return "[ Network ]"
-            case "bluetooth": return "[ Bluetooth ]"
-            case "audio": return "[ Audio ]"
-            case "calendar": return "[ Calendar ]"
-            case "notifications": return "[ Notifications ]"
-            case "power": return "[ Power ]"
-            case "weather": return "[ Weather ]"
-            default: return "[ Settings ]"
-        }
-    }
-
-    // Get keyboard hints based on current view
-    property var viewHints: {
-        switch (Root.GlobalStates.sidebarRightView) {
-            case "network":
-                return [
-                    { key: "Esc", action: "close" },
-                    { key: "j/k", action: "navigate" },
-                    { key: "Enter", action: "connect" }
-                ]
-            case "bluetooth":
-                return [
-                    { key: "Esc", action: "close" },
-                    { key: "j/k", action: "navigate" },
-                    { key: "Enter", action: "pair" }
-                ]
-            case "audio":
-                return [
-                    { key: "Esc", action: "close" },
-                    { key: "m", action: "mute" },
-                    { key: "+/-", action: "volume" }
-                ]
-            case "notifications":
-                return [
-                    { key: "Esc", action: "close" },
-                    { key: "d", action: "dismiss" },
-                    { key: "D", action: "clear all" }
-                ]
-            case "power":
-                return [
-                    { key: "Esc", action: "close" },
-                    { key: "s", action: "suspend" },
-                    { key: "r", action: "reboot" },
-                    { key: "p", action: "poweroff" }
-                ]
-            default:
-                return [{ key: "Esc", action: "close" }]
-        }
-    }
-
     // TUI Panel container
     Common.TuiPanel {
         anchors.fill: parent
-        title: root.viewTitle
-        keyHints: root.viewHints
 
         // Network View
         Loader {
