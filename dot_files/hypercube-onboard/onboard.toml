@@ -26,31 +26,4 @@ remove_initial_session = true
 
 [[updates.commands]]
 description = "System update"
-command = "dnf5 -y upgrade"
-
-[[updates.commands]]
-description = "Flatpak update"
-command = "flatpak update --system --noninteractive"
-
-[flatpaks]
-# Optional user flatpak packages (user can select during onboard)
-
-[[flatpaks.optional]]
-name = "Steam"
-id = "com.valvesoftware.Steam"
-
-[[flatpaks.optional]]
-name = "Discord"
-id = "com.discordapp.Discord"
-
-[[flatpaks.optional]]
-name = "Spotify"
-id = "com.spotify.Client"
-
-[[flatpaks.optional]]
-name = "VS Code"
-id = "com.visualstudio.code"
-
-[[flatpaks.optional]]
-name = "OBS Studio"
-id = "com.obsproject.Studio"
+command = "ujust update"
