@@ -6,3 +6,4 @@ singleton Directories 1.0 Directories.qml
 singleton Icons 1.0 Icons.qml
 ClickCatcher 1.0 ClickCatcher.qml
 Icon 1.0 Icon.qml
+TuiPanel 1.0 TuiPanel.qml

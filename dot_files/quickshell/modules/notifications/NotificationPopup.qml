@@ -8,7 +8,7 @@ import "../common" as Common
 import "../../" as Root
 import "../../services" as Services
 
-// Notification popup that appears in the corner
+// Vim-style notification popup with TUI aesthetics
 PanelWindow {
     id: root
 
@@ -29,16 +29,11 @@ PanelWindow {
 
     visible: notifications.length > 0 && !Root.GlobalStates.doNotDisturb
 
-    // Notification list
     property var notifications: []
     property int maxVisible: 5
 
-    // Background
-    Rectangle {
-        anchors.fill: parent
-        radius: Common.Appearance.rounding.large
-        color: "transparent"
-    }
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.namespace: "notification"
 
     ColumnLayout {
         id: notificationColumn
@@ -56,36 +51,38 @@ PanelWindow {
             }
         }
 
-        // "More notifications" indicator
+        // "More notifications" indicator (TUI style)
         Rectangle {
             visible: notifications.length > maxVisible
             Layout.fillWidth: true
-            Layout.preferredHeight: 32
-            radius: Common.Appearance.rounding.medium
+            Layout.preferredHeight: 24
+            radius: Common.Appearance.rounding.tiny
             color: Qt.rgba(
-                Common.Appearance.m3colors.surface.r,
-                Common.Appearance.m3colors.surface.g,
-                Common.Appearance.m3colors.surface.b,
+                Common.Appearance.colors.bgDark.r,
+                Common.Appearance.colors.bgDark.g,
+                Common.Appearance.colors.bgDark.b,
                 Common.Appearance.overlayOpacity
             )
+            border.width: Common.Appearance.borderWidth.thin
+            border.color: Common.Appearance.colors.border
 
             Text {
                 anchors.centerIn: parent
-                text: "+" + (notifications.length - maxVisible) + " more notifications"
-                font.family: Common.Appearance.fonts.main
-                font.pixelSize: Common.Appearance.fontSize.small
-                color: Common.Appearance.m3colors.onSurfaceVariant
+                text: "-- +" + (notifications.length - maxVisible) + " more --"
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: Common.Appearance.fontSize.tiny
+                color: Common.Appearance.colors.comment
             }
 
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: Root.GlobalStates.sidebarRightOpen = true
+                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "notifications")
             }
         }
     }
 
-    // Notification item component
+    // Notification item component (TUI style)
     component NotificationItem: Rectangle {
         id: notifItem
 
@@ -94,16 +91,16 @@ PanelWindow {
         signal actionInvoked(string actionId)
 
         implicitHeight: contentLayout.implicitHeight + Common.Appearance.spacing.medium * 2
-        radius: Common.Appearance.rounding.large
+        radius: Common.Appearance.rounding.tiny
         color: Qt.rgba(
-            Common.Appearance.m3colors.surface.r,
-            Common.Appearance.m3colors.surface.g,
-            Common.Appearance.m3colors.surface.b,
+            Common.Appearance.colors.bgDark.r,
+            Common.Appearance.colors.bgDark.g,
+            Common.Appearance.colors.bgDark.b,
             Common.Appearance.overlayOpacity
         )
 
-        border.width: 1
-        border.color: Common.Appearance.m3colors.outlineVariant
+        border.width: Common.Appearance.borderWidth.thin
+        border.color: Common.Appearance.colors.border
 
         // Auto-dismiss timer
         Timer {
@@ -113,7 +110,6 @@ PanelWindow {
             onTriggered: dismissed()
         }
 
-        // Click to invoke default action, hover to pause timer
         MouseArea {
             anchors.fill: parent
             hoverEnabled: true
@@ -126,7 +122,6 @@ PanelWindow {
                 }
             }
             onClicked: {
-                // If there's exactly one action, clicking the notification invokes it
                 if (notification.actions && notification.actions.length === 1) {
                     actionInvoked(notification.actions[0].identifier || "")
                 }
@@ -139,18 +134,17 @@ PanelWindow {
             anchors.margins: Common.Appearance.spacing.medium
             spacing: Common.Appearance.spacing.small
 
-            // Header row
+            // Header row (vim-style)
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Common.Appearance.spacing.small
 
-                // App icon via IconResolver
+                // App icon
                 Item {
                     id: popupIconContainer
-                    Layout.preferredWidth: 20
-                    Layout.preferredHeight: 20
+                    Layout.preferredWidth: 16
+                    Layout.preferredHeight: 16
 
-                    // Get icon from IconResolver (triggers async lookup if not cached)
                     property string resolvedIcon: notification.appName ? Services.IconResolver.getIcon(notification.appName) : ""
                     property string fallbackIcon: notification.appIcon || ""
                     property string iconSource: resolvedIcon || (fallbackIcon ? "image://icon/" + fallbackIcon : "")
@@ -161,41 +155,50 @@ PanelWindow {
                         id: appIcon
                         anchors.fill: parent
                         source: popupIconContainer.iconSource
-                        sourceSize: Qt.size(20, 20)
+                        sourceSize: Qt.size(16, 16)
                         smooth: true
                     }
                 }
 
-                // App name
+                // App name (bracketed, vim-style)
                 Text {
-                    Layout.fillWidth: true
-                    text: notification.appName || "Notification"
-                    font.family: Common.Appearance.fonts.main
-                    font.pixelSize: Common.Appearance.fontSize.small
-                    color: Common.Appearance.m3colors.onSurfaceVariant
-                    elide: Text.ElideRight
+                    text: "[" + (notification.appName || "notify") + "]"
+                    font.family: Common.Appearance.fonts.mono
+                    font.pixelSize: Common.Appearance.fontSize.tiny
+                    font.bold: true
+                    color: Common.Appearance.colors.cyan
                 }
+
+                Item { Layout.fillWidth: true }
 
                 // Time
                 Text {
                     text: formatTime(notification.time)
-                    font.family: Common.Appearance.fonts.main
-                    font.pixelSize: Common.Appearance.fontSize.smallest
-                    color: Common.Appearance.m3colors.onSurfaceVariant
+                    font.family: Common.Appearance.fonts.mono
+                    font.pixelSize: Common.Appearance.fontSize.tiny
+                    color: Common.Appearance.colors.comment
                 }
 
                 // Close button
                 MouseArea {
-                    Layout.preferredWidth: 20
-                    Layout.preferredHeight: 20
+                    Layout.preferredWidth: 16
+                    Layout.preferredHeight: 16
                     cursorShape: Qt.PointingHandCursor
                     onClicked: dismissed()
 
-                    Common.Icon {
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Common.Appearance.rounding.tiny
+                        color: parent.containsMouse ? Common.Appearance.colors.bgVisual : "transparent"
+                    }
+
+                    Text {
                         anchors.centerIn: parent
-                        name: Common.Icons.icons.close
-                        size: Common.Appearance.sizes.iconSmall
-                        color: Common.Appearance.m3colors.onSurfaceVariant
+                        text: "×"
+                        font.family: Common.Appearance.fonts.mono
+                        font.pixelSize: Common.Appearance.fontSize.small
+                        font.bold: true
+                        color: parent.containsMouse ? Common.Appearance.colors.error : Common.Appearance.colors.comment
                     }
                 }
             }
@@ -208,10 +211,10 @@ PanelWindow {
                 // Notification image
                 Image {
                     visible: notification.image && status === Image.Ready
-                    Layout.preferredWidth: 48
-                    Layout.preferredHeight: 48
+                    Layout.preferredWidth: 40
+                    Layout.preferredHeight: 40
                     source: notification.image || ""
-                    sourceSize: Qt.size(48, 48)
+                    sourceSize: Qt.size(40, 40)
                     fillMode: Image.PreserveAspectCrop
                 }
 
@@ -223,10 +226,10 @@ PanelWindow {
                     Text {
                         Layout.fillWidth: true
                         text: notification.summary || ""
-                        font.family: Common.Appearance.fonts.main
-                        font.pixelSize: Common.Appearance.fontSize.normal
-                        font.weight: Font.Medium
-                        color: Common.Appearance.m3colors.onSurface
+                        font.family: Common.Appearance.fonts.mono
+                        font.pixelSize: Common.Appearance.fontSize.small
+                        font.bold: true
+                        color: Common.Appearance.colors.fg
                         elide: Text.ElideRight
                         wrapMode: Text.WordWrap
                         maximumLineCount: 2
@@ -237,9 +240,9 @@ PanelWindow {
                         Layout.fillWidth: true
                         visible: text !== ""
                         text: notification.body || ""
-                        font.family: Common.Appearance.fonts.main
-                        font.pixelSize: Common.Appearance.fontSize.small
-                        color: Common.Appearance.m3colors.onSurfaceVariant
+                        font.family: Common.Appearance.fonts.mono
+                        font.pixelSize: Common.Appearance.fontSize.tiny
+                        color: Common.Appearance.colors.fgDark
                         elide: Text.ElideRight
                         wrapMode: Text.WordWrap
                         maximumLineCount: 3
@@ -247,7 +250,7 @@ PanelWindow {
                 }
             }
 
-            // Actions row - only show if multiple actions (single action is triggered by clicking notification)
+            // Actions row (TUI style buttons)
             RowLayout {
                 visible: notification.actions && notification.actions.length > 1
                 Layout.fillWidth: true
@@ -258,26 +261,32 @@ PanelWindow {
 
                     delegate: MouseArea {
                         required property var modelData
-                        Layout.preferredHeight: 28
+                        Layout.preferredHeight: 22
                         Layout.preferredWidth: actionText.implicitWidth + Common.Appearance.spacing.medium * 2
                         cursorShape: Qt.PointingHandCursor
                         onClicked: actionInvoked(modelData.identifier || "")
 
                         Rectangle {
                             anchors.fill: parent
-                            radius: Common.Appearance.rounding.small
+                            radius: Common.Appearance.rounding.tiny
                             color: parent.containsMouse
-                                ? Common.Appearance.m3colors.primaryContainer
-                                : Common.Appearance.m3colors.surfaceVariant
+                                ? Common.Appearance.colors.bgVisual
+                                : Common.Appearance.colors.bgHighlight
+                            border.width: Common.Appearance.borderWidth.thin
+                            border.color: parent.containsMouse
+                                ? Common.Appearance.colors.blue
+                                : Common.Appearance.colors.border
                         }
 
                         Text {
                             id: actionText
                             anchors.centerIn: parent
-                            text: modelData.text || "Action"
-                            font.family: Common.Appearance.fonts.main
-                            font.pixelSize: Common.Appearance.fontSize.small
-                            color: Common.Appearance.m3colors.primary
+                            text: "[" + (modelData.text || "Action") + "]"
+                            font.family: Common.Appearance.fonts.mono
+                            font.pixelSize: Common.Appearance.fontSize.tiny
+                            color: parent.containsMouse
+                                ? Common.Appearance.colors.blue
+                                : Common.Appearance.colors.fgDark
                         }
                     }
                 }
@@ -298,7 +307,6 @@ PanelWindow {
     }
 
     function addNotification(notification: var) {
-        // Add to front of list
         notifications = [notification, ...notifications]
         Root.GlobalStates.unreadNotificationCount++
     }
@@ -308,7 +316,6 @@ PanelWindow {
     }
 
     function invokeAction(notification: var, actionId: string) {
-        // Invoke action through the notification service
         Services.Notifications.invokeAction(notification.id, actionId)
         removeNotification(notification.id)
     }
