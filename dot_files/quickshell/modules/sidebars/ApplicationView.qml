@@ -263,12 +263,12 @@ ColumnLayout {
                     }
                 }
 
-                // Vim-style j/k navigation when not typing
+                // Ctrl+J/K navigation
                 Keys.onPressed: (event) => {
-                    if (event.key === Qt.Key_J && !event.modifiers) {
+                    if (event.key === Qt.Key_J && (event.modifiers & Qt.ControlModifier)) {
                         appListView.incrementCurrentIndex()
                         event.accepted = true
-                    } else if (event.key === Qt.Key_K && !event.modifiers) {
+                    } else if (event.key === Qt.Key_K && (event.modifiers & Qt.ControlModifier)) {
                         appListView.decrementCurrentIndex()
                         event.accepted = true
                     }
@@ -303,13 +303,6 @@ ColumnLayout {
         function onQueryCompleted(queryId, results) {
             if (queryId === root.allAppsQueryId) {
                 root.retryCount = 0
-                results.sort((a, b) => {
-                    const nameA = (a.name || "").toLowerCase()
-                    const nameB = (b.name || "").toLowerCase()
-                    if (nameA < nameB) return -1
-                    if (nameA > nameB) return 1
-                    return 0
-                })
                 root.allApps = results
             } else if (queryId === root.searchQueryId) {
                 root.searchResults = results
