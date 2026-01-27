@@ -28,3 +28,4 @@ import? "/usr/share/ublue-os/just/60-hypercube.just"
 import? "/usr/share/ublue-os/just/61-nvim.just"
 import? "/usr/share/ublue-os/just/62-ai.just"
 import? "/usr/share/ublue-os/just/63-migrate.just"
+

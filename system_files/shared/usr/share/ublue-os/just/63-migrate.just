@@ -57,11 +57,7 @@ migrate-status:
     set -euo pipefail
 
     MIGRATIONS_DIR="/usr/share/hypercube/migrations"
-    STATE_DIR="/var/lib/hypercube/migrations"
-    COMPLETED_FILE="$STATE_DIR/completed"
-
-    mkdir -p "$STATE_DIR"
-    touch "$COMPLETED_FILE"
+    COMPLETED_FILE="/var/lib/hypercube/migrations/completed"
 
     echo "Hypercube Migrations"
     echo "===================="
@@ -73,7 +69,7 @@ migrate-status:
     shopt -s nullglob
     for migration in "$MIGRATIONS_DIR"/*.sh; do
         name=$(basename "$migration")
-        if grep -qxF "$name" "$COMPLETED_FILE" 2>/dev/null; then
+        if [[ -f "$COMPLETED_FILE" ]] && grep -qxF "$name" "$COMPLETED_FILE" 2>/dev/null; then
             echo "  [done]    $name"
             ((completed++)) || true
         else
