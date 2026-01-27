@@ -2,9 +2,9 @@
 vt = 1
 
 [default_session]
-command = "hypercube-greeter"
+command = "cage -s -- ghostty-kiosk hypercube-greeter"
 user = "greeter"
 
 [initial_session]
-command = "hypercube-onboard --config /usr/share/hypercube/config/hypercube-onboard/onboard.toml"
+command = "cage -s -- ghostty-kiosk 'hypercube-onboard --config /usr/share/hypercube/config/hypercube-onboard/onboard.toml'"
 user = "root"

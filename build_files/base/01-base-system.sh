@@ -12,11 +12,13 @@ dnf5 -y clean all
 ### Enable Hypercube COPR for custom packages
 dnf5 -y copr enable binarypie/hypercube
 
-### Display Manager: greetd + hypercube-utils
-# hypercube-utils provides hypercube-greeter and hypercube-onboard (run directly on TTY)
+### Display Manager: greetd + cage + hypercube-utils
+# cage: minimal Wayland compositor for kiosk/greeter mode
+# hypercube-utils provides hypercube-greeter and hypercube-onboard
 dnf5 -y install \
     greetd \
     greetd-selinux \
+    cage \
     hypercube-utils
 
 ### Desktop Portals & Integration
@@ -95,7 +97,22 @@ if ! id -u greeter &>/dev/null; then
     useradd -r -M -s /usr/bin/nologin greeter
 fi
 
+### SELinux Policy: Allow greeter to allocate PTYs and use io_uring
+# Install policy development tools (will be removed by cleanup)
+dnf5 -y install selinux-policy-devel
+
+# Compile and install the greeter policy module
+SELINUX_DIR="/usr/share/hypercube/selinux"
+pushd "$SELINUX_DIR"
+make -f /usr/share/selinux/devel/Makefile hypercube-greeter.pp
+semodule -i hypercube-greeter.pp
+popd
+
+# Clean up build artifacts (keep .te for reference)
+rm -f "$SELINUX_DIR"/*.pp "$SELINUX_DIR"/*.if "$SELINUX_DIR"/*.fc
+
 ### Enable services
+systemctl enable devpts-ptmxmode.service
 systemctl enable greetd.service
 systemctl enable NetworkManager.service
 systemctl enable bluetooth.service

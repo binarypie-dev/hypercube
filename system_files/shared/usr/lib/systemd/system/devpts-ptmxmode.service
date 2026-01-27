@@ -1,0 +1,13 @@
+[Unit]
+Description=Fix devpts mount options for PTY allocation
+DefaultDependencies=no
+After=systemd-remount-fs.service
+Before=greetd.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/mount -o remount,mode=620,gid=5,ptmxmode=0666 devpts /dev/pts
+RemainAfterExit=yes
+
+[Install]
+WantedBy=sysinit.target
