@@ -1,0 +1,15 @@
+policy_module(hypercube-greeter, 1.0)
+
+require {
+    type xdm_t;
+    type ptmx_t;
+    type io_uring_t;
+    class chr_file { read write open getattr ioctl };
+    class anon_inode { create };
+}
+
+# Allow display manager (greetd/greeter) to allocate PTYs
+allow xdm_t ptmx_t:chr_file { read write open getattr ioctl };
+
+# Allow display manager to use io_uring (used by ghostty)
+allow xdm_t io_uring_t:anon_inode { create };
