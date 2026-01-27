@@ -12,11 +12,13 @@ dnf5 -y clean all
 ### Enable Hypercube COPR for custom packages
 dnf5 -y copr enable binarypie/hypercube
 
-### Display Manager: greetd + hypercube-utils
-# hypercube-utils provides hypercube-greeter and hypercube-onboard (run directly on TTY)
+### Display Manager: greetd + cage + hypercube-utils
+# cage: minimal Wayland compositor for kiosk/greeter mode
+# hypercube-utils provides hypercube-greeter and hypercube-onboard
 dnf5 -y install \
     greetd \
     greetd-selinux \
+    cage \
     hypercube-utils
 
 ### Desktop Portals & Integration
