@@ -48,7 +48,10 @@ dnf5 -y install \
   eza \
   starship \
   lazygit \
-  wifitui
+  wifitui \
+  bluetui \
+  yazi \
+  resvg
 
 ### Fish Shell (set as default)
 dnf5 -y install fish
