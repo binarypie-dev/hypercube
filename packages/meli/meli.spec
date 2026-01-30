@@ -22,6 +22,7 @@ BuildRequires:  perl-interpreter
 BuildRequires:  mandoc
 
 Recommends:     gpgme
+Recommends:     notmuch
 
 %description
 meli is a configurable and extensible terminal email client with sane defaults.
