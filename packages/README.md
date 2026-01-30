@@ -329,6 +329,30 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
+### 27. resvg
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/resvg` |
+| Spec File | `resvg.spec` |
+| Version | 0.46.0 |
+| Dependencies | None |
+| Notes | SVG rendering library and CLI tool, used by yazi for SVG previews |
+
+---
+
+### 28. yazi
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/yazi` |
+| Spec File | `yazi.spec` |
+| Version | 26.1.22 |
+| Dependencies | None |
+| Notes | Terminal file manager written in Rust. Recommends resvg for SVG previews |
+
+---
+
 ## Build Order Summary
 
 To ensure dependencies are satisfied, build in this order:
@@ -346,6 +370,8 @@ To ensure dependencies are satisfied, build in this order:
 10. quickshell
 11. livesys-scripts
 12. wifitui
+13. resvg
+14. yazi
 
 **Batch 2** (depends on Batch 1):
 1. hyprlang (needs hyprutils)
@@ -404,3 +430,5 @@ To ensure dependencies are satisfied, build in this order:
 | 23 | quickshell | `packages/quickshell` | `quickshell.spec` | 0.2.1 |
 | 24 | livesys-scripts | `packages/livesys-scripts` | `livesys-scripts.spec` | 0.9.1 |
 | 25 | wifitui | `packages/wifitui` | `wifitui.spec` | 0.9.0 |
+| 26 | resvg | `packages/resvg` | `resvg.spec` | 0.46.0 |
+| 27 | yazi | `packages/yazi` | `yazi.spec` | 26.1.22 |

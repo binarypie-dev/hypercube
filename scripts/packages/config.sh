@@ -28,6 +28,8 @@ declare -gA PACKAGE_REPOS=(
     [starship]="starship/starship"
     [lazygit]="jesseduffield/lazygit"
     [wifitui]="shazow/wifitui"
+    [yazi]="sxyazi/yazi"
+    [resvg]="linebender/resvg"
 
     # Other
     [glaze]="stephenberry/glaze"
@@ -56,6 +58,8 @@ declare -gA PACKAGE_DEPS=(
     [quickshell]=""
     [livesys-scripts]=""
     [wifitui]=""
+    [resvg]=""
+    [yazi]=""
 
     # Packages with dependencies
     [hyprlang]="hyprutils"
@@ -75,7 +79,7 @@ declare -gA PACKAGE_DEPS=(
 
 # Build batches (packages in same batch can build in parallel)
 declare -gA BUILD_BATCHES=(
-    [1]="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui"
+    [1]="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui resvg yazi"
     [2]="hyprlang hyprgraphics aquamarine"
     [3]="hyprcursor hyprland-qt-support"
     [4]="hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprpolkitagent hyprtoolkit"
