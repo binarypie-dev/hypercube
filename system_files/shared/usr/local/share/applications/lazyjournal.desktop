@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=LazyJournal
+Comment=System log viewer
+Exec=ghostty-kiosk lazyjournal
+Icon=utilities-log-viewer
+Terminal=false
+Type=Application
+Categories=System;Monitor;
+Keywords=logs;journal;systemd;docker;podman;

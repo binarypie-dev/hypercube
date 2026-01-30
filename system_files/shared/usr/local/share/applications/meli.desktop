@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=meli
+Comment=Terminal email client
+Exec=ghostty-kiosk meli
+Icon=mail-client
+Terminal=false
+Type=Application
+Categories=Network;Email;
+Keywords=email;mail;imap;

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Resterm
+Comment=REST and API client
+Exec=ghostty-kiosk resterm
+Icon=network-transmit-receive
+Terminal=false
+Type=Application
+Categories=Development;Network;
+Keywords=rest;api;grpc;websocket;http;
