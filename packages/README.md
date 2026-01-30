@@ -353,6 +353,30 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
+### 29. bluetui
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/bluetui` |
+| Spec File | `bluetui.spec` |
+| Version | 0.8.1 |
+| Dependencies | None |
+| Notes | TUI for managing Bluetooth devices. Requires bluez at runtime |
+
+---
+
+### 30. iamb
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/iamb` |
+| Spec File | `iamb.spec` |
+| Version | 0.0.11 |
+| Dependencies | None |
+| Notes | Matrix chat client with Vim-like keybindings |
+
+---
+
 ## Build Order Summary
 
 To ensure dependencies are satisfied, build in this order:
@@ -372,6 +396,8 @@ To ensure dependencies are satisfied, build in this order:
 12. wifitui
 13. resvg
 14. yazi
+15. bluetui
+16. iamb
 
 **Batch 2** (depends on Batch 1):
 1. hyprlang (needs hyprutils)
@@ -432,3 +458,5 @@ To ensure dependencies are satisfied, build in this order:
 | 25 | wifitui | `packages/wifitui` | `wifitui.spec` | 0.9.0 |
 | 26 | resvg | `packages/resvg` | `resvg.spec` | 0.46.0 |
 | 27 | yazi | `packages/yazi` | `yazi.spec` | 26.1.22 |
+| 28 | bluetui | `packages/bluetui` | `bluetui.spec` | 0.8.1 |
+| 29 | iamb | `packages/iamb` | `iamb.spec` | 0.0.11 |

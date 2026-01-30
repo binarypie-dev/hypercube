@@ -30,6 +30,8 @@ declare -gA PACKAGE_REPOS=(
     [wifitui]="shazow/wifitui"
     [yazi]="sxyazi/yazi"
     [resvg]="linebender/resvg"
+    [bluetui]="pythops/bluetui"
+    [iamb]="ulyssa/iamb"
 
     # Other
     [glaze]="stephenberry/glaze"
@@ -60,6 +62,8 @@ declare -gA PACKAGE_DEPS=(
     [wifitui]=""
     [resvg]=""
     [yazi]=""
+    [bluetui]=""
+    [iamb]=""
 
     # Packages with dependencies
     [hyprlang]="hyprutils"
@@ -79,7 +83,7 @@ declare -gA PACKAGE_DEPS=(
 
 # Build batches (packages in same batch can build in parallel)
 declare -gA BUILD_BATCHES=(
-    [1]="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui resvg yazi"
+    [1]="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui resvg yazi bluetui iamb"
     [2]="hyprlang hyprgraphics aquamarine"
     [3]="hyprcursor hyprland-qt-support"
     [4]="hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprpolkitagent hyprtoolkit"
