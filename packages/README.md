@@ -377,6 +377,18 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
+### 31. meli
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/meli` |
+| Spec File | `meli.spec` |
+| Version | 0.8.13 |
+| Dependencies | None |
+| Notes | Terminal email client. Source from git.meli-email.org, not GitHub |
+
+---
+
 ## Build Order Summary
 
 To ensure dependencies are satisfied, build in this order:
@@ -398,6 +410,7 @@ To ensure dependencies are satisfied, build in this order:
 14. yazi
 15. bluetui
 16. iamb
+17. meli
 
 **Batch 2** (depends on Batch 1):
 1. hyprlang (needs hyprutils)
@@ -460,3 +473,4 @@ To ensure dependencies are satisfied, build in this order:
 | 27 | yazi | `packages/yazi` | `yazi.spec` | 26.1.22 |
 | 28 | bluetui | `packages/bluetui` | `bluetui.spec` | 0.8.1 |
 | 29 | iamb | `packages/iamb` | `iamb.spec` | 0.0.11 |
+| 30 | meli | `packages/meli` | `meli.spec` | 0.8.13 |
