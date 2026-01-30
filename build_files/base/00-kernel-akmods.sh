@@ -16,8 +16,8 @@ echo "Using base image kernel: ${KERNEL_VERSION}"
 
 # Fetch akmods container (contains kmods for this kernel)
 skopeo copy --retry-times 3 \
-    docker://ghcr.io/ublue-os/akmods:"${AKMODS_FLAVOR}"-"${FEDORA_VERSION}" \
-    dir:/tmp/akmods
+  docker://ghcr.io/ublue-os/akmods:"${AKMODS_FLAVOR}"-"${FEDORA_VERSION}" \
+  dir:/tmp/akmods
 
 AKMODS_TARGZ=$(jq -r '.layers[].digest' </tmp/akmods/manifest.json | cut -d : -f 2)
 tar -xvzf /tmp/akmods/"$AKMODS_TARGZ" -C /tmp/
@@ -28,22 +28,12 @@ sed -i 's@enabled=0@enabled=1@g' /etc/yum.repos.d/_copr_ublue-os-akmods.repo
 
 # Install hardware support akmods
 dnf5 -y install \
-    /tmp/akmods/kmods/*xone*.rpm \
-    /tmp/akmods/kmods/*openrazer*.rpm \
-    /tmp/akmods/kmods/*framework-laptop*.rpm \
-    || true
+  /tmp/akmods/kmods/*xone*.rpm \
+  /tmp/akmods/kmods/*openrazer*.rpm \
+  /tmp/akmods/kmods/*framework-laptop*.rpm ||
+  true
 
-# Install v4l2loopback userspace tools from RPM Fusion (without akmod dependency)
-# Then install pre-built kmod from ublue akmods
-dnf5 -y install \
-    "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${FEDORA_VERSION}.noarch.rpm" \
-    "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${FEDORA_VERSION}.noarch.rpm"
-
-# Install userspace package but exclude akmod (we use pre-built kmod instead)
-dnf5 -y install --exclude=akmod-v4l2loopback --exclude=akmods v4l2loopback || echo "WARNING: Failed to install v4l2loopback userspace"
-dnf5 -y remove rpmfusion-free-release rpmfusion-nonfree-release || true
-
-# Install pre-built v4l2loopback kmod from ublue akmods
+# Install pre-built v4l2loopback kmod from ublue akmods (userspace tools not needed)
 echo "Installing v4l2loopback kmod..."
 ls -la /tmp/akmods/kmods/*v4l2loopback*.rpm || echo "WARNING: v4l2loopback kmod not found"
 dnf5 -y install /tmp/akmods/kmods/*v4l2loopback*.rpm || echo "WARNING: Failed to install v4l2loopback kmod"
@@ -53,8 +43,8 @@ echo "Installing NVIDIA drivers..."
 
 # Fetch NVIDIA akmods
 skopeo copy --retry-times 3 \
-    docker://ghcr.io/ublue-os/akmods-nvidia-open:"${AKMODS_FLAVOR}"-"${FEDORA_VERSION}"-"${KERNEL_VERSION}" \
-    dir:/tmp/akmods-nvidia
+  docker://ghcr.io/ublue-os/akmods-nvidia-open:"${AKMODS_FLAVOR}"-"${FEDORA_VERSION}"-"${KERNEL_VERSION}" \
+  dir:/tmp/akmods-nvidia
 
 NVIDIA_TARGZ=$(jq -r '.layers[].digest' </tmp/akmods-nvidia/manifest.json | cut -d : -f 2)
 tar -xvzf /tmp/akmods-nvidia/"$NVIDIA_TARGZ" -C /tmp/
@@ -65,6 +55,9 @@ mv /tmp/rpms/* /tmp/akmods-rpms/
 
 # Exclude golang nvidia toolkit from Fedora repo
 dnf5 config-manager setopt excludepkgs=golang-github-nvidia-container-toolkit || true
+
+# Update mesa packages first to avoid RPM Fusion version conflicts
+dnf5 -y update mesa* || true
 
 # Fetch and run Universal Blue's nvidia-install script
 curl -sSL "https://raw.githubusercontent.com/ublue-os/main/main/build_files/nvidia-install.sh" -o /tmp/nvidia-install.sh
@@ -77,7 +70,7 @@ ln -sf libnvidia-ml.so.1 /usr/lib64/libnvidia-ml.so
 
 # Configure kernel arguments for NVIDIA
 mkdir -p /usr/lib/bootc/kargs.d/
-cat > /usr/lib/bootc/kargs.d/00-nvidia.toml << 'EOF'
+cat >/usr/lib/bootc/kargs.d/00-nvidia.toml <<'EOF'
 kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-drm.modeset=1", "initcall_blacklist=simpledrm_platform_driver_init"]
 EOF
 
