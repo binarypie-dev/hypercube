@@ -35,7 +35,6 @@ declare -gA PACKAGE_REPOS=(
     [lazyjournal]="Lifailon/lazyjournal"
     [lazysql]="jorgerojas26/lazysql"
     [resterm]="unkn0wn-root/resterm"
-    [podman-tui]="containers/podman-tui"
 
     # Other
     [glaze]="stephenberry/glaze"
@@ -72,7 +71,6 @@ declare -gA PACKAGE_DEPS=(
     [lazyjournal]=""
     [lazysql]=""
     [resterm]=""
-    [podman-tui]=""
 
     # Packages with dependencies
     [hyprlang]="hyprutils"
@@ -92,7 +90,7 @@ declare -gA PACKAGE_DEPS=(
 
 # Build batches (packages in same batch can build in parallel)
 declare -gA BUILD_BATCHES=(
-    [1]="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui resvg yazi bluetui iamb meli lazyjournal lazysql resterm podman-tui"
+    [1]="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui resvg yazi bluetui iamb meli lazyjournal lazysql resterm"
     [2]="hyprlang hyprgraphics aquamarine"
     [3]="hyprcursor hyprland-qt-support"
     [4]="hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprpolkitagent hyprtoolkit"

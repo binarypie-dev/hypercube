@@ -425,18 +425,6 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
-### 35. podman-tui
-
-| Setting | Value |
-|---------|-------|
-| Subdir | `packages/podman-tui` |
-| Spec File | `podman-tui.spec` |
-| Version | 1.10.0 |
-| Dependencies | None |
-| Notes | TUI for managing Podman containers. Requires podman at runtime |
-
----
-
 ## Build Order Summary
 
 To ensure dependencies are satisfied, build in this order:
@@ -462,7 +450,6 @@ To ensure dependencies are satisfied, build in this order:
 18. lazyjournal
 19. lazysql
 20. resterm
-21. podman-tui
 
 **Batch 2** (depends on Batch 1):
 1. hyprlang (needs hyprutils)
@@ -529,4 +516,3 @@ To ensure dependencies are satisfied, build in this order:
 | 31 | lazyjournal | `packages/lazyjournal` | `lazyjournal.spec` | 0.8.4 |
 | 32 | lazysql | `packages/lazysql` | `lazysql.spec` | 0.4.6 |
 | 33 | resterm | `packages/resterm` | `resterm.spec` | 0.20.3 |
-| 34 | podman-tui | `packages/podman-tui` | `podman-tui.spec` | 1.10.0 |

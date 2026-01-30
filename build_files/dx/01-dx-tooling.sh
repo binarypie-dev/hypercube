@@ -14,6 +14,7 @@ dnf5 -y install \
     podman \
     podman-compose \
     podman-docker \
+    podman-tui \
     buildah \
     skopeo
 
@@ -50,8 +51,7 @@ dnf5 -y install cosign
 dnf5 -y install \
     lazyjournal \
     lazysql \
-    resterm \
-    podman-tui
+    resterm
 
 ### Enable libvirtd for VM management
 systemctl enable libvirtd.service

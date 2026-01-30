@@ -17,7 +17,8 @@ BuildRequires:  rust >= 1.85
 BuildRequires:  gcc
 BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pkgconfig(dbus-1)
-BuildRequires:  pkgconfig(openssl)
+BuildRequires:  openssl-devel
+BuildRequires:  perl-interpreter
 
 Recommends:     gpgme
 
@@ -30,6 +31,7 @@ email threading, tabs for multitasking, GPG support, and contact management.
 %autosetup -n %{name}
 
 %build
+export OPENSSL_NO_VENDOR=1
 RUSTFLAGS='-C strip=symbols' cargo build --release --locked --bin meli
 
 %install
