@@ -15,11 +15,15 @@ Source0:        https://git.meli-email.org/meli/meli/archive/v%{version}.tar.gz
 BuildRequires:  cargo >= 1.85
 BuildRequires:  rust >= 1.85
 BuildRequires:  gcc
+BuildRequires:  pkgconfig
 BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  openssl-devel
 BuildRequires:  perl-interpreter
 BuildRequires:  mandoc
+BuildRequires:  zlib-devel
+BuildRequires:  libcurl-devel
+BuildRequires:  libnghttp2-devel
 
 Recommends:     gpgme
 Recommends:     notmuch
@@ -34,7 +38,9 @@ email threading, tabs for multitasking, GPG support, and contact management.
 
 %build
 export OPENSSL_NO_VENDOR=1
-RUSTFLAGS='-C strip=symbols' cargo build --release --locked --bin meli
+export LIBZ_SYS_STATIC=0
+export LIBSQLITE3_SYS_USE_PKG_CONFIG=1
+RUSTFLAGS='-C strip=symbols' cargo build --release --locked --bin meli --no-default-features --features "sqlite3 notmuch smtp dbus-notifications gpgme cli-docs jmap"
 
 %install
 install -Dpm 0755 target/release/meli %{buildroot}%{_bindir}/meli
