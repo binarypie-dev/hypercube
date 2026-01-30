@@ -389,6 +389,54 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
+### 32. lazyjournal
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/lazyjournal` |
+| Spec File | `lazyjournal.spec` |
+| Version | 0.8.4 |
+| Dependencies | None |
+| Notes | TUI for viewing journalctl, Docker, Podman, and Kubernetes logs |
+
+---
+
+### 33. lazysql
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/lazysql` |
+| Spec File | `lazysql.spec` |
+| Version | 0.4.6 |
+| Dependencies | None |
+| Notes | TUI database client for PostgreSQL, MySQL, SQLite, MSSQL |
+
+---
+
+### 34. resterm
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/resterm` |
+| Spec File | `resterm.spec` |
+| Version | 0.20.3 |
+| Dependencies | None |
+| Notes | TUI REST, gRPC, and WebSocket API client |
+
+---
+
+### 35. podman-tui
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/podman-tui` |
+| Spec File | `podman-tui.spec` |
+| Version | 1.10.0 |
+| Dependencies | None |
+| Notes | TUI for managing Podman containers. Requires podman at runtime |
+
+---
+
 ## Build Order Summary
 
 To ensure dependencies are satisfied, build in this order:
@@ -411,6 +459,10 @@ To ensure dependencies are satisfied, build in this order:
 15. bluetui
 16. iamb
 17. meli
+18. lazyjournal
+19. lazysql
+20. resterm
+21. podman-tui
 
 **Batch 2** (depends on Batch 1):
 1. hyprlang (needs hyprutils)
@@ -474,3 +526,7 @@ To ensure dependencies are satisfied, build in this order:
 | 28 | bluetui | `packages/bluetui` | `bluetui.spec` | 0.8.1 |
 | 29 | iamb | `packages/iamb` | `iamb.spec` | 0.0.11 |
 | 30 | meli | `packages/meli` | `meli.spec` | 0.8.13 |
+| 31 | lazyjournal | `packages/lazyjournal` | `lazyjournal.spec` | 0.8.4 |
+| 32 | lazysql | `packages/lazysql` | `lazysql.spec` | 0.4.6 |
+| 33 | resterm | `packages/resterm` | `resterm.spec` | 0.20.3 |
+| 34 | podman-tui | `packages/podman-tui` | `podman-tui.spec` | 1.10.0 |
