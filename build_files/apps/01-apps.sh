@@ -9,6 +9,11 @@ echo "Installing applications..."
 ### Web Browser
 dnf5 -y install firefox
 
+### TUI Communication Apps - From Hypercube COPR
+dnf5 -y install \
+    iamb \
+    meli
+
 ### Flatpak Applications (system-wide, baked into image)
 flatpak remote-add --if-not-exists --system flathub https://flathub.org/repo/flathub.flatpakrepo
 flatpak install --system --noninteractive flathub \

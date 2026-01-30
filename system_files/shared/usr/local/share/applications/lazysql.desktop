@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=LazySQL
+Comment=Database management client
+Exec=ghostty-kiosk lazysql
+Icon=database
+Terminal=false
+Type=Application
+Categories=Development;Database;
+Keywords=database;sql;postgresql;mysql;sqlite;

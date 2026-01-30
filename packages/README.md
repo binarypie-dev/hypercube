@@ -329,6 +329,102 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
+### 27. resvg
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/resvg` |
+| Spec File | `resvg.spec` |
+| Version | 0.46.0 |
+| Dependencies | None |
+| Notes | SVG rendering library and CLI tool, used by yazi for SVG previews |
+
+---
+
+### 28. yazi
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/yazi` |
+| Spec File | `yazi.spec` |
+| Version | 26.1.22 |
+| Dependencies | None |
+| Notes | Terminal file manager written in Rust. Recommends resvg for SVG previews |
+
+---
+
+### 29. bluetui
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/bluetui` |
+| Spec File | `bluetui.spec` |
+| Version | 0.8.1 |
+| Dependencies | None |
+| Notes | TUI for managing Bluetooth devices. Requires bluez at runtime |
+
+---
+
+### 30. iamb
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/iamb` |
+| Spec File | `iamb.spec` |
+| Version | 0.0.11 |
+| Dependencies | None |
+| Notes | Matrix chat client with Vim-like keybindings |
+
+---
+
+### 31. meli
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/meli` |
+| Spec File | `meli.spec` |
+| Version | 0.8.13 |
+| Dependencies | None |
+| Notes | Terminal email client. Source from git.meli-email.org, not GitHub |
+
+---
+
+### 32. lazyjournal
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/lazyjournal` |
+| Spec File | `lazyjournal.spec` |
+| Version | 0.8.4 |
+| Dependencies | None |
+| Notes | TUI for viewing journalctl, Docker, Podman, and Kubernetes logs |
+
+---
+
+### 33. lazysql
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/lazysql` |
+| Spec File | `lazysql.spec` |
+| Version | 0.4.6 |
+| Dependencies | None |
+| Notes | TUI database client for PostgreSQL, MySQL, SQLite, MSSQL |
+
+---
+
+### 34. resterm
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/resterm` |
+| Spec File | `resterm.spec` |
+| Version | 0.20.3 |
+| Dependencies | None |
+| Notes | TUI REST, gRPC, and WebSocket API client |
+
+---
+
 ## Build Order Summary
 
 To ensure dependencies are satisfied, build in this order:
@@ -346,6 +442,14 @@ To ensure dependencies are satisfied, build in this order:
 10. quickshell
 11. livesys-scripts
 12. wifitui
+13. resvg
+14. yazi
+15. bluetui
+16. iamb
+17. meli
+18. lazyjournal
+19. lazysql
+20. resterm
 
 **Batch 2** (depends on Batch 1):
 1. hyprlang (needs hyprutils)
@@ -404,3 +508,11 @@ To ensure dependencies are satisfied, build in this order:
 | 23 | quickshell | `packages/quickshell` | `quickshell.spec` | 0.2.1 |
 | 24 | livesys-scripts | `packages/livesys-scripts` | `livesys-scripts.spec` | 0.9.1 |
 | 25 | wifitui | `packages/wifitui` | `wifitui.spec` | 0.9.0 |
+| 26 | resvg | `packages/resvg` | `resvg.spec` | 0.46.0 |
+| 27 | yazi | `packages/yazi` | `yazi.spec` | 26.1.22 |
+| 28 | bluetui | `packages/bluetui` | `bluetui.spec` | 0.8.1 |
+| 29 | iamb | `packages/iamb` | `iamb.spec` | 0.0.11 |
+| 30 | meli | `packages/meli` | `meli.spec` | 0.8.13 |
+| 31 | lazyjournal | `packages/lazyjournal` | `lazyjournal.spec` | 0.8.4 |
+| 32 | lazysql | `packages/lazysql` | `lazysql.spec` | 0.4.6 |
+| 33 | resterm | `packages/resterm` | `resterm.spec` | 0.20.3 |

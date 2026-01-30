@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Yazi
+Comment=Terminal file manager
+Exec=ghostty-kiosk yazi
+Icon=system-file-manager
+Terminal=false
+Type=Application
+Categories=System;FileTools;FileManager;
+Keywords=files;file;manager;browser;

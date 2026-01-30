@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=iamb
+Comment=Matrix chat client
+Exec=ghostty-kiosk iamb
+Icon=internet-chat
+Terminal=false
+Type=Application
+Categories=Network;Chat;InstantMessaging;
+Keywords=matrix;chat;messaging;im;

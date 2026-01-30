@@ -14,6 +14,7 @@ dnf5 -y install \
     podman \
     podman-compose \
     podman-docker \
+    podman-tui \
     buildah \
     skopeo
 
@@ -45,6 +46,12 @@ dnf5 -y install \
 
 ### Container signing
 dnf5 -y install cosign
+
+### TUI Developer Tools - From Hypercube COPR
+dnf5 -y install \
+    lazyjournal \
+    lazysql \
+    resterm
 
 ### Enable libvirtd for VM management
 systemctl enable libvirtd.service
