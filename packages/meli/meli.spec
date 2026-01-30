@@ -19,6 +19,7 @@ BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pkgconfig(dbus-1)
 BuildRequires:  openssl-devel
 BuildRequires:  perl-interpreter
+BuildRequires:  mandoc
 
 Recommends:     gpgme
 
