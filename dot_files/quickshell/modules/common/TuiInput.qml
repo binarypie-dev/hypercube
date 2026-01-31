@@ -25,7 +25,7 @@ Rectangle {
 
     color: Appearance.colors.bgDark
     border.width: Appearance.borderWidth.thin
-    border.color: textInput.activeFocus ? Appearance.colors.cyan : Appearance.colors.border
+    border.color: Appearance.colors.border
     radius: Appearance.rounding.tiny
 
     opacity: enabled ? 1.0 : 0.5
@@ -46,6 +46,8 @@ Rectangle {
         echoMode: root.password ? TextInput.Password : TextInput.Normal
         enabled: root.enabled
         clip: true
+
+        Keys.forwardTo: [root]
 
         onAccepted: root.accepted()
     }

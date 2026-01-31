@@ -36,8 +36,8 @@ ColumnLayout {
     // Search bar
     Rectangle {
         Layout.fillWidth: true
-        Layout.preferredHeight: 32
-        color: Common.Appearance.colors.bgDark
+        Layout.preferredHeight: 40
+        color: "transparent"
 
         RowLayout {
             anchors.fill: parent
@@ -45,11 +45,20 @@ ColumnLayout {
             anchors.rightMargin: Common.Appearance.spacing.medium
             spacing: Common.Appearance.spacing.small
 
+            // Chevron prompt
+            Text {
+                text: ">"
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: Common.Appearance.fontSize.normal
+                font.bold: true
+                color: Common.Appearance.colors.green
+            }
+
             // Search input
             Common.TuiInput {
                 id: searchInput
                 Layout.fillWidth: true
-                Layout.preferredHeight: 24
+                Layout.preferredHeight: 28
                 placeholderText: "Search applications..."
 
                 onTextChanged: {
@@ -93,8 +102,9 @@ ColumnLayout {
 
             // Results count
             Text {
-                visible: appListView.count > 0
-                text: "[" + (appListView.currentIndex + 1) + "/" + appListView.count + "]"
+                text: appListView.count > 0
+                    ? String(appListView.currentIndex + 1).padStart(3, ' ') + "/" + String(appListView.count).padEnd(3, ' ')
+                    : "  0/0  "
                 font.family: Common.Appearance.fonts.mono
                 font.pixelSize: Common.Appearance.fontSize.small
                 color: Common.Appearance.colors.comment
@@ -102,20 +112,14 @@ ColumnLayout {
         }
     }
 
-    // Separator line
-    Rectangle {
-        Layout.fillWidth: true
-        Layout.preferredHeight: 1
-        color: Common.Appearance.colors.border
-    }
-
     // App list
     ListView {
         id: appListView
         Layout.fillWidth: true
         Layout.fillHeight: true
+        Layout.topMargin: Common.Appearance.spacing.medium
         clip: true
-        spacing: 0
+        spacing: 4
 
         model: root.isSearching ? searchResults : allApps
 
@@ -124,21 +128,19 @@ ColumnLayout {
             required property var modelData
             required property int index
 
-            width: appListView.width
-            height: 32
+            width: appListView.width - 8
+            height: 40
 
             property bool isSelected: appListView.currentIndex === index
 
-            color: {
-                if (isSelected) return Common.Appearance.colors.bgVisual
-                if (delegateMouseArea.containsMouse) return Common.Appearance.colors.bgHighlight
-                return "transparent"
-            }
+            color: delegateMouseArea.containsMouse ? Common.Appearance.colors.bgHighlight : "transparent"
+            border.width: isSelected ? 1 : 0
+            border.color: Qt.alpha(Common.Appearance.colors.green, 0.6)
+            radius: Common.Appearance.rounding.tiny
 
             RowLayout {
                 anchors.fill: parent
-                anchors.leftMargin: Common.Appearance.spacing.medium
-                anchors.rightMargin: Common.Appearance.spacing.medium
+                anchors.margins: Common.Appearance.spacing.small
                 spacing: Common.Appearance.spacing.medium
 
                 // App icon
@@ -218,13 +220,25 @@ ColumnLayout {
         }
 
         ScrollBar.vertical: ScrollBar {
+            id: listScrollBar
             policy: ScrollBar.AsNeeded
-            width: 6
+            visible: listScrollBar.size < 1.0
+            width: 8
+
+            background: Rectangle {
+                implicitWidth: 8
+                color: Common.Appearance.colors.bgDark
+                visible: listScrollBar.size < 1.0
+            }
 
             contentItem: Rectangle {
                 implicitWidth: 4
                 radius: 2
-                color: Common.Appearance.colors.bgVisual
+                gradient: Gradient {
+                    GradientStop { position: 0.0; color: "transparent" }
+                    GradientStop { position: 0.5; color: Qt.alpha(Common.Appearance.colors.green, 0.6) }
+                    GradientStop { position: 1.0; color: "transparent" }
+                }
             }
         }
     }
