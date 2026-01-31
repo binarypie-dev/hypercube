@@ -23,7 +23,7 @@ PanelWindow {
 
     // Flush to all edges (status bar is on overlay layer above)
     margins.top: 0
-    margins.bottom: 0
+    margins.bottom: 5
     margins.left: 0
 
     implicitWidth: Common.Appearance.sizes.sidebarWidth

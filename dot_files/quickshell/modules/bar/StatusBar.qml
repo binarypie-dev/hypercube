@@ -92,27 +92,22 @@ PanelWindow {
             anchors.bottom: parent.bottom
             height: 1
 
-            // Blend the two mode colors for the middle
-            property color midColor: Qt.rgba(
-                (root.leftModeColor.r + root.rightModeColor.r) / 2,
-                (root.leftModeColor.g + root.rightModeColor.g) / 2,
-                (root.leftModeColor.b + root.rightModeColor.b) / 2,
-                1.0
-            )
+            // Black for middle of gradient
+            property color blackColor: Qt.rgba(0, 0, 0, 1)
 
             // Calculate gradient colors based on screen position
-            // Single monitor: full gradient (left -> right)
-            // Leftmost of multiple: left -> mid
-            // Rightmost of multiple: mid -> right
-            // Middle screens: mid -> mid (solid middle color)
+            // Single monitor: full gradient (left -> black -> right)
+            // Leftmost of multiple: left -> black
+            // Rightmost of multiple: black -> right
+            // Middle screens: black -> black (solid black)
             property color startColor: {
                 if (root.isLeftmost) return root.leftModeColor
-                return midColor
+                return blackColor
             }
 
             property color endColor: {
                 if (root.isRightmost) return root.rightModeColor
-                return midColor
+                return blackColor
             }
 
             gradient: Gradient {
@@ -127,6 +122,10 @@ PanelWindow {
                             easing.type: Common.Appearance.easing.standard
                         }
                     }
+                }
+                GradientStop {
+                    position: 0.5
+                    color: bottomBorder.blackColor
                 }
                 GradientStop {
                     position: 1.0
