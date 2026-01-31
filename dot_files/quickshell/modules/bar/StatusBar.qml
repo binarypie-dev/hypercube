@@ -161,14 +161,7 @@ PanelWindow {
             Rectangle {
                 Layout.fillHeight: true
                 Layout.preferredWidth: modeText.implicitWidth + Common.Appearance.spacing.medium * 2
-                color: root.modeColor
-
-                Behavior on color {
-                    ColorAnimation {
-                        duration: Common.Appearance.animation.fast
-                        easing.type: Common.Appearance.easing.standard
-                    }
-                }
+                color: "transparent"
 
                 Text {
                     id: modeText
@@ -177,7 +170,14 @@ PanelWindow {
                     font.family: Common.Appearance.fonts.mono
                     font.pixelSize: Common.Appearance.fontSize.small
                     font.bold: true
-                    color: Common.Appearance.colors.bg
+                    color: root.modeColor
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: Common.Appearance.animation.fast
+                            easing.type: Common.Appearance.easing.standard
+                        }
+                    }
                 }
             }
 
@@ -650,9 +650,10 @@ PanelWindow {
 
             // Power/Battery segment
             Rectangle {
+                id: powerSegment
                 Layout.fillHeight: true
                 Layout.preferredWidth: powerContent.implicitWidth + Common.Appearance.spacing.medium * 2
-                color: powerColor
+                color: "transparent"
 
                 property color powerColor: {
                     if (Services.Battery.present) {
@@ -685,7 +686,7 @@ PanelWindow {
                             return Common.Icons.icons.power
                         }
                         size: Common.Appearance.sizes.iconSmall
-                        color: Common.Appearance.colors.bg
+                        color: powerSegment.powerColor
                     }
 
                     Text {
@@ -694,7 +695,7 @@ PanelWindow {
                         font.family: Common.Appearance.fonts.mono
                         font.pixelSize: Common.Appearance.fontSize.small
                         font.bold: true
-                        color: Common.Appearance.colors.bg
+                        color: powerSegment.powerColor
                     }
                 }
 
@@ -706,7 +707,7 @@ PanelWindow {
 
                     Rectangle {
                         anchors.fill: parent
-                        color: parent.containsMouse ? Qt.rgba(0, 0, 0, 0.1) : "transparent"
+                        color: parent.containsMouse ? Qt.rgba(1, 1, 1, 0.08) : "transparent"
                     }
                 }
             }
