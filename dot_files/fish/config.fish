@@ -1,6 +1,9 @@
 if status is-interactive
     # Commands to run in interactive sessions can go here
 
+    # Disable greeting
+    set -g fish_greeting
+
     # VIM Mode
     fish_vi_key_bindings
 
