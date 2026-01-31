@@ -7,3 +7,11 @@ singleton Icons 1.0 Icons.qml
 ClickCatcher 1.0 ClickCatcher.qml
 Icon 1.0 Icon.qml
 TuiPanel 1.0 TuiPanel.qml
+TuiToggle 1.0 TuiToggle.qml
+TuiButton 1.0 TuiButton.qml
+TuiInput 1.0 TuiInput.qml
+TuiSlider 1.0 TuiSlider.qml
+TuiList 1.0 TuiList.qml
+TuiListItem 1.0 TuiListItem.qml
+TuiCard 1.0 TuiCard.qml
+TuiProgress 1.0 TuiProgress.qml

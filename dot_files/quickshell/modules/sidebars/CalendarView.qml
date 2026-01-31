@@ -7,79 +7,68 @@ import "../common" as Common
 import "../../services" as Services
 import "../../" as Root
 
-// Calendar view for the right sidebar
+// Calendar view - TUI style
 Flickable {
     id: root
-    contentHeight: contentColumn.height
+    contentHeight: contentColumn.height + 10
     clip: true
     boundsBehavior: Flickable.StopAtBounds
+    topMargin: 5
+    bottomMargin: 5
 
     ScrollBar.vertical: ScrollBar {
         policy: ScrollBar.AsNeeded
+        width: 6
+
+        contentItem: Rectangle {
+            implicitWidth: 4
+            radius: 2
+            color: Common.Appearance.colors.bgVisual
+        }
     }
+
+    property int displayMonth: new Date().getMonth()
+    property int displayYear: new Date().getFullYear()
 
     ColumnLayout {
         id: contentColumn
         width: parent.width
-        spacing: Common.Appearance.spacing.large
+        spacing: Common.Appearance.spacing.medium
 
-        // Header with close button
-        RowLayout {
+        // Header
+        Text {
             Layout.fillWidth: true
-            spacing: Common.Appearance.spacing.small
-
-            Text {
-                Layout.fillWidth: true
-                text: "Calendar"
-                font.family: Common.Appearance.fonts.main
-                font.pixelSize: Common.Appearance.fontSize.headline
-                font.weight: Font.Medium
-                color: Common.Appearance.m3colors.onSurface
-            }
-
-            MouseArea {
-                Layout.preferredWidth: 32
-                Layout.preferredHeight: 32
-                cursorShape: Qt.PointingHandCursor
-                hoverEnabled: true
-
-                onClicked: Root.GlobalStates.sidebarRightOpen = false
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: Common.Appearance.rounding.small
-                    color: parent.containsMouse ? Common.Appearance.m3colors.surfaceVariant : "transparent"
-                }
-
-                Common.Icon {
-                    anchors.centerIn: parent
-                    name: Common.Icons.icons.close
-                    size: Common.Appearance.sizes.iconMedium
-                    color: Common.Appearance.m3colors.onSurface
-                }
-            }
+            text: "Calendar"
+            font.family: Common.Appearance.fonts.mono
+            font.pixelSize: Common.Appearance.fontSize.large
+            font.bold: true
+            color: Common.Appearance.colors.fg
         }
 
         // Current date and time display
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: dateTimeColumn.implicitHeight + Common.Appearance.spacing.medium * 2
-            radius: Common.Appearance.rounding.large
-            color: Common.Appearance.m3colors.primaryContainer
+            Layout.preferredHeight: timeContent.height + Common.Appearance.spacing.medium * 2
+            color: Common.Appearance.colors.bgDark
+            border.width: 1
+            border.color: Common.Appearance.colors.border
+            radius: Common.Appearance.rounding.tiny
 
             ColumnLayout {
-                id: dateTimeColumn
-                anchors.fill: parent
+                id: timeContent
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
                 anchors.margins: Common.Appearance.spacing.medium
                 spacing: Common.Appearance.spacing.tiny
 
                 Text {
                     Layout.fillWidth: true
                     text: Services.DateTime.timeString
-                    font.family: Common.Appearance.fonts.main
+                    font.family: Common.Appearance.fonts.mono
                     font.pixelSize: Common.Appearance.fontSize.display
-                    font.weight: Font.Medium
-                    color: Common.Appearance.m3colors.onPrimaryContainer
+                    font.bold: true
+                    color: Common.Appearance.colors.cyan
                     horizontalAlignment: Text.AlignHCenter
                 }
 
@@ -88,21 +77,22 @@ Flickable {
                     text: Services.DateTime.dayNames[Services.DateTime.dayOfWeek] + ", " +
                           Services.DateTime.monthNames[Services.DateTime.month - 1] + " " +
                           Services.DateTime.day + ", " + Services.DateTime.year
-                    font.family: Common.Appearance.fonts.main
+                    font.family: Common.Appearance.fonts.mono
                     font.pixelSize: Common.Appearance.fontSize.normal
-                    color: Common.Appearance.m3colors.onPrimaryContainer
+                    color: Common.Appearance.colors.fgDark
                     horizontalAlignment: Text.AlignHCenter
-                    opacity: 0.8
                 }
             }
         }
 
-        // Calendar card
+        // Calendar
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: calendarContent.implicitHeight + Common.Appearance.spacing.medium * 2
-            radius: Common.Appearance.rounding.large
-            color: Common.Appearance.m3colors.surfaceVariant
+            Layout.preferredHeight: calendarContent.height + Common.Appearance.spacing.medium * 2
+            color: Common.Appearance.colors.bgDark
+            border.width: 1
+            border.color: Common.Appearance.colors.border
+            radius: Common.Appearance.rounding.tiny
 
             ColumnLayout {
                 id: calendarContent
@@ -112,38 +102,19 @@ Flickable {
                 anchors.margins: Common.Appearance.spacing.medium
                 spacing: Common.Appearance.spacing.small
 
-                property int displayMonth: new Date().getMonth()
-                property int displayYear: new Date().getFullYear()
-
                 // Month navigation
                 RowLayout {
                     Layout.fillWidth: true
 
-                    MouseArea {
-                        Layout.preferredWidth: 32
-                        Layout.preferredHeight: 32
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
+                    Common.TuiButton {
+                        icon: Common.Icons.icons.back
                         onClicked: {
-                            if (calendarContent.displayMonth === 0) {
-                                calendarContent.displayMonth = 11
-                                calendarContent.displayYear--
+                            if (root.displayMonth === 0) {
+                                root.displayMonth = 11
+                                root.displayYear--
                             } else {
-                                calendarContent.displayMonth--
+                                root.displayMonth--
                             }
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: Common.Appearance.rounding.small
-                            color: parent.containsMouse ? Common.Appearance.m3colors.surface : "transparent"
-                        }
-
-                        Common.Icon {
-                            anchors.centerIn: parent
-                            name: Common.Icons.icons.back
-                            size: Common.Appearance.sizes.iconMedium
-                            color: Common.Appearance.m3colors.onSurface
                         }
                     }
 
@@ -152,42 +123,26 @@ Flickable {
                         horizontalAlignment: Text.AlignHCenter
                         text: {
                             var months = Services.DateTime.monthNames
-                            if (months && months.length > calendarContent.displayMonth) {
-                                return months[calendarContent.displayMonth] + " " + calendarContent.displayYear
+                            if (months && months.length > root.displayMonth) {
+                                return months[root.displayMonth] + " " + root.displayYear
                             }
-                            return calendarContent.displayYear.toString()
+                            return root.displayYear.toString()
                         }
-                        font.family: Common.Appearance.fonts.main
+                        font.family: Common.Appearance.fonts.mono
                         font.pixelSize: Common.Appearance.fontSize.normal
-                        font.weight: Font.Medium
-                        color: Common.Appearance.m3colors.onSurface
+                        font.bold: true
+                        color: Common.Appearance.colors.fg
                     }
 
-                    MouseArea {
-                        Layout.preferredWidth: 32
-                        Layout.preferredHeight: 32
-                        cursorShape: Qt.PointingHandCursor
-                        hoverEnabled: true
+                    Common.TuiButton {
+                        icon: Common.Icons.icons.forward
                         onClicked: {
-                            if (calendarContent.displayMonth === 11) {
-                                calendarContent.displayMonth = 0
-                                calendarContent.displayYear++
+                            if (root.displayMonth === 11) {
+                                root.displayMonth = 0
+                                root.displayYear++
                             } else {
-                                calendarContent.displayMonth++
+                                root.displayMonth++
                             }
-                        }
-
-                        Rectangle {
-                            anchors.fill: parent
-                            radius: Common.Appearance.rounding.small
-                            color: parent.containsMouse ? Common.Appearance.m3colors.surface : "transparent"
-                        }
-
-                        Common.Icon {
-                            anchors.centerIn: parent
-                            name: Common.Icons.icons.forward
-                            size: Common.Appearance.sizes.iconMedium
-                            color: Common.Appearance.m3colors.onSurface
                         }
                     }
                 }
@@ -204,9 +159,9 @@ Flickable {
                             Layout.fillWidth: true
                             horizontalAlignment: Text.AlignHCenter
                             text: modelData
-                            font.family: Common.Appearance.fonts.main
+                            font.family: Common.Appearance.fonts.mono
                             font.pixelSize: Common.Appearance.fontSize.small
-                            color: Common.Appearance.m3colors.onSurfaceVariant
+                            color: Common.Appearance.colors.comment
                         }
                     }
                 }
@@ -224,11 +179,11 @@ Flickable {
                         Rectangle {
                             width: Math.max((calendarGrid.width - 12) / 7, 20)
                             height: width
-                            radius: width / 2
+                            radius: Common.Appearance.rounding.tiny
 
                             property int dayNumber: {
-                                var firstDay = new Date(calendarContent.displayYear, calendarContent.displayMonth, 1).getDay()
-                                var daysInMonth = new Date(calendarContent.displayYear, calendarContent.displayMonth + 1, 0).getDate()
+                                var firstDay = new Date(root.displayYear, root.displayMonth, 1).getDay()
+                                var daysInMonth = new Date(root.displayYear, root.displayMonth + 1, 0).getDate()
                                 var dayIndex = index - firstDay + 1
 
                                 if (dayIndex < 1 || dayIndex > daysInMonth) {
@@ -240,22 +195,26 @@ Flickable {
                             property bool isToday: {
                                 var now = new Date()
                                 return dayNumber === now.getDate() &&
-                                       calendarContent.displayMonth === now.getMonth() &&
-                                       calendarContent.displayYear === now.getFullYear()
+                                       root.displayMonth === now.getMonth() &&
+                                       root.displayYear === now.getFullYear()
                             }
 
                             color: isToday
-                                ? Common.Appearance.m3colors.primary
+                                ? Common.Appearance.colors.bgVisual
                                 : "transparent"
+
+                            border.width: isToday ? 1 : 0
+                            border.color: Common.Appearance.colors.blue
 
                             Text {
                                 anchors.centerIn: parent
                                 text: dayNumber > 0 ? dayNumber : ""
-                                font.family: Common.Appearance.fonts.main
+                                font.family: Common.Appearance.fonts.mono
                                 font.pixelSize: Common.Appearance.fontSize.small
+                                font.bold: isToday
                                 color: isToday
-                                    ? Common.Appearance.m3colors.onPrimary
-                                    : Common.Appearance.m3colors.onSurface
+                                    ? Common.Appearance.colors.blue
+                                    : Common.Appearance.colors.fg
                             }
                         }
                     }
@@ -264,6 +223,9 @@ Flickable {
         }
 
         // Spacer
-        Item { Layout.fillHeight: true }
+        Item {
+            Layout.fillWidth: true
+            Layout.preferredHeight: Common.Appearance.spacing.medium
+        }
     }
 }

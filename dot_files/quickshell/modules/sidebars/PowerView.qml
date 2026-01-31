@@ -6,66 +6,48 @@ import "../common" as Common
 import "../../services" as Services
 import "../../" as Root
 
-// Power settings view for the right sidebar
+// Power settings view - TUI style
 ColumnLayout {
     id: root
-    spacing: Common.Appearance.spacing.large
+    spacing: Common.Appearance.spacing.medium
+    anchors.topMargin: 5
+    anchors.bottomMargin: 5
 
-    // Refresh power profiles when view opens
-    Component.onCompleted: {
-        // Power service auto-refreshes
-    }
-
-    // Header with close button
-    RowLayout {
+    // Header
+    Text {
         Layout.fillWidth: true
-        spacing: Common.Appearance.spacing.small
-
-        Text {
-            Layout.fillWidth: true
-            text: "Power"
-            font.family: Common.Appearance.fonts.main
-            font.pixelSize: Common.Appearance.fontSize.headline
-            font.weight: Font.Medium
-            color: Common.Appearance.m3colors.onSurface
-        }
-
-        MouseArea {
-            Layout.preferredWidth: 32
-            Layout.preferredHeight: 32
-            cursorShape: Qt.PointingHandCursor
-            hoverEnabled: true
-
-            onClicked: Root.GlobalStates.sidebarRightOpen = false
-
-            Rectangle {
-                anchors.fill: parent
-                radius: Common.Appearance.rounding.small
-                color: parent.containsMouse ? Common.Appearance.m3colors.surfaceVariant : "transparent"
-            }
-
-            Common.Icon {
-                anchors.centerIn: parent
-                name: Common.Icons.icons.close
-                size: Common.Appearance.sizes.iconMedium
-                color: Common.Appearance.m3colors.onSurface
-            }
-        }
+        text: "Power"
+        font.family: Common.Appearance.fonts.mono
+        font.pixelSize: Common.Appearance.fontSize.large
+        font.bold: true
+        color: Common.Appearance.colors.fg
     }
 
-    // ===== SECTION 1: Battery Status (if present) =====
+    // Battery Status
     Rectangle {
         visible: Services.Battery.present
         Layout.fillWidth: true
-        Layout.preferredHeight: batteryContent.implicitHeight + Common.Appearance.spacing.medium * 2
-        radius: Common.Appearance.rounding.large
-        color: Common.Appearance.m3colors.surfaceVariant
+        Layout.preferredHeight: batteryContent.height + Common.Appearance.spacing.medium * 2
+        color: Common.Appearance.colors.bgDark
+        border.width: 1
+        border.color: Common.Appearance.colors.border
+        radius: Common.Appearance.rounding.tiny
 
         ColumnLayout {
             id: batteryContent
-            anchors.fill: parent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
             anchors.margins: Common.Appearance.spacing.medium
             spacing: Common.Appearance.spacing.medium
+
+            Text {
+                text: "Battery"
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: Common.Appearance.fontSize.small
+                font.bold: true
+                color: Common.Appearance.colors.fgDark
+            }
 
             // Battery header row
             RowLayout {
@@ -73,36 +55,37 @@ ColumnLayout {
                 spacing: Common.Appearance.spacing.medium
 
                 Common.Icon {
-                    name: {
-                        if (Services.Battery.pluggedIn && Services.Battery.percent >= 95) {
-                            return Common.Icons.icons.plug
-                        } else if (Services.Battery.charging) {
-                            return Common.Icons.icons.batteryCharging
-                        } else {
-                            return Common.Icons.batteryIcon(Services.Battery.percent, false)
-                        }
-                    }
-                    size: Common.Appearance.sizes.iconXLarge
+                    name: Common.Icons.batteryIcon(Services.Battery.percent, Services.Battery.charging)
+                    size: 24
                     color: {
                         if (Services.Battery.percent <= 20 && !Services.Battery.charging) {
-                            return Common.Appearance.m3colors.error
-                        } else if (Services.Battery.charging || Services.Battery.pluggedIn) {
-                            return Common.Appearance.m3colors.primary
+                            return Common.Appearance.colors.red
                         }
-                        return Common.Appearance.m3colors.onSurface
+                        if (Services.Battery.charging || Services.Battery.pluggedIn) {
+                            return Common.Appearance.colors.cyan
+                        }
+                        return Common.Appearance.colors.fg
                     }
                 }
 
                 ColumnLayout {
                     Layout.fillWidth: true
-                    spacing: 2
+                    spacing: 0
 
                     Text {
-                        text: Services.Battery.percent + "%"
-                        font.family: Common.Appearance.fonts.main
-                        font.pixelSize: Common.Appearance.fontSize.title
-                        font.weight: Font.Medium
-                        color: Common.Appearance.m3colors.onSurface
+                        text: "[" + Services.Battery.percent + "%]"
+                        font.family: Common.Appearance.fonts.mono
+                        font.pixelSize: Common.Appearance.fontSize.large
+                        font.bold: true
+                        color: {
+                            if (Services.Battery.percent <= 20 && !Services.Battery.charging) {
+                                return Common.Appearance.colors.red
+                            }
+                            if (Services.Battery.charging || Services.Battery.pluggedIn) {
+                                return Common.Appearance.colors.cyan
+                            }
+                            return Common.Appearance.colors.fg
+                        }
                     }
 
                     Text {
@@ -111,50 +94,34 @@ ColumnLayout {
                                 return "Fully charged"
                             } else if (Services.Battery.charging) {
                                 const timeStr = Services.Battery.timeRemainingString()
-                                return "Charging" + (timeStr ? " - " + timeStr + " until full" : "")
+                                return "Charging" + (timeStr ? " - " + timeStr : "")
                             } else {
                                 const timeStr = Services.Battery.timeRemainingString()
                                 return timeStr ? timeStr + " remaining" : "On battery"
                             }
                         }
-                        font.family: Common.Appearance.fonts.main
+                        font.family: Common.Appearance.fonts.mono
                         font.pixelSize: Common.Appearance.fontSize.small
-                        color: Common.Appearance.m3colors.onSurfaceVariant
+                        color: Common.Appearance.colors.fgDark
                     }
                 }
             }
 
             // Battery progress bar
-            Rectangle {
+            Common.TuiProgress {
                 Layout.fillWidth: true
-                Layout.preferredHeight: 8
-                radius: 4
-                color: Common.Appearance.m3colors.surface
-
-                Rectangle {
-                    width: parent.width * (Services.Battery.percent / 100)
-                    height: parent.height
-                    radius: parent.radius
-                    color: {
-                        if (Services.Battery.percent <= 10) {
-                            return Common.Appearance.m3colors.error
-                        } else if (Services.Battery.percent <= 20) {
-                            return Common.Appearance.m3colors.orange
-                        } else if (Services.Battery.charging || Services.Battery.pluggedIn) {
-                            return Common.Appearance.m3colors.primary
-                        }
-                        return Common.Appearance.m3colors.tertiary
-                    }
-
-                    Behavior on width {
-                        NumberAnimation { duration: 300; easing.type: Easing.OutCubic }
-                    }
-                }
+                value: Services.Battery.percent / 100
+                useThresholds: true
+                lowThreshold: 20
+                mediumThreshold: 50
+                normalColor: Services.Battery.charging
+                    ? Common.Appearance.colors.cyan
+                    : Common.Appearance.colors.green
             }
         }
     }
 
-    // ===== SECTION 2: Power Profile (if available and battery present) =====
+    // Power Profile
     ColumnLayout {
         visible: Services.Power.profilesAvailable && Services.Battery.present
         Layout.fillWidth: true
@@ -162,81 +129,70 @@ ColumnLayout {
 
         Text {
             text: "Power Profile"
-            font.family: Common.Appearance.fonts.main
+            font.family: Common.Appearance.fonts.mono
             font.pixelSize: Common.Appearance.fontSize.small
-            font.weight: Font.Medium
-            color: Common.Appearance.m3colors.onSurfaceVariant
+            font.bold: true
+            color: Common.Appearance.colors.fgDark
         }
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: profilesColumn.implicitHeight + Common.Appearance.spacing.medium * 2
-            radius: Common.Appearance.rounding.large
-            color: Common.Appearance.m3colors.surfaceVariant
+            Layout.preferredHeight: profilesContent.height + Common.Appearance.spacing.small * 2
+            color: Common.Appearance.colors.bgDark
+            border.width: 1
+            border.color: Common.Appearance.colors.border
+            radius: Common.Appearance.rounding.tiny
 
             ColumnLayout {
-                id: profilesColumn
-                anchors.fill: parent
-                anchors.margins: Common.Appearance.spacing.medium
-                spacing: Common.Appearance.spacing.small
+                id: profilesContent
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.margins: Common.Appearance.spacing.small
+                spacing: 0
 
                 Repeater {
                     model: Services.Power.availableProfiles
 
-                    delegate: MouseArea {
+                    delegate: Rectangle {
                         id: profileItem
                         required property string modelData
 
                         Layout.fillWidth: true
-                        Layout.preferredHeight: 48
-                        hoverEnabled: true
-                        cursorShape: Qt.PointingHandCursor
+                        height: 32
+                        color: profileMouse.containsMouse
+                            ? Common.Appearance.colors.bgHighlight
+                            : (modelData === Services.Power.currentProfile ? Common.Appearance.colors.bgVisual : "transparent")
 
-                        onClicked: Services.Power.setProfile(modelData)
-
-                        Rectangle {
+                        MouseArea {
+                            id: profileMouse
                             anchors.fill: parent
-                            radius: Common.Appearance.rounding.medium
-                            color: profileItem.modelData === Services.Power.currentProfile
-                                ? Common.Appearance.m3colors.primaryContainer
-                                : (profileItem.containsMouse
-                                    ? Common.Appearance.surfaceLayer(2)
-                                    : "transparent")
-
-                            Behavior on color {
-                                ColorAnimation { duration: 150 }
-                            }
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onClicked: Services.Power.setProfile(modelData)
                         }
 
                         RowLayout {
                             anchors.fill: parent
                             anchors.leftMargin: Common.Appearance.spacing.medium
                             anchors.rightMargin: Common.Appearance.spacing.medium
-                            spacing: Common.Appearance.spacing.medium
-
-                            Common.Icon {
-                                name: Services.Power.profileIcon(profileItem.modelData)
-                                size: Common.Appearance.sizes.iconMedium
-                                color: profileItem.modelData === Services.Power.currentProfile
-                                    ? Common.Appearance.m3colors.onPrimaryContainer
-                                    : Common.Appearance.m3colors.onSurfaceVariant
-                            }
+                            spacing: Common.Appearance.spacing.small
 
                             Text {
                                 Layout.fillWidth: true
-                                text: Services.Power.profileDisplayName(profileItem.modelData)
-                                font.family: Common.Appearance.fonts.main
+                                text: Services.Power.profileDisplayName(modelData)
+                                font.family: Common.Appearance.fonts.mono
                                 font.pixelSize: Common.Appearance.fontSize.normal
-                                color: profileItem.modelData === Services.Power.currentProfile
-                                    ? Common.Appearance.m3colors.onPrimaryContainer
-                                    : Common.Appearance.m3colors.onSurface
+                                color: Common.Appearance.colors.fg
                             }
 
-                            Common.Icon {
-                                visible: profileItem.modelData === Services.Power.currentProfile
-                                name: Common.Icons.icons.check
-                                size: Common.Appearance.sizes.iconSmall
-                                color: Common.Appearance.m3colors.onPrimaryContainer
+                            Text {
+                                visible: modelData === Services.Power.currentProfile
+                                text: "[*]"
+                                font.family: Common.Appearance.fonts.mono
+                                font.pixelSize: Common.Appearance.fontSize.small
+                                font.bold: true
+                                color: Common.Appearance.colors.cyan
                             }
                         }
                     }
@@ -245,85 +201,84 @@ ColumnLayout {
         }
     }
 
-    // ===== SECTION 3: Session Actions =====
+    // Session Actions
     ColumnLayout {
         Layout.fillWidth: true
         spacing: Common.Appearance.spacing.small
 
         Text {
             text: "Session"
-            font.family: Common.Appearance.fonts.main
+            font.family: Common.Appearance.fonts.mono
             font.pixelSize: Common.Appearance.fontSize.small
-            font.weight: Font.Medium
-            color: Common.Appearance.m3colors.onSurfaceVariant
+            font.bold: true
+            color: Common.Appearance.colors.fgDark
         }
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: actionsGrid.implicitHeight + Common.Appearance.spacing.medium * 2
-            radius: Common.Appearance.rounding.large
-            color: Common.Appearance.m3colors.surfaceVariant
+            Layout.preferredHeight: actionsGrid.height + Common.Appearance.spacing.medium * 2
+            color: Common.Appearance.colors.bgDark
+            border.width: 1
+            border.color: Common.Appearance.colors.border
+            radius: Common.Appearance.rounding.tiny
 
             GridLayout {
                 id: actionsGrid
-                anchors.fill: parent
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
                 anchors.margins: Common.Appearance.spacing.medium
                 columns: 2
                 rowSpacing: Common.Appearance.spacing.small
                 columnSpacing: Common.Appearance.spacing.small
 
-                // Lock
-                PowerActionButton {
+                Common.TuiButton {
                     Layout.fillWidth: true
                     icon: Common.Icons.icons.lock
-                    label: "Lock"
+                    text: "Lock"
                     onClicked: {
                         Root.GlobalStates.closeAll()
                         Services.Power.lock()
                     }
                 }
 
-                // Suspend
-                PowerActionButton {
+                Common.TuiButton {
                     Layout.fillWidth: true
                     icon: Common.Icons.icons.sleep
-                    label: "Suspend"
+                    text: "Suspend"
                     onClicked: {
                         Root.GlobalStates.closeAll()
                         Services.Power.suspend()
                     }
                 }
 
-                // Logout
-                PowerActionButton {
+                Common.TuiButton {
                     Layout.fillWidth: true
                     icon: Common.Icons.icons.logout
-                    label: "Log Out"
+                    text: "Log Out"
                     onClicked: {
                         Root.GlobalStates.closeAll()
                         Services.Power.logout()
                     }
                 }
 
-                // Restart
-                PowerActionButton {
+                Common.TuiButton {
                     Layout.fillWidth: true
                     icon: Common.Icons.icons.restart
-                    label: "Restart"
-                    dangerous: true
+                    text: "Restart"
+                    danger: true
                     onClicked: {
                         Root.GlobalStates.closeAll()
                         Services.Power.reboot()
                     }
                 }
 
-                // Power Off (spans 2 columns)
-                PowerActionButton {
+                Common.TuiButton {
                     Layout.fillWidth: true
                     Layout.columnSpan: 2
                     icon: Common.Icons.icons.power
-                    label: "Power Off"
-                    dangerous: true
+                    text: "Power Off"
+                    danger: true
                     onClicked: {
                         Root.GlobalStates.closeAll()
                         Services.Power.powerOff()
@@ -335,54 +290,4 @@ ColumnLayout {
 
     // Spacer
     Item { Layout.fillHeight: true }
-
-    // ===== Power Action Button Component =====
-    component PowerActionButton: MouseArea {
-        id: actionButton
-        property string icon: ""
-        property string label: ""
-        property bool dangerous: false
-
-        implicitHeight: 56
-        hoverEnabled: true
-        cursorShape: Qt.PointingHandCursor
-
-        Rectangle {
-            anchors.fill: parent
-            radius: Common.Appearance.rounding.medium
-            color: actionButton.containsMouse
-                ? (actionButton.dangerous
-                    ? Common.Appearance.m3colors.errorContainer
-                    : Common.Appearance.surfaceLayer(2))
-                : "transparent"
-
-            Behavior on color {
-                ColorAnimation { duration: 150 }
-            }
-        }
-
-        ColumnLayout {
-            anchors.centerIn: parent
-            spacing: Common.Appearance.spacing.tiny
-
-            Common.Icon {
-                Layout.alignment: Qt.AlignHCenter
-                name: actionButton.icon
-                size: Common.Appearance.sizes.iconMedium
-                color: actionButton.dangerous && actionButton.containsMouse
-                    ? Common.Appearance.m3colors.onErrorContainer
-                    : Common.Appearance.m3colors.onSurface
-            }
-
-            Text {
-                Layout.alignment: Qt.AlignHCenter
-                text: actionButton.label
-                font.family: Common.Appearance.fonts.main
-                font.pixelSize: Common.Appearance.fontSize.small
-                color: actionButton.dangerous && actionButton.containsMouse
-                    ? Common.Appearance.m3colors.onErrorContainer
-                    : Common.Appearance.m3colors.onSurface
-            }
-        }
-    }
 }

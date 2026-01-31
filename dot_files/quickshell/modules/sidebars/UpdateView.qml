@@ -8,58 +8,37 @@ import "../common" as Common
 import "../../" as Root
 import "../../services" as Services
 
-// System updates view for the left sidebar
+// System updates view for the left sidebar - TUI style
 ColumnLayout {
     id: root
-    spacing: Common.Appearance.spacing.large
+    spacing: Common.Appearance.spacing.medium
+    anchors.topMargin: 5
+    anchors.bottomMargin: 5
 
     // Header
-    RowLayout {
+    Text {
         Layout.fillWidth: true
-        spacing: Common.Appearance.spacing.small
-
-        Text {
-            Layout.fillWidth: true
-            text: "System Updates"
-            font.family: Common.Appearance.fonts.main
-            font.pixelSize: Common.Appearance.fontSize.headline
-            font.weight: Font.Medium
-            color: Common.Appearance.m3colors.onSurface
-        }
-
-        MouseArea {
-            Layout.preferredWidth: 32
-            Layout.preferredHeight: 32
-            cursorShape: Qt.PointingHandCursor
-            hoverEnabled: true
-
-            onClicked: Root.GlobalStates.sidebarLeftOpen = false
-
-            Rectangle {
-                anchors.fill: parent
-                radius: Common.Appearance.rounding.small
-                color: parent.containsMouse ? Common.Appearance.m3colors.surfaceVariant : "transparent"
-            }
-
-            Common.Icon {
-                anchors.centerIn: parent
-                name: Common.Icons.icons.close
-                size: Common.Appearance.sizes.iconMedium
-                color: Common.Appearance.m3colors.onSurface
-            }
-        }
+        text: "System Updates"
+        font.family: Common.Appearance.fonts.mono
+        font.pixelSize: Common.Appearance.fontSize.large
+        font.bold: true
+        color: Common.Appearance.colors.fg
     }
 
     // System Updates Card
     Rectangle {
         Layout.fillWidth: true
-        Layout.preferredHeight: updatesContent.implicitHeight + Common.Appearance.spacing.medium * 2
-        radius: Common.Appearance.rounding.large
-        color: Common.Appearance.m3colors.surfaceVariant
+        Layout.preferredHeight: updateContent.height + Common.Appearance.spacing.medium * 2
+        color: Common.Appearance.colors.bgDark
+        border.width: 1
+        border.color: Common.Appearance.colors.border
+        radius: Common.Appearance.rounding.tiny
 
         ColumnLayout {
-            id: updatesContent
-            anchors.fill: parent
+            id: updateContent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
             anchors.margins: Common.Appearance.spacing.medium
             spacing: Common.Appearance.spacing.medium
 
@@ -67,14 +46,15 @@ ColumnLayout {
                 Layout.fillWidth: true
                 spacing: Common.Appearance.spacing.medium
 
+                // Status icon
                 Common.Icon {
                     name: Services.Updates.updateCount > 0
-                        ? Common.Icons.icons.update
+                        ? Common.Icons.icons.download
                         : Common.Icons.icons.checkCircle
-                    size: Common.Appearance.sizes.iconLarge
+                    size: 20
                     color: Services.Updates.updateCount > 0
-                        ? Common.Appearance.m3colors.primary
-                        : Common.Appearance.m3colors.onSurfaceVariant
+                        ? Common.Appearance.colors.cyan
+                        : Common.Appearance.colors.green
                 }
 
                 ColumnLayout {
@@ -82,52 +62,30 @@ ColumnLayout {
                     spacing: 2
 
                     Text {
-                        text: "System Updates"
-                        font.family: Common.Appearance.fonts.main
+                        text: Services.Updates.updateCount > 0
+                            ? "[" + Services.Updates.updateCount + " updates available]"
+                            : "[System up to date]"
+                        font.family: Common.Appearance.fonts.mono
                         font.pixelSize: Common.Appearance.fontSize.normal
-                        font.weight: Font.Medium
-                        color: Common.Appearance.m3colors.onSurface
+                        font.bold: true
+                        color: Services.Updates.updateCount > 0
+                            ? Common.Appearance.colors.cyan
+                            : Common.Appearance.colors.fg
                     }
 
                     Text {
                         text: Services.Updates.summary()
-                        font.family: Common.Appearance.fonts.main
+                        font.family: Common.Appearance.fonts.mono
                         font.pixelSize: Common.Appearance.fontSize.small
-                        color: Common.Appearance.m3colors.onSurfaceVariant
+                        color: Common.Appearance.colors.fgDark
                     }
                 }
 
                 // Refresh button
-                MouseArea {
-                    Layout.preferredWidth: 32
-                    Layout.preferredHeight: 32
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
+                Common.TuiButton {
+                    icon: Common.Icons.icons.refresh
                     enabled: !Services.Updates.checking
-
                     onClicked: Services.Updates.checkUpdates()
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: Common.Appearance.rounding.small
-                        color: parent.containsMouse ? Common.Appearance.m3colors.surface : "transparent"
-                    }
-
-                    Common.Icon {
-                        anchors.centerIn: parent
-                        name: Common.Icons.icons.refresh
-                        size: Common.Appearance.sizes.iconSmall
-                        color: Common.Appearance.m3colors.onSurfaceVariant
-                        opacity: Services.Updates.checking ? 0.5 : 1
-
-                        RotationAnimation on rotation {
-                            running: Services.Updates.checking
-                            from: 0
-                            to: 360
-                            duration: 1000
-                            loops: Animation.Infinite
-                        }
-                    }
                 }
             }
 
@@ -135,10 +93,9 @@ ColumnLayout {
             Text {
                 visible: Services.Updates.lastChecked !== ""
                 text: "Last checked: " + Services.Updates.lastChecked
-                font.family: Common.Appearance.fonts.main
-                font.pixelSize: Common.Appearance.fontSize.smallest
-                color: Common.Appearance.m3colors.onSurfaceVariant
-                opacity: 0.7
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: Common.Appearance.fontSize.small
+                color: Common.Appearance.colors.comment
             }
         }
     }

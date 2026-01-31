@@ -7,218 +7,107 @@ import "../common" as Common
 import "../../services" as Services
 import "../../" as Root
 
-// Audio settings view for the right sidebar
+// Audio settings view - TUI style
 ColumnLayout {
     id: root
-    spacing: Common.Appearance.spacing.large
+    spacing: Common.Appearance.spacing.medium
+    anchors.topMargin: 5
+    anchors.bottomMargin: 5
 
-    // Refresh devices when view opens
     Component.onCompleted: Services.Audio.refreshDevices()
 
-    // Header with close button
-    RowLayout {
+    // Header
+    Text {
         Layout.fillWidth: true
-        spacing: Common.Appearance.spacing.small
-
-        Text {
-            Layout.fillWidth: true
-            text: "Audio"
-            font.family: Common.Appearance.fonts.main
-            font.pixelSize: Common.Appearance.fontSize.headline
-            font.weight: Font.Medium
-            color: Common.Appearance.m3colors.onSurface
-        }
-
-        MouseArea {
-            Layout.preferredWidth: 32
-            Layout.preferredHeight: 32
-            cursorShape: Qt.PointingHandCursor
-            hoverEnabled: true
-
-            onClicked: Root.GlobalStates.sidebarRightOpen = false
-
-            Rectangle {
-                anchors.fill: parent
-                radius: Common.Appearance.rounding.small
-                color: parent.containsMouse ? Common.Appearance.m3colors.surfaceVariant : "transparent"
-            }
-
-            Common.Icon {
-                anchors.centerIn: parent
-                name: Common.Icons.icons.close
-                size: Common.Appearance.sizes.iconMedium
-                color: Common.Appearance.m3colors.onSurface
-            }
-        }
+        text: "Audio"
+        font.family: Common.Appearance.fonts.mono
+        font.pixelSize: Common.Appearance.fontSize.large
+        font.bold: true
+        color: Common.Appearance.colors.fg
     }
 
     // Output (Speaker) section
     Rectangle {
         Layout.fillWidth: true
-        Layout.preferredHeight: outputContent.implicitHeight + Common.Appearance.spacing.medium * 2
-        radius: Common.Appearance.rounding.large
-        color: Common.Appearance.m3colors.surfaceVariant
+        Layout.preferredHeight: outputContent.height + Common.Appearance.spacing.medium * 2
+        color: Common.Appearance.colors.bgDark
+        border.width: 1
+        border.color: Common.Appearance.colors.border
+        radius: Common.Appearance.rounding.tiny
 
         ColumnLayout {
             id: outputContent
-            anchors.fill: parent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
             anchors.margins: Common.Appearance.spacing.medium
             spacing: Common.Appearance.spacing.medium
 
-            // Header row with mute toggle
+            // Section header
+            Text {
+                text: "Output"
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: Common.Appearance.fontSize.small
+                font.bold: true
+                color: Common.Appearance.colors.fgDark
+            }
+
+            // Speaker header row
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Common.Appearance.spacing.medium
 
                 Common.Icon {
-                    name: Services.Audio.muted
-                        ? Common.Icons.icons.volumeOff
-                        : Common.Icons.volumeIcon(Services.Audio.volume * 100, false)
-                    size: Common.Appearance.sizes.iconLarge
+                    name: Common.Icons.volumeIcon(Services.Audio.volume * 100, Services.Audio.muted)
+                    size: 20
                     color: Services.Audio.muted
-                        ? Common.Appearance.m3colors.onSurfaceVariant
-                        : Common.Appearance.m3colors.primary
+                        ? Common.Appearance.colors.fgDark
+                        : Common.Appearance.colors.fg
                 }
 
                 ColumnLayout {
-                    spacing: 2
+                    Layout.fillWidth: true
+                    spacing: 0
 
                     Text {
                         text: "Speaker"
-                        font.family: Common.Appearance.fonts.main
+                        font.family: Common.Appearance.fonts.mono
                         font.pixelSize: Common.Appearance.fontSize.normal
-                        font.weight: Font.Medium
-                        color: Common.Appearance.m3colors.onSurface
+                        font.bold: true
+                        color: Common.Appearance.colors.fg
                     }
 
                     Text {
                         text: Services.Audio.muted
-                            ? "Muted"
-                            : Math.round(Services.Audio.volume * 100) + "%"
-                        font.family: Common.Appearance.fonts.main
+                            ? "[MUTED]"
+                            : "[" + Math.round(Services.Audio.volume * 100) + "%]"
+                        font.family: Common.Appearance.fonts.mono
                         font.pixelSize: Common.Appearance.fontSize.small
-                        color: Common.Appearance.m3colors.onSurfaceVariant
+                        color: Services.Audio.muted
+                            ? Common.Appearance.colors.red
+                            : Common.Appearance.colors.fgDark
                     }
                 }
 
-                Item { Layout.fillWidth: true }
-
-                // Mute toggle switch
-                MouseArea {
-                    Layout.preferredWidth: 52
-                    Layout.preferredHeight: 32
-                    Layout.alignment: Qt.AlignRight
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Services.Audio.toggleMute()
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: height / 2
-                        color: !Services.Audio.muted
-                            ? Common.Appearance.m3colors.primary
-                            : Common.Appearance.m3colors.surfaceVariant
-                        border.width: !Services.Audio.muted ? 0 : 2
-                        border.color: Common.Appearance.m3colors.outline
-
-                        Behavior on color {
-                            ColorAnimation { duration: 150 }
-                        }
-
-                        Rectangle {
-                            width: !Services.Audio.muted ? 24 : 16
-                            height: !Services.Audio.muted ? 24 : 16
-                            radius: height / 2
-                            anchors.verticalCenter: parent.verticalCenter
-                            x: !Services.Audio.muted ? parent.width - width - 4 : 4
-                            color: !Services.Audio.muted
-                                ? Common.Appearance.m3colors.onPrimary
-                                : Common.Appearance.m3colors.outline
-
-                            Behavior on x {
-                                NumberAnimation { duration: 150; easing.type: Easing.InOutQuad }
-                            }
-                            Behavior on width {
-                                NumberAnimation { duration: 150 }
-                            }
-                            Behavior on height {
-                                NumberAnimation { duration: 150 }
-                            }
-                            Behavior on color {
-                                ColorAnimation { duration: 150 }
-                            }
-                        }
-                    }
+                Common.TuiToggle {
+                    checked: !Services.Audio.muted
+                    onToggled: Services.Audio.toggleMute()
                 }
             }
 
             // Volume slider
-            RowLayout {
+            Common.TuiSlider {
                 Layout.fillWidth: true
-                spacing: Common.Appearance.spacing.small
-
-                Common.Icon {
-                    name: Common.Icons.icons.volumeLow
-                    size: Common.Appearance.sizes.iconSmall
-                    color: Common.Appearance.m3colors.onSurfaceVariant
-                }
-
-                // Custom slider using MouseArea
-                Item {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 32
-
-                    Rectangle {
-                        id: volumeTrack
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        height: 6
-                        radius: 3
-                        color: Common.Appearance.m3colors.outline
-
-                        Rectangle {
-                            width: Services.Audio.volume * parent.width
-                            height: parent.height
-                            radius: 3
-                            color: Common.Appearance.m3colors.primary
-                        }
-                    }
-
-                    Rectangle {
-                        id: volumeHandle
-                        width: 20
-                        height: 20
-                        radius: 10
-                        x: Services.Audio.volume * (parent.width - width)
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: Common.Appearance.m3colors.primaryContainer
-                        border.color: Common.Appearance.m3colors.primary
-                        border.width: 2
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onPressed: updateVolume(mouse)
-                        onPositionChanged: if (pressed) updateVolume(mouse)
-
-                        function updateVolume(mouse) {
-                            let newValue = Math.max(0, Math.min(1, mouse.x / width))
-                            Services.Audio.setVolume(newValue)
-                        }
-                    }
-                }
-
-                Common.Icon {
-                    name: Common.Icons.icons.volumeHigh
-                    size: Common.Appearance.sizes.iconSmall
-                    color: Common.Appearance.m3colors.onSurfaceVariant
+                value: Services.Audio.volume
+                accentColor: Common.Appearance.colors.blue
+                onMoved: function(newValue) {
+                    Services.Audio.setVolume(newValue)
                 }
             }
 
             // Output device selector
             DeviceSelector {
                 Layout.fillWidth: true
-                label: "Output Device"
                 devices: Services.Audio.sinks
                 onDeviceSelected: function(name) {
                     Services.Audio.setDefaultSink(name)
@@ -230,186 +119,99 @@ ColumnLayout {
     // Input (Microphone) section
     Rectangle {
         Layout.fillWidth: true
-        Layout.preferredHeight: inputContent.implicitHeight + Common.Appearance.spacing.medium * 2
-        radius: Common.Appearance.rounding.large
-        color: Common.Appearance.m3colors.surfaceVariant
+        Layout.preferredHeight: inputContent.height + Common.Appearance.spacing.medium * 2
+        color: Common.Appearance.colors.bgDark
+        border.width: 1
+        border.color: Common.Appearance.colors.border
+        radius: Common.Appearance.rounding.tiny
 
         ColumnLayout {
             id: inputContent
-            anchors.fill: parent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
             anchors.margins: Common.Appearance.spacing.medium
             spacing: Common.Appearance.spacing.medium
 
-            // Header row with mute toggle
+            // Section header
+            Text {
+                text: "Input"
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: Common.Appearance.fontSize.small
+                font.bold: true
+                color: Common.Appearance.colors.fgDark
+            }
+
+            // Mic header row
             RowLayout {
                 Layout.fillWidth: true
                 spacing: Common.Appearance.spacing.medium
 
                 Common.Icon {
-                    name: Services.Audio.micMuted
-                        ? Common.Icons.icons.micOff
-                        : Common.Icons.icons.mic
-                    size: Common.Appearance.sizes.iconLarge
+                    name: Services.Audio.micMuted ? Common.Icons.icons.micOff : Common.Icons.icons.mic
+                    size: 20
                     color: Services.Privacy.micInUse
-                        ? Common.Appearance.m3colors.error
+                        ? Common.Appearance.colors.red
                         : (Services.Audio.micMuted
-                            ? Common.Appearance.m3colors.onSurfaceVariant
-                            : Common.Appearance.m3colors.primary)
+                            ? Common.Appearance.colors.fgDark
+                            : Common.Appearance.colors.fg)
                 }
 
                 ColumnLayout {
-                    spacing: 2
+                    Layout.fillWidth: true
+                    spacing: 0
 
                     Text {
                         text: "Microphone"
-                        font.family: Common.Appearance.fonts.main
+                        font.family: Common.Appearance.fonts.mono
                         font.pixelSize: Common.Appearance.fontSize.normal
-                        font.weight: Font.Medium
-                        color: Common.Appearance.m3colors.onSurface
+                        font.bold: true
+                        color: Common.Appearance.colors.fg
                     }
 
                     Text {
                         text: {
                             if (Services.Audio.micMuted && Services.Privacy.micInUse) {
-                                return "Muted (in use)"
+                                return "[MUTED] (in use)"
                             } else if (Services.Audio.micMuted) {
-                                return "Muted"
+                                return "[MUTED]"
                             } else if (Services.Privacy.micInUse) {
-                                return "In use - " + Math.round(Services.Audio.micVolume * 100) + "%"
+                                return "[" + Math.round(Services.Audio.micVolume * 100) + "%] (in use)"
                             } else {
-                                return Math.round(Services.Audio.micVolume * 100) + "%"
+                                return "[" + Math.round(Services.Audio.micVolume * 100) + "%]"
                             }
                         }
-                        font.family: Common.Appearance.fonts.main
+                        font.family: Common.Appearance.fonts.mono
                         font.pixelSize: Common.Appearance.fontSize.small
                         color: Services.Privacy.micInUse
-                            ? Common.Appearance.m3colors.error
-                            : Common.Appearance.m3colors.onSurfaceVariant
+                            ? Common.Appearance.colors.red
+                            : (Services.Audio.micMuted
+                                ? Common.Appearance.colors.red
+                                : Common.Appearance.colors.fgDark)
                     }
                 }
 
-                Item { Layout.fillWidth: true }
-
-                // Mute toggle switch
-                MouseArea {
-                    Layout.preferredWidth: 52
-                    Layout.preferredHeight: 32
-                    Layout.alignment: Qt.AlignRight
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: Services.Audio.toggleMicMute()
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: height / 2
-                        color: !Services.Audio.micMuted
-                            ? Common.Appearance.m3colors.primary
-                            : Common.Appearance.m3colors.surfaceVariant
-                        border.width: !Services.Audio.micMuted ? 0 : 2
-                        border.color: Common.Appearance.m3colors.outline
-
-                        Behavior on color {
-                            ColorAnimation { duration: 150 }
-                        }
-
-                        Rectangle {
-                            width: !Services.Audio.micMuted ? 24 : 16
-                            height: !Services.Audio.micMuted ? 24 : 16
-                            radius: height / 2
-                            anchors.verticalCenter: parent.verticalCenter
-                            x: !Services.Audio.micMuted ? parent.width - width - 4 : 4
-                            color: !Services.Audio.micMuted
-                                ? Common.Appearance.m3colors.onPrimary
-                                : Common.Appearance.m3colors.outline
-
-                            Behavior on x {
-                                NumberAnimation { duration: 150; easing.type: Easing.InOutQuad }
-                            }
-                            Behavior on width {
-                                NumberAnimation { duration: 150 }
-                            }
-                            Behavior on height {
-                                NumberAnimation { duration: 150 }
-                            }
-                            Behavior on color {
-                                ColorAnimation { duration: 150 }
-                            }
-                        }
-                    }
+                Common.TuiToggle {
+                    checked: !Services.Audio.micMuted
+                    onToggled: Services.Audio.toggleMicMute()
                 }
             }
 
             // Mic volume slider
-            RowLayout {
+            Common.TuiSlider {
                 Layout.fillWidth: true
-                spacing: Common.Appearance.spacing.small
-
-                Common.Icon {
-                    name: Common.Icons.icons.micOff
-                    size: Common.Appearance.sizes.iconSmall
-                    color: Common.Appearance.m3colors.onSurfaceVariant
-                }
-
-                // Custom slider using MouseArea
-                Item {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 32
-
-                    property color accentColor: Services.Privacy.micInUse
-                        ? Common.Appearance.m3colors.error
-                        : Common.Appearance.m3colors.primary
-
-                    Rectangle {
-                        id: micTrack
-                        anchors.left: parent.left
-                        anchors.right: parent.right
-                        anchors.verticalCenter: parent.verticalCenter
-                        height: 6
-                        radius: 3
-                        color: Common.Appearance.m3colors.outline
-
-                        Rectangle {
-                            width: Services.Audio.micVolume * parent.width
-                            height: parent.height
-                            radius: 3
-                            color: parent.parent.accentColor
-                        }
-                    }
-
-                    Rectangle {
-                        id: micHandle
-                        width: 20
-                        height: 20
-                        radius: 10
-                        x: Services.Audio.micVolume * (parent.width - width)
-                        anchors.verticalCenter: parent.verticalCenter
-                        color: Common.Appearance.m3colors.primaryContainer
-                        border.color: parent.accentColor
-                        border.width: 2
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onPressed: updateMicVolume(mouse)
-                        onPositionChanged: if (pressed) updateMicVolume(mouse)
-
-                        function updateMicVolume(mouse) {
-                            let newValue = Math.max(0, Math.min(1, mouse.x / width))
-                            Services.Audio.setMicVolume(newValue)
-                        }
-                    }
-                }
-
-                Common.Icon {
-                    name: Common.Icons.icons.mic
-                    size: Common.Appearance.sizes.iconSmall
-                    color: Common.Appearance.m3colors.onSurfaceVariant
+                value: Services.Audio.micVolume
+                accentColor: Services.Privacy.micInUse
+                    ? Common.Appearance.colors.red
+                    : Common.Appearance.colors.blue
+                onMoved: function(newValue) {
+                    Services.Audio.setMicVolume(newValue)
                 }
             }
 
             // Input device selector
             DeviceSelector {
                 Layout.fillWidth: true
-                label: "Input Device"
                 devices: Services.Audio.sources
                 onDeviceSelected: function(name) {
                     Services.Audio.setDefaultSource(name)
@@ -421,10 +223,9 @@ ColumnLayout {
     // Spacer
     Item { Layout.fillHeight: true }
 
-    // Device selector dropdown component
+    // Device selector component
     component DeviceSelector: ColumnLayout {
         id: selector
-        property string label: ""
         property var devices: []
         property bool expanded: false
 
@@ -433,18 +234,22 @@ ColumnLayout {
         spacing: Common.Appearance.spacing.small
 
         // Current selection / dropdown trigger
-        MouseArea {
+        Rectangle {
             Layout.fillWidth: true
-            Layout.preferredHeight: 40
-            cursorShape: Qt.PointingHandCursor
-            hoverEnabled: true
+            Layout.preferredHeight: 32
+            color: selectorMouse.containsMouse
+                ? Common.Appearance.colors.bgHighlight
+                : "transparent"
+            border.width: 1
+            border.color: Common.Appearance.colors.border
+            radius: Common.Appearance.rounding.tiny
 
-            onClicked: selector.expanded = !selector.expanded
-
-            Rectangle {
+            MouseArea {
+                id: selectorMouse
                 anchors.fill: parent
-                radius: Common.Appearance.rounding.medium
-                color: parent.containsMouse ? Common.Appearance.surfaceLayer(2) : Common.Appearance.surfaceLayer(1)
+                cursorShape: Qt.PointingHandCursor
+                hoverEnabled: true
+                onClicked: selector.expanded = !selector.expanded
             }
 
             RowLayout {
@@ -453,38 +258,26 @@ ColumnLayout {
                 anchors.rightMargin: Common.Appearance.spacing.small
                 spacing: Common.Appearance.spacing.small
 
-                ColumnLayout {
+                Text {
                     Layout.fillWidth: true
-                    spacing: 0
-
-                    Text {
-                        text: selector.label
-                        font.family: Common.Appearance.fonts.main
-                        font.pixelSize: Common.Appearance.fontSize.small
-                        color: Common.Appearance.m3colors.onSurfaceVariant
-                    }
-
-                    Text {
-                        Layout.fillWidth: true
-                        text: {
-                            for (let i = 0; i < selector.devices.length; i++) {
-                                if (selector.devices[i].isDefault) {
-                                    return selector.devices[i].description
-                                }
+                    text: {
+                        for (let i = 0; i < selector.devices.length; i++) {
+                            if (selector.devices[i].isDefault) {
+                                return selector.devices[i].description
                             }
-                            return "No device"
                         }
-                        font.family: Common.Appearance.fonts.main
-                        font.pixelSize: Common.Appearance.fontSize.normal
-                        color: Common.Appearance.m3colors.onSurface
-                        elide: Text.ElideRight
+                        return "-- No device --"
                     }
+                    font.family: Common.Appearance.fonts.mono
+                    font.pixelSize: Common.Appearance.fontSize.small
+                    color: Common.Appearance.colors.fg
+                    elide: Text.ElideRight
                 }
 
                 Common.Icon {
-                    name: selector.expanded ? Common.Icons.icons.expand : Common.Icons.icons.collapse
-                    size: Common.Appearance.sizes.iconSmall
-                    color: Common.Appearance.m3colors.onSurfaceVariant
+                    name: selector.expanded ? Common.Icons.icons.collapse : Common.Icons.icons.expand
+                    size: 12
+                    color: Common.Appearance.colors.fgDark
                 }
             }
         }
@@ -493,52 +286,50 @@ ColumnLayout {
         ColumnLayout {
             visible: selector.expanded
             Layout.fillWidth: true
-            spacing: 2
+            spacing: 0
 
             Repeater {
                 model: selector.devices
 
-                MouseArea {
+                Rectangle {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 36
-                    cursorShape: Qt.PointingHandCursor
-                    hoverEnabled: true
+                    Layout.preferredHeight: 28
+                    color: deviceMouse.containsMouse
+                        ? Common.Appearance.colors.bgHighlight
+                        : (modelData.isDefault ? Common.Appearance.colors.bgVisual : "transparent")
 
-                    onClicked: {
-                        selector.deviceSelected(modelData.name)
-                        selector.expanded = false
-                    }
-
-                    Rectangle {
+                    MouseArea {
+                        id: deviceMouse
                         anchors.fill: parent
-                        radius: Common.Appearance.rounding.small
-                        color: modelData.isDefault
-                            ? Common.Appearance.m3colors.primaryContainer
-                            : (parent.containsMouse ? Common.Appearance.surfaceLayer(2) : "transparent")
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: {
+                            selector.deviceSelected(modelData.name)
+                            selector.expanded = false
+                        }
                     }
 
                     RowLayout {
                         anchors.fill: parent
-                        anchors.leftMargin: Common.Appearance.spacing.small
-                        anchors.rightMargin: Common.Appearance.spacing.small
-                        spacing: Common.Appearance.spacing.small
+                        anchors.leftMargin: Common.Appearance.spacing.medium
+                        anchors.rightMargin: Common.Appearance.spacing.medium
 
                         Text {
                             Layout.fillWidth: true
                             text: modelData.description
-                            font.family: Common.Appearance.fonts.main
-                            font.pixelSize: Common.Appearance.fontSize.normal
-                            color: modelData.isDefault
-                                ? Common.Appearance.m3colors.onPrimaryContainer
-                                : Common.Appearance.m3colors.onSurface
+                            font.family: Common.Appearance.fonts.mono
+                            font.pixelSize: Common.Appearance.fontSize.small
+                            color: Common.Appearance.colors.fg
                             elide: Text.ElideRight
                         }
 
-                        Common.Icon {
+                        Text {
                             visible: modelData.isDefault
-                            name: Common.Icons.icons.check
-                            size: Common.Appearance.sizes.iconSmall
-                            color: Common.Appearance.m3colors.onPrimaryContainer
+                            text: "[*]"
+                            font.family: Common.Appearance.fonts.mono
+                            font.pixelSize: Common.Appearance.fontSize.small
+                            font.bold: true
+                            color: Common.Appearance.colors.cyan
                         }
                     }
                 }

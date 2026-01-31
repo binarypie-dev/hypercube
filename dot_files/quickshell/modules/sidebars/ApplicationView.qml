@@ -8,12 +8,12 @@ import "../common" as Common
 import "../../" as Root
 import "../../services" as Services
 
-// Vim-style application launcher with TUI aesthetics
+// TUI-style application launcher
 ColumnLayout {
     id: root
-    anchors.fill: parent
-    anchors.margins: 0
     spacing: 0
+    anchors.topMargin: 5
+    anchors.bottomMargin: 5
 
     property var searchResults: []
     property var allApps: []
@@ -33,51 +33,24 @@ ColumnLayout {
         allAppsQueryId = Services.Datacube.queryAll("", 500)
     }
 
-    // Command line search (vim-style at top)
+    // Search bar
     Rectangle {
         Layout.fillWidth: true
-        Layout.preferredHeight: 28
-        Layout.alignment: Qt.AlignTop
+        Layout.preferredHeight: 32
         color: Common.Appearance.colors.bgDark
 
         RowLayout {
             anchors.fill: parent
-            anchors.leftMargin: Common.Appearance.spacing.small
-            anchors.rightMargin: Common.Appearance.spacing.small
-            spacing: 0
-
-            // Command prompt indicator
-            Text {
-                text: root.isSearching ? "/" : ":"
-                font.family: Common.Appearance.fonts.mono
-                font.pixelSize: Common.Appearance.fontSize.small
-                font.bold: true
-                color: Common.Appearance.colors.cyan
-            }
+            anchors.leftMargin: Common.Appearance.spacing.medium
+            anchors.rightMargin: Common.Appearance.spacing.medium
+            spacing: Common.Appearance.spacing.small
 
             // Search input
-            TextInput {
+            Common.TuiInput {
                 id: searchInput
                 Layout.fillWidth: true
-                Layout.leftMargin: Common.Appearance.spacing.tiny
-                font.family: Common.Appearance.fonts.mono
-                font.pixelSize: Common.Appearance.fontSize.small
-                color: Common.Appearance.colors.fg
-                clip: true
-                selectByMouse: true
-                selectionColor: Common.Appearance.colors.bgVisual
-                selectedTextColor: Common.Appearance.colors.fg
-
-                property string placeholderText: "Type to search..."
-
-                Text {
-                    anchors.fill: parent
-                    verticalAlignment: Text.AlignVCenter
-                    text: searchInput.placeholderText
-                    font: searchInput.font
-                    color: Common.Appearance.colors.comment
-                    visible: !searchInput.text && !searchInput.activeFocus
-                }
+                Layout.preferredHeight: 24
+                placeholderText: "Search applications..."
 
                 onTextChanged: {
                     root.currentQuery = text
@@ -86,6 +59,13 @@ ColumnLayout {
                         queryDebounceTimer.restart()
                     } else {
                         searchResults = []
+                    }
+                }
+
+                onAccepted: {
+                    if (appListView.currentIndex >= 0 && appListView.currentIndex < appListView.count) {
+                        const apps = root.isSearching ? searchResults : allApps
+                        launchApp(apps[appListView.currentIndex])
                     }
                 }
 
@@ -99,14 +79,7 @@ ColumnLayout {
 
                 Keys.onDownPressed: appListView.incrementCurrentIndex()
                 Keys.onUpPressed: appListView.decrementCurrentIndex()
-                Keys.onReturnPressed: {
-                    if (appListView.currentIndex >= 0 && appListView.currentIndex < appListView.count) {
-                        const apps = root.isSearching ? searchResults : allApps
-                        launchApp(apps[appListView.currentIndex])
-                    }
-                }
 
-                // Ctrl+J/K navigation
                 Keys.onPressed: (event) => {
                     if (event.key === Qt.Key_J && (event.modifiers & Qt.ControlModifier)) {
                         appListView.incrementCurrentIndex()
@@ -118,24 +91,14 @@ ColumnLayout {
                 }
             }
 
-            // Results count (vim-style)
+            // Results count
             Text {
                 visible: appListView.count > 0
                 text: "[" + (appListView.currentIndex + 1) + "/" + appListView.count + "]"
                 font.family: Common.Appearance.fonts.mono
-                font.pixelSize: Common.Appearance.fontSize.tiny
+                font.pixelSize: Common.Appearance.fontSize.small
                 color: Common.Appearance.colors.comment
             }
-        }
-
-        // Cursor blink simulation
-        Rectangle {
-            visible: searchInput.activeFocus && searchInput.cursorVisible
-            x: searchInput.x + searchInput.cursorRectangle.x + Common.Appearance.spacing.small + 8
-            y: (parent.height - height) / 2
-            width: 2
-            height: Common.Appearance.fontSize.small
-            color: Common.Appearance.colors.fg
         }
     }
 
@@ -146,7 +109,7 @@ ColumnLayout {
         color: Common.Appearance.colors.border
     }
 
-    // App list (vim-style)
+    // App list
     ListView {
         id: appListView
         Layout.fillWidth: true
@@ -156,87 +119,44 @@ ColumnLayout {
 
         model: root.isSearching ? searchResults : allApps
 
-        // Line numbers like vim
-        property int lineNumberWidth: 36
-
-        delegate: MouseArea {
+        delegate: Rectangle {
             id: appDelegate
             required property var modelData
             required property int index
 
             width: appListView.width
-            height: 28
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-
-            onClicked: launchApp(modelData)
+            height: 32
 
             property bool isSelected: appListView.currentIndex === index
 
-            // Selection highlight (vim-style visual line)
-            Rectangle {
-                anchors.fill: parent
-                color: appDelegate.isSelected
-                    ? Common.Appearance.colors.bgVisual
-                    : (appDelegate.containsMouse
-                        ? Common.Appearance.colors.bgHighlight
-                        : "transparent")
+            color: {
+                if (isSelected) return Common.Appearance.colors.bgVisual
+                if (delegateMouseArea.containsMouse) return Common.Appearance.colors.bgHighlight
+                return "transparent"
             }
 
             RowLayout {
                 anchors.fill: parent
-                spacing: 0
-
-                // Line number (vim-style gutter)
-                Rectangle {
-                    Layout.preferredWidth: appListView.lineNumberWidth
-                    Layout.fillHeight: true
-                    color: Common.Appearance.colors.bgDark
-
-                    Text {
-                        anchors.right: parent.right
-                        anchors.rightMargin: Common.Appearance.spacing.small
-                        anchors.verticalCenter: parent.verticalCenter
-                        text: (index + 1).toString()
-                        font.family: Common.Appearance.fonts.mono
-                        font.pixelSize: Common.Appearance.fontSize.tiny
-                        color: appDelegate.isSelected
-                            ? Common.Appearance.colors.yellow
-                            : Common.Appearance.colors.comment
-                    }
-                }
-
-                // Separator line
-                Rectangle {
-                    Layout.preferredWidth: 1
-                    Layout.fillHeight: true
-                    color: Common.Appearance.colors.fgGutter
-                }
+                anchors.leftMargin: Common.Appearance.spacing.medium
+                anchors.rightMargin: Common.Appearance.spacing.medium
+                spacing: Common.Appearance.spacing.medium
 
                 // App icon
                 Item {
-                    Layout.preferredWidth: 28
-                    Layout.preferredHeight: 28
-                    Layout.leftMargin: Common.Appearance.spacing.small
-
-                    property string iconSource: modelData.icon || ""
+                    Layout.preferredWidth: 20
+                    Layout.preferredHeight: 20
 
                     Image {
                         id: appIcon
-                        anchors.centerIn: parent
-                        width: 18
-                        height: 18
-                        source: parent.iconSource
-                        sourceSize: Qt.size(18, 18)
+                        anchors.fill: parent
+                        source: modelData.icon || ""
+                        sourceSize: Qt.size(20, 20)
                         smooth: true
                         visible: status === Image.Ready
                     }
 
-                    // Fallback: colored letter
                     Rectangle {
-                        anchors.centerIn: parent
-                        width: 18
-                        height: 18
+                        anchors.fill: parent
                         visible: appIcon.status !== Image.Ready
                         radius: Common.Appearance.rounding.tiny
                         color: Common.Appearance.colors.bgVisual
@@ -244,6 +164,7 @@ ColumnLayout {
                         Text {
                             anchors.centerIn: parent
                             text: modelData.name ? modelData.name.charAt(0).toUpperCase() : "?"
+                            font.family: Common.Appearance.fonts.mono
                             font.pixelSize: 10
                             font.bold: true
                             color: Common.Appearance.colors.cyan
@@ -251,29 +172,38 @@ ColumnLayout {
                     }
                 }
 
-                // App name
-                Text {
+                // App name and description
+                ColumnLayout {
                     Layout.fillWidth: true
-                    Layout.leftMargin: Common.Appearance.spacing.small
-                    text: modelData.name || "Unknown"
-                    font.family: Common.Appearance.fonts.mono
-                    font.pixelSize: Common.Appearance.fontSize.small
-                    color: appDelegate.isSelected
-                        ? Common.Appearance.colors.fg
-                        : Common.Appearance.colors.fgDark
-                    elide: Text.ElideRight
-                }
+                    spacing: 0
 
-                // Category/description (dimmed)
-                Text {
-                    Layout.rightMargin: Common.Appearance.spacing.medium
-                    visible: modelData.genericName && modelData.genericName !== modelData.name
-                    text: modelData.genericName || ""
-                    font.family: Common.Appearance.fonts.mono
-                    font.pixelSize: Common.Appearance.fontSize.tiny
-                    color: Common.Appearance.colors.comment
-                    elide: Text.ElideRight
+                    Text {
+                        Layout.fillWidth: true
+                        text: modelData.name || "Unknown"
+                        font.family: Common.Appearance.fonts.mono
+                        font.pixelSize: Common.Appearance.fontSize.normal
+                        color: Common.Appearance.colors.fg
+                        elide: Text.ElideRight
+                    }
+
+                    Text {
+                        visible: modelData.genericName && modelData.genericName !== modelData.name
+                        Layout.fillWidth: true
+                        text: modelData.genericName || ""
+                        font.family: Common.Appearance.fonts.mono
+                        font.pixelSize: Common.Appearance.fontSize.small
+                        color: Common.Appearance.colors.comment
+                        elide: Text.ElideRight
+                    }
                 }
+            }
+
+            MouseArea {
+                id: delegateMouseArea
+                anchors.fill: parent
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: launchApp(modelData)
             }
         }
 
@@ -289,11 +219,11 @@ ColumnLayout {
 
         ScrollBar.vertical: ScrollBar {
             policy: ScrollBar.AsNeeded
-            width: 8
+            width: 6
 
             contentItem: Rectangle {
-                implicitWidth: 6
-                radius: 3
+                implicitWidth: 4
+                radius: 2
                 color: Common.Appearance.colors.bgVisual
             }
         }
@@ -390,7 +320,7 @@ ColumnLayout {
     }
 
     function focusSearch() {
-        searchInput.forceActiveFocus()
+        searchInput.focusInput()
         appListView.currentIndex = 0
     }
 }
