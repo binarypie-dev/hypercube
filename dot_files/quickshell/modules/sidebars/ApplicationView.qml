@@ -11,6 +11,8 @@ import "../../services" as Services
 // Vim-style application launcher with TUI aesthetics
 ColumnLayout {
     id: root
+    anchors.fill: parent
+    anchors.margins: 0
     spacing: 0
 
     property var searchResults: []
@@ -29,6 +31,119 @@ ColumnLayout {
 
     function loadAllApps() {
         allAppsQueryId = Services.Datacube.queryAll("", 500)
+    }
+
+    // Command line search (vim-style at top)
+    Rectangle {
+        Layout.fillWidth: true
+        Layout.preferredHeight: 28
+        Layout.alignment: Qt.AlignTop
+        color: Common.Appearance.colors.bgDark
+
+        RowLayout {
+            anchors.fill: parent
+            anchors.leftMargin: Common.Appearance.spacing.small
+            anchors.rightMargin: Common.Appearance.spacing.small
+            spacing: 0
+
+            // Command prompt indicator
+            Text {
+                text: root.isSearching ? "/" : ":"
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: Common.Appearance.fontSize.small
+                font.bold: true
+                color: Common.Appearance.colors.cyan
+            }
+
+            // Search input
+            TextInput {
+                id: searchInput
+                Layout.fillWidth: true
+                Layout.leftMargin: Common.Appearance.spacing.tiny
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: Common.Appearance.fontSize.small
+                color: Common.Appearance.colors.fg
+                clip: true
+                selectByMouse: true
+                selectionColor: Common.Appearance.colors.bgVisual
+                selectedTextColor: Common.Appearance.colors.fg
+
+                property string placeholderText: "Type to search..."
+
+                Text {
+                    anchors.fill: parent
+                    verticalAlignment: Text.AlignVCenter
+                    text: searchInput.placeholderText
+                    font: searchInput.font
+                    color: Common.Appearance.colors.comment
+                    visible: !searchInput.text && !searchInput.activeFocus
+                }
+
+                onTextChanged: {
+                    root.currentQuery = text
+                    root.isSearching = text.trim() !== ""
+                    if (root.isSearching) {
+                        queryDebounceTimer.restart()
+                    } else {
+                        searchResults = []
+                    }
+                }
+
+                Keys.onEscapePressed: {
+                    if (text !== "") {
+                        text = ""
+                    } else {
+                        Root.GlobalStates.sidebarLeftOpen = false
+                    }
+                }
+
+                Keys.onDownPressed: appListView.incrementCurrentIndex()
+                Keys.onUpPressed: appListView.decrementCurrentIndex()
+                Keys.onReturnPressed: {
+                    if (appListView.currentIndex >= 0 && appListView.currentIndex < appListView.count) {
+                        const apps = root.isSearching ? searchResults : allApps
+                        launchApp(apps[appListView.currentIndex])
+                    }
+                }
+
+                // Ctrl+J/K navigation
+                Keys.onPressed: (event) => {
+                    if (event.key === Qt.Key_J && (event.modifiers & Qt.ControlModifier)) {
+                        appListView.incrementCurrentIndex()
+                        event.accepted = true
+                    } else if (event.key === Qt.Key_K && (event.modifiers & Qt.ControlModifier)) {
+                        appListView.decrementCurrentIndex()
+                        event.accepted = true
+                    }
+                }
+            }
+
+            // Results count (vim-style)
+            Text {
+                visible: appListView.count > 0
+                text: "[" + (appListView.currentIndex + 1) + "/" + appListView.count + "]"
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: Common.Appearance.fontSize.tiny
+                color: Common.Appearance.colors.comment
+            }
+        }
+
+        // Cursor blink simulation
+        Rectangle {
+            visible: searchInput.activeFocus && searchInput.cursorVisible
+            x: searchInput.x + searchInput.cursorRectangle.x + Common.Appearance.spacing.small + 8
+            y: (parent.height - height) / 2
+            width: 2
+            height: Common.Appearance.fontSize.small
+            color: Common.Appearance.colors.fg
+        }
+    }
+
+    // Separator line
+    Rectangle {
+        Layout.fillWidth: true
+        Layout.preferredHeight: 1
+        color: Common.Appearance.colors.border
     }
 
     // App list (vim-style)
@@ -181,118 +296,6 @@ ColumnLayout {
                 radius: 3
                 color: Common.Appearance.colors.bgVisual
             }
-        }
-    }
-
-    // Separator line
-    Rectangle {
-        Layout.fillWidth: true
-        Layout.preferredHeight: 1
-        color: Common.Appearance.colors.border
-    }
-
-    // Command line search (vim-style at bottom)
-    Rectangle {
-        Layout.fillWidth: true
-        Layout.preferredHeight: 28
-        color: Common.Appearance.colors.bgDark
-
-        RowLayout {
-            anchors.fill: parent
-            anchors.leftMargin: Common.Appearance.spacing.small
-            anchors.rightMargin: Common.Appearance.spacing.small
-            spacing: 0
-
-            // Command prompt indicator
-            Text {
-                text: root.isSearching ? "/" : ":"
-                font.family: Common.Appearance.fonts.mono
-                font.pixelSize: Common.Appearance.fontSize.small
-                font.bold: true
-                color: Common.Appearance.colors.cyan
-            }
-
-            // Search input
-            TextInput {
-                id: searchInput
-                Layout.fillWidth: true
-                Layout.leftMargin: Common.Appearance.spacing.tiny
-                font.family: Common.Appearance.fonts.mono
-                font.pixelSize: Common.Appearance.fontSize.small
-                color: Common.Appearance.colors.fg
-                clip: true
-                selectByMouse: true
-                selectionColor: Common.Appearance.colors.bgVisual
-                selectedTextColor: Common.Appearance.colors.fg
-
-                property string placeholderText: "Type to search..."
-
-                Text {
-                    anchors.fill: parent
-                    verticalAlignment: Text.AlignVCenter
-                    text: searchInput.placeholderText
-                    font: searchInput.font
-                    color: Common.Appearance.colors.comment
-                    visible: !searchInput.text && !searchInput.activeFocus
-                }
-
-                onTextChanged: {
-                    root.currentQuery = text
-                    root.isSearching = text.trim() !== ""
-                    if (root.isSearching) {
-                        queryDebounceTimer.restart()
-                    } else {
-                        searchResults = []
-                    }
-                }
-
-                Keys.onEscapePressed: {
-                    if (text !== "") {
-                        text = ""
-                    } else {
-                        Root.GlobalStates.sidebarLeftOpen = false
-                    }
-                }
-
-                Keys.onDownPressed: appListView.incrementCurrentIndex()
-                Keys.onUpPressed: appListView.decrementCurrentIndex()
-                Keys.onReturnPressed: {
-                    if (appListView.currentIndex >= 0 && appListView.currentIndex < appListView.count) {
-                        const apps = root.isSearching ? searchResults : allApps
-                        launchApp(apps[appListView.currentIndex])
-                    }
-                }
-
-                // Ctrl+J/K navigation
-                Keys.onPressed: (event) => {
-                    if (event.key === Qt.Key_J && (event.modifiers & Qt.ControlModifier)) {
-                        appListView.incrementCurrentIndex()
-                        event.accepted = true
-                    } else if (event.key === Qt.Key_K && (event.modifiers & Qt.ControlModifier)) {
-                        appListView.decrementCurrentIndex()
-                        event.accepted = true
-                    }
-                }
-            }
-
-            // Results count (vim-style)
-            Text {
-                visible: appListView.count > 0
-                text: "[" + (appListView.currentIndex + 1) + "/" + appListView.count + "]"
-                font.family: Common.Appearance.fonts.mono
-                font.pixelSize: Common.Appearance.fontSize.tiny
-                color: Common.Appearance.colors.comment
-            }
-        }
-
-        // Cursor blink simulation
-        Rectangle {
-            visible: searchInput.activeFocus && searchInput.cursorVisible
-            x: searchInput.x + searchInput.cursorRectangle.x + Common.Appearance.spacing.small + 8
-            y: (parent.height - height) / 2
-            width: 2
-            height: Common.Appearance.fontSize.small
-            color: Common.Appearance.colors.fg
         }
     }
 
