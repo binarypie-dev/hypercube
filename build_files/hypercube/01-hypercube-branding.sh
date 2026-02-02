@@ -4,6 +4,9 @@
 
 set -ouex pipefail
 
+### Install Plymouth script module (required for custom boot theme)
+dnf5 -y install plymouth-plugin-script
+
 # Variables (can be overridden via build args)
 IMAGE_NAME="${IMAGE_NAME:-hypercube}"
 IMAGE_VENDOR="${IMAGE_VENDOR:-binarypie-dev}"

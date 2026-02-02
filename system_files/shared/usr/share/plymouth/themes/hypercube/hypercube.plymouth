@@ -1,17 +1,8 @@
 [Plymouth Theme]
 Name=Hypercube
-Description=Hypercube boot theme with Tokyo Night colors
-ModuleName=two-step
+Description=Hypercube boot theme with Tokyo Night colors and centered LUKS dialog
+ModuleName=script
 
-[two-step]
+[script]
 ImageDir=/usr/share/plymouth/themes/hypercube
-HorizontalAlignment=.5
-VerticalAlignment=.5
-WatermarkHorizontalAlignment=.5
-WatermarkVerticalAlignment=.5
-Transition=none
-TransitionDuration=0.0
-BackgroundStartColor=0x1a1b26
-BackgroundEndColor=0x1a1b26
-ProgressBarBackgroundColor=0x565f89
-ProgressBarForegroundColor=0x7aa2f7
+ScriptFile=/usr/share/plymouth/themes/hypercube/hypercube.script

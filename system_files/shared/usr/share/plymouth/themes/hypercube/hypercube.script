@@ -1,0 +1,308 @@
+// Hypercube Plymouth Boot Theme Script
+// Tokyo Night color scheme with TUI aesthetic
+
+// ============================================================================
+// Color Definitions (Tokyo Night Moon - matching Ghostty)
+// ============================================================================
+// Background:    #000000 (pure black)
+// Foreground:    #c8d3f5 (text/prompts)
+// Blue accent:   #7aa2f7 (dialog border)
+// Cyan:          #86e1fc (password bullets)
+// Selection:     #2f334d (dialog background)
+// Dark bg:       #1e2030 (entry field background)
+// Error:         #ff757f (error messages)
+// Success:       #9ece6a (success messages)
+
+// ============================================================================
+// Background Setup
+// ============================================================================
+Window.SetBackgroundTopColor(0.0, 0.0, 0.0);
+Window.SetBackgroundBottomColor(0.0, 0.0, 0.0);
+
+// ============================================================================
+// Screen Dimensions
+// ============================================================================
+screen_width = Window.GetWidth();
+screen_height = Window.GetHeight();
+
+// ============================================================================
+// Logo Display
+// ============================================================================
+logo.image = Image("logo.png");
+logo.sprite = Sprite(logo.image);
+
+logo.width = logo.image.GetWidth();
+logo.height = logo.image.GetHeight();
+
+// Center logo horizontally, position in upper third of screen
+logo.x = Window.GetX() + (screen_width - logo.width) / 2;
+logo.y = Window.GetY() + (screen_height / 4) - (logo.height / 2);
+
+logo.sprite.SetPosition(logo.x, logo.y, 10);
+logo.sprite.SetOpacity(1.0);
+
+// ============================================================================
+// Animation Variables for subtle logo pulse
+// ============================================================================
+global.pulse_direction = 1;
+global.pulse_opacity = 1.0;
+global.pulse_min = 0.85;
+global.pulse_max = 1.0;
+global.pulse_speed = 0.003;
+
+// ============================================================================
+// Password Dialog Elements
+// ============================================================================
+// Load dialog assets
+box.image = Image("box.png");
+entry.image = Image("entry.png");
+bullet.image = Image("bullet.png");
+
+// Dialog dimensions
+box.width = box.image.GetWidth();
+box.height = box.image.GetHeight();
+entry.width = entry.image.GetWidth();
+entry.height = entry.image.GetHeight();
+bullet.width = bullet.image.GetWidth();
+bullet.height = bullet.image.GetHeight();
+
+// Dialog positioning (centered, below logo)
+box.x = Window.GetX() + (screen_width - box.width) / 2;
+box.y = Window.GetY() + (screen_height / 2) + 20;
+
+// Entry field positioning (inside the dialog box)
+entry.x = box.x + (box.width - entry.width) / 2;
+entry.y = box.y + box.height - entry.height - 15;
+
+// ============================================================================
+// Password Dialog State
+// ============================================================================
+global.dialog_visible = 0;
+global.bullet_count = 0;
+global.bullets = [];
+global.prompt_text = "";
+
+// Dialog sprites (created when needed)
+global.box_sprite = NULL;
+global.entry_sprite = NULL;
+global.prompt_sprite = NULL;
+
+// ============================================================================
+// Message Display State
+// ============================================================================
+global.message_sprites = [];
+global.message_count = 0;
+
+// ============================================================================
+// Helper Function: Create Text Image
+// ============================================================================
+fun CreateTextImage(text, r, g, b) {
+    local.image = Image.Text(text, r, g, b, 1, "Sans 14");
+    return local.image;
+}
+
+// ============================================================================
+// Password Dialog Functions
+// ============================================================================
+fun ShowPasswordDialog(prompt) {
+    global.dialog_visible = 1;
+    global.prompt_text = prompt;
+    global.bullet_count = 0;
+
+    // Create and position box sprite
+    global.box_sprite = Sprite(box.image);
+    global.box_sprite.SetPosition(box.x, box.y, 20);
+    global.box_sprite.SetOpacity(1.0);
+
+    // Create and position entry field sprite
+    global.entry_sprite = Sprite(entry.image);
+    global.entry_sprite.SetPosition(entry.x, entry.y, 21);
+    global.entry_sprite.SetOpacity(1.0);
+
+    // Create prompt text (foreground color: #c8d3f5 = 200/255, 211/255, 245/255)
+    local.prompt_image = CreateTextImage(prompt, 0.784, 0.827, 0.961);
+    global.prompt_sprite = Sprite(local.prompt_image);
+
+    // Position prompt text inside the dialog box
+    local.prompt_x = box.x + 20;
+    local.prompt_y = box.y + 15;
+    global.prompt_sprite.SetPosition(local.prompt_x, local.prompt_y, 22);
+    global.prompt_sprite.SetOpacity(1.0);
+}
+
+fun HidePasswordDialog() {
+    global.dialog_visible = 0;
+
+    if (global.box_sprite)
+        global.box_sprite.SetOpacity(0);
+    if (global.entry_sprite)
+        global.entry_sprite.SetOpacity(0);
+    if (global.prompt_sprite)
+        global.prompt_sprite.SetOpacity(0);
+
+    // Hide all bullets
+    for (i = 0; i < global.bullet_count; i++) {
+        if (global.bullets[i])
+            global.bullets[i].SetOpacity(0);
+    }
+    global.bullet_count = 0;
+}
+
+fun UpdateBullets(count) {
+    // Hide excess bullets
+    for (i = count; i < global.bullet_count; i++) {
+        if (global.bullets[i])
+            global.bullets[i].SetOpacity(0);
+    }
+
+    // Show/create bullets up to count
+    local.bullet_start_x = entry.x + 15;
+    local.bullet_y = entry.y + (entry.height - bullet.height) / 2;
+    local.bullet_spacing = bullet.width + 4;
+
+    for (i = 0; i < count; i++) {
+        if (!global.bullets[i]) {
+            global.bullets[i] = Sprite(bullet.image);
+        }
+        local.bullet_x = bullet_start_x + (i * bullet_spacing);
+        global.bullets[i].SetPosition(local.bullet_x, local.bullet_y, 23);
+        global.bullets[i].SetOpacity(1.0);
+    }
+
+    global.bullet_count = count;
+}
+
+// ============================================================================
+// Plymouth Callbacks
+// ============================================================================
+
+// Password prompt callback
+Plymouth.SetDisplayPasswordFunction(
+    fun(prompt, bullets) {
+        if (!global.dialog_visible) {
+            ShowPasswordDialog(prompt);
+        }
+        UpdateBullets(bullets);
+    }
+);
+
+// Password prompt done callback
+Plymouth.SetDisplayNormalFunction(
+    fun() {
+        HidePasswordDialog();
+    }
+);
+
+// Question callback (uses same dialog)
+Plymouth.SetDisplayQuestionFunction(
+    fun(prompt, entry_text) {
+        if (!global.dialog_visible) {
+            ShowPasswordDialog(prompt);
+        }
+    }
+);
+
+// Message callback
+Plymouth.SetMessageFunction(
+    fun(message) {
+        // Create message text sprite
+        // Default to foreground color
+        local.r = 0.784;  // #c8d3f5
+        local.g = 0.827;
+        local.b = 0.961;
+
+        // Check for error keywords and use error color (#ff757f)
+        if (message.Find("error") >= 0 || message.Find("Error") >= 0 ||
+            message.Find("fail") >= 0 || message.Find("Fail") >= 0 ||
+            message.Find("wrong") >= 0 || message.Find("Wrong") >= 0 ||
+            message.Find("invalid") >= 0 || message.Find("Invalid") >= 0) {
+            local.r = 1.0;    // #ff757f
+            local.g = 0.459;
+            local.b = 0.498;
+        }
+
+        // Check for success keywords and use success color (#9ece6a)
+        if (message.Find("success") >= 0 || message.Find("Success") >= 0 ||
+            message.Find("complete") >= 0 || message.Find("Complete") >= 0 ||
+            message.Find("unlocked") >= 0 || message.Find("Unlocked") >= 0) {
+            local.r = 0.620;  // #9ece6a
+            local.g = 0.808;
+            local.b = 0.416;
+        }
+
+        local.message_image = CreateTextImage(message, local.r, local.g, local.b);
+        local.message_sprite = Sprite(local.message_image);
+
+        // Position message below the dialog (or below logo if dialog not visible)
+        local.message_y;
+        if (global.dialog_visible) {
+            local.message_y = box.y + box.height + 20 + (global.message_count * 25);
+        } else {
+            local.message_y = logo.y + logo.height + 60 + (global.message_count * 25);
+        }
+
+        local.message_x = (screen_width - local.message_image.GetWidth()) / 2;
+        local.message_sprite.SetPosition(local.message_x, local.message_y, 15);
+        local.message_sprite.SetOpacity(1.0);
+
+        global.message_sprites[global.message_count] = local.message_sprite;
+        global.message_count++;
+    }
+);
+
+// Status update callback
+Plymouth.SetUpdateStatusFunction(
+    fun(status) {
+        // Could display boot status here if desired
+    }
+);
+
+// ============================================================================
+// Refresh Callback (Animation Loop)
+// ============================================================================
+Plymouth.SetRefreshFunction(
+    fun() {
+        // Subtle logo pulse animation
+        global.pulse_opacity += global.pulse_direction * global.pulse_speed;
+
+        if (global.pulse_opacity >= global.pulse_max) {
+            global.pulse_opacity = global.pulse_max;
+            global.pulse_direction = -1;
+        } else if (global.pulse_opacity <= global.pulse_min) {
+            global.pulse_opacity = global.pulse_min;
+            global.pulse_direction = 1;
+        }
+
+        logo.sprite.SetOpacity(global.pulse_opacity);
+    }
+);
+
+// ============================================================================
+// Boot Progress (optional spinner/progress display)
+// ============================================================================
+global.progress = 0;
+
+Plymouth.SetBootProgressFunction(
+    fun(time, progress) {
+        global.progress = progress;
+        // Progress is 0.0 to 1.0
+        // Could add progress bar here if desired
+    }
+);
+
+// ============================================================================
+// Quit Callback
+// ============================================================================
+Plymouth.SetQuitFunction(
+    fun() {
+        // Fade out logo
+        logo.sprite.SetOpacity(0);
+        HidePasswordDialog();
+
+        // Hide all messages
+        for (i = 0; i < global.message_count; i++) {
+            if (global.message_sprites[i])
+                global.message_sprites[i].SetOpacity(0);
+        }
+    }
+);
