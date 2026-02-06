@@ -1,5 +1,5 @@
 Name:           hyprwire
-Version:        0.2.1
+Version:        0.3.0
 Release:        1%{?dist}
 Summary:        A fast and consistent wire protocol for IPC
 
@@ -63,5 +63,7 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Thu Feb 05 2026 Hypercube <hypercube@binarypie.dev> - 0.3.0-1
+- Update to 0.3.0
 * Thu Jan 15 2026 Hypercube <hypercube@binarypie.dev> - 0.2.1-1
 - Initial package for Hypercube
