@@ -1,6 +1,6 @@
 Name:           hyprwire
 Version:        0.3.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A fast and consistent wire protocol for IPC
 
 License:        BSD-3-Clause
@@ -49,7 +49,7 @@ Development files for %{name}.
 %files
 %license LICENSE
 %doc README.md
-%{_libdir}/lib%{name}.so.2
+%{_libdir}/lib%{name}.so.3
 %{_libdir}/lib%{name}.so.%{version}
 
 %files scanner
@@ -63,6 +63,9 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Thu Feb 06 2026 Hypercube <hypercube@binarypie.dev> - 0.3.0-2
+- Fix SONAME: library changed from .so.2 to .so.3
+
 * Thu Feb 05 2026 Hypercube <hypercube@binarypie.dev> - 0.3.0-1
 - Update to 0.3.0
 * Thu Jan 15 2026 Hypercube <hypercube@binarypie.dev> - 0.2.1-1
