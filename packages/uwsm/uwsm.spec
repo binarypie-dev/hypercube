@@ -1,5 +1,5 @@
 Name:           uwsm
-Version:        0.26.1
+Version:        0.26.3
 Release:        1%{?dist}
 Summary:        Universal Wayland Session Manager
 
@@ -81,6 +81,8 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/*.desktop
 %{_userunitdir}/wayland-*.target
 
 %changelog
+* Sun Feb 15 2026 Hypercube <hypercube@binarypie.dev> - 0.26.3-1
+- Update to 0.26.3
 * Fri Jan 30 2026 Hypercube <hypercube@binarypie.dev> - 0.26.1-1
 - Update to 0.26.1
 * Thu Jan 15 2026 Hypercube <hypercube@binarypie.dev> - 0.26.0-1
