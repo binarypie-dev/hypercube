@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           resterm
-Version:        0.21.3
+Version:        0.23.1
 Release:        1%{?dist}
 Summary:        TUI REST, gRPC, and WebSocket API client
 
@@ -35,6 +35,8 @@ install -Dpm 0755 %{name} %{buildroot}%{_bindir}/%{name}
 %{_bindir}/%{name}
 
 %changelog
+* Mon Feb 16 2026 Hypercube <hypercube@binarypie.dev> - 0.23.1-1
+- Update to 0.23.1
 * Fri Feb 06 2026 Hypercube <hypercube@binarypie.dev> - 0.21.3-1
 - Update to 0.21.3
 * Thu Jan 30 2026 Hypercube <hypercube@binarypie.dev> - 0.20.3-1
