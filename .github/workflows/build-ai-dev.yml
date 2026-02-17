@@ -1,5 +1,5 @@
 # Build and publish ai-dev container image
-# Triggered on changes to dot_files/ai-dev/ or manual dispatch
+# Triggered on changes to dot_files/ai-dev/, after nvim-dev builds, or manual dispatch
 # Image published to: ghcr.io/binarypie-dev/ai-dev:latest
 
 name: Build ai-dev Image
@@ -19,10 +19,11 @@ on:
     paths:
       - 'dot_files/ai-dev/**'
       - '.github/workflows/build-ai-dev.yml'
+  workflow_run:
+    workflows: ["Build nvim-dev Image"]
+    types:
+      - completed
   workflow_dispatch:
-  schedule:
-    # Rebuild daily to get updated packages
-    - cron: '0 6 * * *'
 
 env:
   IMAGE_NAME: ai-dev
@@ -31,6 +32,8 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest-m
+    # Skip if triggered by failed nvim-dev workflow
+    if: ${{ github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success' }}
     permissions:
       contents: read
       packages: write
