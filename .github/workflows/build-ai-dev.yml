@@ -110,17 +110,21 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create and push manifest
+        env:
+          SHORT_SHA: ${{ github.sha }}
         run: |
+          SHORT_SHA=${SHORT_SHA::7}
+
           docker manifest create ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
             ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-amd64 \
             ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest-arm64
           docker manifest push ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
           # Also create SHA manifest
-          docker manifest create ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }} \
-            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-amd64 \
-            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}-arm64
-          docker manifest push ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          docker manifest create ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${SHORT_SHA} \
+            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${SHORT_SHA}-amd64 \
+            ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${SHORT_SHA}-arm64
+          docker manifest push ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:${SHORT_SHA}
 
       - name: Generate build summary
         run: |
