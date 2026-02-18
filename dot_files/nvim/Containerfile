@@ -121,7 +121,7 @@ RUN brew install \
 # LAYER 6: Infrastructure tools via Homebrew
 # =============================================================================
 RUN brew install \
-    terraform \
+    opentofu \
     tflint \
     helm \
     sqlfluff \
