@@ -79,7 +79,7 @@ jobs:
             type=ref,event=pr,suffix=-${{ matrix.suffix }}
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: dot_files/nvim
           file: dot_files/nvim/Containerfile
