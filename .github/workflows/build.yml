@@ -69,7 +69,7 @@ jobs:
           echo "version=$(date +%Y%m%d)" >> $GITHUB_OUTPUT
 
       - name: Image Metadata
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         id: metadata
         with:
           tags: |
