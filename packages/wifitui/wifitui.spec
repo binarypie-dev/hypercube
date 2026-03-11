@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           wifitui
-Version:        0.10.0
+Version:        0.11.0
 Release:        1%{?dist}
 Summary:        Fast featureful friendly wifi terminal UI
 
@@ -35,6 +35,8 @@ install -Dpm 0755 %{name} %{buildroot}%{_bindir}/%{name}
 %{_bindir}/%{name}
 
 %changelog
+* Wed Mar 11 2026 Hypercube <hypercube@binarypie.dev> - 0.11.0-1
+- Update to 0.11.0
 * Sat Jan 10 2026 Hypercube <hypercube@binarypie.dev> - 0.10.0-1
 - Update to 0.10.0
 * Thu Jan 09 2025 Hypercube <hypercube@binarypie.dev> - 0.9.0-1
