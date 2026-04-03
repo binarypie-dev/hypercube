@@ -1,7 +1,7 @@
 %global sdbus_version 2.1.0
 
 Name:           hyprlock
-Version:        0.9.2
+Version:        0.9.3
 Release:        1%{?dist}
 Summary:        Hyprland's GPU-accelerated screen locking utility
 
@@ -68,5 +68,7 @@ rm %{buildroot}%{_datadir}/hypr/%{name}.conf
 %config(noreplace) %{_sysconfdir}/pam.d/%{name}
 
 %changelog
+* Fri Apr 03 2026 Hypercube <hypercube@binarypie.dev> - 0.9.3-1
+- Update to 0.9.3
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.9.2-1
 - Initial package for Hypercube (based on sdegler/hyprland COPR)
