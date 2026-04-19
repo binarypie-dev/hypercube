@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:           starship
-Version:        1.24.2
+Version:        1.25.0
 Release:        1%{?dist}
 Summary:        Minimal, blazing-fast, and infinitely customizable prompt for any shell
 
@@ -54,6 +54,8 @@ rm -f %{buildroot}%{_prefix}/.crates2.json
 %{_datadir}/fish/vendor_completions.d/%{name}.fish
 
 %changelog
+* Sun Apr 19 2026 Hypercube <hypercube@binarypie.dev> - 1.25.0-1
+- Update to 1.25.0
 * Thu Jan 15 2026 Hypercube <hypercube@binarypie.dev> - 1.24.2-1
 - Update to 1.24.2
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 1.24.1-1
