@@ -2,7 +2,7 @@
 
 Name:           xdg-desktop-portal-hyprland
 Epoch:          1
-Version:        1.3.11
+Version:        1.3.12
 Release:        1%{?dist}
 Summary:        xdg-desktop-portal backend for hyprland
 
@@ -69,5 +69,7 @@ tar -xf %{SOURCE1} -C subprojects/sdbus-cpp --strip=1
 %{_userunitdir}/%{name}.service
 
 %changelog
+* Thu Apr 30 2026 Hypercube <hypercube@binarypie.dev> - 1.3.12-1
+- Update to 1.3.12
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 1.3.11-1
 - Initial package for Hypercube (based on sdegler/hyprland COPR)
