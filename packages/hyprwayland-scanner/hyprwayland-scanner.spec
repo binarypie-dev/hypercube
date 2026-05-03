@@ -1,5 +1,5 @@
 Name:           hyprwayland-scanner
-Version:        0.4.5
+Version:        0.4.6
 Release:        1%{?dist}
 Summary:        A Hyprland implementation of wayland-scanner, in and for C++
 
@@ -40,5 +40,7 @@ Summary:        A Hyprland implementation of wayland-scanner, in and for C++
 %{_libdir}/cmake/%{name}/
 
 %changelog
+* Sun May 03 2026 Hypercube <hypercube@binarypie.dev> - 0.4.6-1
+- Update to 0.4.6
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.4.5-1
 - Initial package for Hypercube (based on sdegler/hyprland COPR)
