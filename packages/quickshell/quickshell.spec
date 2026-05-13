@@ -1,5 +1,5 @@
 Name:           quickshell
-Version:        0.2.1
+Version:        0.3.0
 Release:        1%{?dist}
 Summary:        Flexible QtQuick based desktop shell toolkit
 
@@ -78,5 +78,7 @@ managers. It supports Hyprland, Sway, and other Wayland compositors.
 %{_datadir}/icons/hicolor/scalable/apps/org.quickshell.svg
 
 %changelog
+* Wed May 06 2026 Hypercube <hypercube@binarypie.dev> - 0.3.0-1
+- Update to 0.3.0
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.2.1-1
 - Initial package for Hypercube
