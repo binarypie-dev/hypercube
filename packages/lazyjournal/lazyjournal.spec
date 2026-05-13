@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           lazyjournal
-Version:        0.8.5
+Version:        0.8.6
 Release:        1%{?dist}
 Summary:        TUI for viewing systemd journal and container logs
 
@@ -35,6 +35,8 @@ install -Dpm 0755 %{name} %{buildroot}%{_bindir}/%{name}
 %{_bindir}/%{name}
 
 %changelog
+* Tue Mar 17 2026 Hypercube <hypercube@binarypie.dev> - 0.8.6-1
+- Update to 0.8.6
 * Fri Feb 06 2026 Hypercube <hypercube@binarypie.dev> - 0.8.5-1
 - Update to 0.8.5
 * Thu Jan 30 2026 Hypercube <hypercube@binarypie.dev> - 0.8.4-1
