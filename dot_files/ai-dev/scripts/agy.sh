@@ -6,7 +6,7 @@ IMAGE="${AI_DEV_IMAGE:-ghcr.io/binarypie-dev/ai-dev:latest}"
 mkdir -p "$HOME/.gemini"
 
 env_flags=""
-for var in $(env | grep -E '^(GOOGLE_|GEMINI_)' | cut -d= -f1); do
+for var in $(env | grep -E '^(GOOGLE_|GEMINI_|ANTIGRAVITY_)' | cut -d= -f1); do
     env_flags="$env_flags -e $var"
 done
 
@@ -19,4 +19,4 @@ exec podman run --rm -it --init \
     -v "$HOME/.gemini:$HOME/.gemini:rw" \
     -w "$(pwd)" \
     "$IMAGE" \
-    gemini "$@"
+    agy "$@"

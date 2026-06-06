@@ -2,17 +2,18 @@
 set -e
 
 # Fix root's home directory in /etc/passwd to match host $HOME
-# This ensures os.homedir() in Node.js (used by claude/gemini) returns the correct path
+# This ensures os.homedir() in Node.js (used by claude) returns the correct path
 if [ -n "$HOME" ] && [ "$HOME" != "/root" ]; then
     sed -i "s|root:x:0:0:[^:]*:/root:|root:x:0:0:root:$HOME:|" /etc/passwd 2>/dev/null || true
 fi
 
-# Symlink claude install paths to where the native installer expects them at runtime
+# Symlink native install paths to where the installers expect them at runtime
 # (installed under /home/linuxbrew at build time, but $HOME differs at runtime)
 if [ -n "$HOME" ] && [ "$HOME" != "/home/linuxbrew" ]; then
     mkdir -p "$HOME/.local/bin" "$HOME/.local/share"
     ln -sf /home/linuxbrew/.local/bin/claude "$HOME/.local/bin/claude" 2>/dev/null || true
     ln -sf /home/linuxbrew/.local/share/claude "$HOME/.local/share/claude" 2>/dev/null || true
+    ln -sf /home/linuxbrew/.local/bin/agy "$HOME/.local/bin/agy" 2>/dev/null || true
 fi
 
 # Ensure claude auth files are readable within the container
@@ -35,8 +36,8 @@ if [ "$1" = "--ai-dev-debug" ]; then
     ls -la /dev/pts/ 2>/dev/null || echo "no /dev/pts"
     echo "tty: $(tty 2>/dev/null || echo 'not a tty')"
     echo ""
-    echo "=== env (GOOGLE_/GEMINI_/ANTHROPIC_) ==="
-    env | grep -E "^(GOOGLE_|GEMINI_|ANTHROPIC_)" || echo "(none set)"
+    echo "=== env (GOOGLE_/GEMINI_/ANTIGRAVITY_/ANTHROPIC_) ==="
+    env | grep -E "^(GOOGLE_|GEMINI_|ANTIGRAVITY_|ANTHROPIC_)" || echo "(none set)"
     echo ""
     echo "=== $HOME/.gemini/ ==="
     ls -la "$HOME/.gemini/" 2>/dev/null || echo "not found at $HOME/.gemini/"
@@ -44,9 +45,9 @@ if [ "$1" = "--ai-dev-debug" ]; then
     echo "=== $HOME/.claude/ ==="
     ls -la "$HOME/.claude/" 2>/dev/null || echo "not found at $HOME/.claude/"
     echo ""
-    echo "=== which claude/gemini ==="
+    echo "=== which claude/agy ==="
     which claude 2>/dev/null || echo "claude: not found"
-    which gemini 2>/dev/null || echo "gemini: not found"
+    which agy 2>/dev/null || echo "agy: not found"
     echo ""
     echo "=== node os.homedir() ==="
     node -e "console.log(require(\"os\").homedir())" 2>/dev/null || echo "node not available"

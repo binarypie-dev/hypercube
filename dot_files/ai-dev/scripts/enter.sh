@@ -7,7 +7,7 @@ mkdir -p "$HOME/.claude" "$HOME/.gemini"
 touch "$HOME/.claude.json"
 
 env_flags=""
-for var in $(env | grep -E '^(GOOGLE_|GEMINI_|ANTHROPIC_)' | cut -d= -f1); do
+for var in $(env | grep -E '^(GOOGLE_|GEMINI_|ANTIGRAVITY_|ANTHROPIC_)' | cut -d= -f1); do
     env_flags="$env_flags -e $var"
 done
 

@@ -41,9 +41,9 @@ push:
 claude *args:
     AI_DEV_IMAGE={{local_image}} ./scripts/claude.sh {{args}}
 
-# Run Gemini CLI in the current directory
-gemini *args:
-    AI_DEV_IMAGE={{local_image}} ./scripts/gemini.sh {{args}}
+# Run Antigravity CLI in the current directory
+agy *args:
+    AI_DEV_IMAGE={{local_image}} ./scripts/agy.sh {{args}}
 
 # Enter the container interactively
 enter:
@@ -59,9 +59,9 @@ install:
     set -euo pipefail
     mkdir -p "$HOME/.local/bin"
     cp scripts/claude.sh "$HOME/.local/bin/claude"
-    cp scripts/gemini.sh "$HOME/.local/bin/gemini"
-    chmod +x "$HOME/.local/bin/claude" "$HOME/.local/bin/gemini"
-    echo "Installed ~/.local/bin/claude and ~/.local/bin/gemini (image: {{remote_image}})"
+    cp scripts/agy.sh "$HOME/.local/bin/agy"
+    chmod +x "$HOME/.local/bin/claude" "$HOME/.local/bin/agy"
+    echo "Installed ~/.local/bin/claude and ~/.local/bin/agy (image: {{remote_image}})"
 
 # Install wrapper scripts using local image
 install-local:
@@ -69,16 +69,16 @@ install-local:
     set -euo pipefail
     mkdir -p "$HOME/.local/bin"
     sed 's|ghcr.io/binarypie-dev/ai-dev:latest|localhost/ai-dev|' scripts/claude.sh > "$HOME/.local/bin/claude"
-    sed 's|ghcr.io/binarypie-dev/ai-dev:latest|localhost/ai-dev|' scripts/gemini.sh > "$HOME/.local/bin/gemini"
-    chmod +x "$HOME/.local/bin/claude" "$HOME/.local/bin/gemini"
-    echo "Installed ~/.local/bin/claude and ~/.local/bin/gemini (image: {{local_image}})"
+    sed 's|ghcr.io/binarypie-dev/ai-dev:latest|localhost/ai-dev|' scripts/agy.sh > "$HOME/.local/bin/agy"
+    chmod +x "$HOME/.local/bin/claude" "$HOME/.local/bin/agy"
+    echo "Installed ~/.local/bin/claude and ~/.local/bin/agy (image: {{local_image}})"
 
 # Remove wrapper scripts from ~/.local/bin
 uninstall:
     #!/usr/bin/bash
     set -euo pipefail
     rm -f "$HOME/.local/bin/claude"
-    rm -f "$HOME/.local/bin/gemini"
+    rm -f "$HOME/.local/bin/agy"
     echo "Removed wrapper scripts from ~/.local/bin"
 
 # =============================================================================
@@ -88,7 +88,7 @@ uninstall:
 # Full setup: pull image + install wrappers
 setup: pull install
     @echo ""
-    @echo "Setup complete! Run 'claude' or 'gemini' to use the AI assistants."
+    @echo "Setup complete! Run 'claude' or 'agy' to use the AI assistants."
 
 # Remove local image
 clean:
@@ -104,7 +104,7 @@ clean:
 test-build: build
     @echo "Testing container..."
     AI_DEV_IMAGE={{local_image}} ./scripts/claude.sh --version
-    AI_DEV_IMAGE={{local_image}} ./scripts/gemini.sh --version
+    AI_DEV_IMAGE={{local_image}} ./scripts/agy.sh --version
     @echo ""
     @echo "All tests passed!"
 

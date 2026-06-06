@@ -1,5 +1,5 @@
 # AI Development Environment (Sandboxed Podman Container)
-# Pre-built image with Claude Code and Gemini CLI
+# Pre-built image with Claude Code and Antigravity CLI
 #
 # Build: podman build -t ai-dev .
 # Run:   podman run --rm -it --user 0:0 --security-opt label=disable \
@@ -16,9 +16,9 @@ WORKDIR /home/linuxbrew
 RUN curl -fsSL https://claude.ai/install.sh | bash
 
 # =============================================================================
-# LAYER 2: Gemini CLI via npm
+# LAYER 2: Antigravity CLI (native install)
 # =============================================================================
-RUN npm install -g @google/gemini-cli
+RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
 
 # =============================================================================
 # LAYER 3: Entrypoint script (sets PATH, execs command)
@@ -33,5 +33,5 @@ CMD ["bash"]
 
 # Labels for GitHub Container Registry
 LABEL org.opencontainers.image.source="https://github.com/binarypie/hypercube"
-LABEL org.opencontainers.image.description="AI development environment with Claude Code and Gemini CLI"
+LABEL org.opencontainers.image.description="AI development environment with Claude Code and Antigravity CLI"
 LABEL org.opencontainers.image.licenses="MIT"
