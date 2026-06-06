@@ -122,7 +122,6 @@ RUN brew install \
 # =============================================================================
 RUN brew install \
     opentofu \
-    tflint \
     helm \
     sqlfluff \
     fish
