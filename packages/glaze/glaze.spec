@@ -46,7 +46,7 @@ Development files for %{name}. Glaze is a header-only library.
 %{_includedir}/%{name}/
 
 %changelog
-* Sun May 31 2026 Hypercube <hypercube@binarypie.dev> - 7.7.1-1
+* Sat May 30 2026 Hypercube <hypercube@binarypie.dev> - 7.7.1-1
 - Update to 7.7.1
 * Mon May 11 2026 Hypercube <hypercube@binarypie.dev> - 7.6.0-1
 - Update to 7.6.0

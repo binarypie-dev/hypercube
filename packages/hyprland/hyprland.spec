@@ -143,7 +143,7 @@ cp -p subprojects/udis86/LICENSE LICENSE-udis86
 %{_includedir}/hyprland/
 
 %changelog
-* Sun May 31 2026 Hypercube <hypercube@binarypie.dev> - 0.55.2-1
+* Sun May 17 2026 Hypercube <hypercube@binarypie.dev> - 0.55.2-1
 - Update to 0.55.2
 * Mon May 11 2026 Hypercube <hypercube@binarypie.dev> - 0.55.0-1
 - Update to 0.55.0
