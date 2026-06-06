@@ -24,6 +24,10 @@ Matrix functionality.
 
 %prep
 %autosetup -n %{name}-%{version}
+# Newer rustc + matrix-sdk-crypto hits the default 128 trait-recursion limit
+# when evaluating `Send` on the sync_handle async block (E0275). The compiler
+# itself suggests bumping the crate-level recursion_limit.
+sed -i '1i#![recursion_limit = "256"]' src/main.rs
 
 %build
 RUSTFLAGS='-C strip=symbols' cargo build --release --locked
@@ -37,5 +41,5 @@ install -Dpm 0755 target/release/iamb %{buildroot}%{_bindir}/iamb
 %{_bindir}/iamb
 
 %changelog
-* Thu Jan 30 2026 Hypercube <hypercube@binarypie.dev> - 0.0.11-1
+* Fri Jan 30 2026 Hypercube <hypercube@binarypie.dev> - 0.0.11-1
 - Initial package for Hypercube

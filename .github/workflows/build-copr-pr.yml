@@ -135,7 +135,7 @@ jobs:
               }
               echo "$BUILD_OUTPUT"
 
-              BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -oP 'Build was added to .+builds/\K\d+' | head -1)
+              BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -oP '^Created builds?:\s*\K\d+' | head -1)
               if [[ -z "$BUILD_ID" ]]; then
                 echo "::error::Could not extract build ID for $pkg"
                 exit 1
