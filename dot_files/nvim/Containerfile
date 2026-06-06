@@ -131,11 +131,10 @@ RUN brew install \
 # =============================================================================
 ENV CARGO_HOME="/home/linuxbrew/.cargo"
 ENV RUSTUP_HOME="/home/linuxbrew/.rustup"
-ENV PATH="${CARGO_HOME}/bin:${PATH}"
+ENV PATH="/home/linuxbrew/.linuxbrew/opt/rustup/bin:${CARGO_HOME}/bin:${PATH}"
 
-RUN brew install rustup-init \
-    && rustup-init -y --default-toolchain stable \
-    && . ${CARGO_HOME}/env \
+RUN brew install rustup \
+    && rustup default stable \
     && rustup component add rustfmt clippy rust-analyzer
 
 # =============================================================================
