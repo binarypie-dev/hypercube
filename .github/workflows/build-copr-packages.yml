@@ -34,7 +34,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       packages: ${{ steps.detect.outputs.packages }}
-      matrix: ${{ steps.build-matrix.outputs.matrix }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -165,61 +164,10 @@ jobs:
             echo "packages=$JSON" >> $GITHUB_OUTPUT
           fi
 
-      - name: Build batch matrix
-        id: build-matrix
-        run: |
-          PACKAGES='${{ steps.detect.outputs.packages }}'
-
-          if [[ "$PACKAGES" == "[]" ]]; then
-            echo "matrix={\"batch\":[]}" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          # Source shared package configuration
-          source ./scripts/packages/config.sh
-
-          # Build batches JSON from BUILD_BATCHES array (in sorted order)
-          echo '{"batch":[' > /tmp/batches.json
-
-          first=true
-          # Sort batch IDs numerically to ensure correct order
-          for batch_id in $(echo "${!BUILD_BATCHES[@]}" | tr ' ' '\n' | sort -n); do
-            if [[ $first == false ]]; then
-              echo "," >> /tmp/batches.json
-            fi
-            first=false
-
-            # Convert space-separated packages to JSON array
-            packages_json=$(echo "${BUILD_BATCHES[$batch_id]}" | tr ' ' '\n' | jq -R . | jq -sc .)
-
-            jq -n \
-              --argjson id "$batch_id" \
-              --argjson packages "$packages_json" \
-              '{id: $id, packages: $packages}' >> /tmp/batches.json
-          done
-
-          echo ']}' >> /tmp/batches.json
-
-          # Filter batches to only include packages that need building
-          FILTERED=$(jq -c --argjson pkgs "$PACKAGES" '
-            .batch | map(
-              .packages = (.packages | map(select(. as $p | $pkgs | index($p))))
-              | select(.packages | length > 0)
-            ) | {batch: .}
-          ' /tmp/batches.json)
-
-          echo "matrix=$FILTERED" >> $GITHUB_OUTPUT
-          echo "Build matrix:"
-          echo "$FILTERED" | jq .
-
-  build-batch:
+  build:
     needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.matrix != '{"batch":[]}' && needs.detect-changes.outputs.matrix != '' }}
+    if: ${{ needs.detect-changes.outputs.packages != '[]' && needs.detect-changes.outputs.packages != '' }}
     runs-on: ubuntu-latest
-    strategy:
-      max-parallel: 1  # Run batches sequentially
-      fail-fast: true   # Stop subsequent batches if one fails (dependencies would fail anyway)
-      matrix: ${{ fromJson(needs.detect-changes.outputs.matrix) }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -227,7 +175,7 @@ jobs:
       - name: Install COPR CLI
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip
+          sudo apt-get install -y python3-pip jq
           pip3 install copr-cli
 
       - name: Configure COPR CLI
@@ -241,101 +189,113 @@ jobs:
           copr_url = https://copr.fedorainfracloud.org
           EOF
 
-      - name: Build batch ${{ matrix.batch.id }} packages
-        id: build
+      # Submit every package up-front, using Copr's native batching to express
+      # the dep graph:
+      #   --with-build-id  -> same Copr batch (parallel execution)
+      #   --after-build-id -> new Copr batch blocked by parent (sequential)
+      # Each of our BUILD_BATCHES layers maps to one Copr batch; layer N+1's
+      # first build chains to layer N's first build via --after-build-id, and
+      # the rest of layer N+1 joins it via --with-build-id. Copr then runs
+      # everything as parallel as the dep graph allows, in one GH job.
+      - name: Submit all builds with Copr batch chaining
+        id: submit
         run: |
-          echo "Building batch ${{ matrix.batch.id }}: ${{ join(matrix.batch.packages, ', ') }}"
+          source ./scripts/packages/config.sh
 
-          FAILED=""
-          BUILD_IDS=""
+          PACKAGES_JSON='${{ needs.detect-changes.outputs.packages }}'
+          ALL_BUILD_IDS=""
+          PREV_LAYER_FIRST_ID=""
 
-          # Trigger all builds in this batch
-          for pkg in ${{ join(matrix.batch.packages, ' ') }}; do
+          # Iterate layers in defined order
+          for layer_id in $(echo "${!BUILD_BATCHES[@]}" | tr ' ' '\n' | sort -n); do
             echo ""
             echo "========================================"
-            echo "Triggering build for: $pkg"
+            echo "Layer $layer_id"
             echo "========================================"
 
-            # Trigger SCM build
-            BUILD_OUTPUT=$(copr-cli build-package \
-              --name "$pkg" \
-              "${{ env.COPR_PROJECT }}" 2>&1) || {
-              echo "::error::Failed to trigger build for $pkg"
+            LAYER_FIRST_ID=""
+
+            for pkg in ${BUILD_BATCHES[$layer_id]}; do
+              # Skip packages not in the filtered build set
+              if ! echo "$PACKAGES_JSON" | jq -e --arg p "$pkg" 'index($p) != null' >/dev/null; then
+                continue
+              fi
+
+              ARGS=(--nowait --name "$pkg")
+              if [[ -z "$LAYER_FIRST_ID" ]]; then
+                # First package in this layer establishes the batch.
+                # If a previous layer had builds, chain after it.
+                if [[ -n "$PREV_LAYER_FIRST_ID" ]]; then
+                  ARGS+=(--after-build-id "$PREV_LAYER_FIRST_ID")
+                fi
+              else
+                # Join the layer's existing batch (parallel with siblings)
+                ARGS+=(--with-build-id "$LAYER_FIRST_ID")
+              fi
+
+              echo "Submitting $pkg (${ARGS[@]:1})"
+              BUILD_OUTPUT=$(copr-cli build-package "${ARGS[@]}" "${{ env.COPR_PROJECT }}" 2>&1) || {
+                echo "::error::Failed to submit $pkg"
+                echo "$BUILD_OUTPUT"
+                exit 1
+              }
               echo "$BUILD_OUTPUT"
-              FAILED="$FAILED $pkg"
-              continue
-            }
 
-            echo "$BUILD_OUTPUT"
+              BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -oP 'Build was added to .+builds/\K\d+' | head -1)
+              if [[ -z "$BUILD_ID" ]]; then
+                echo "::error::Could not extract build ID for $pkg"
+                exit 1
+              fi
 
-            # Extract build ID
-            BUILD_ID=$(echo "$BUILD_OUTPUT" | grep -oP 'Build was added to .+builds/\K\d+' || echo "")
-            if [[ -n "$BUILD_ID" ]]; then
-              BUILD_IDS="$BUILD_IDS $BUILD_ID"
-              echo "Build ID: $BUILD_ID"
-            fi
+              ALL_BUILD_IDS="$ALL_BUILD_IDS $BUILD_ID"
+              [[ -z "$LAYER_FIRST_ID" ]] && LAYER_FIRST_ID="$BUILD_ID"
+            done
+
+            [[ -n "$LAYER_FIRST_ID" ]] && PREV_LAYER_FIRST_ID="$LAYER_FIRST_ID"
           done
 
-          # Save build IDs for potential cleanup
-          echo "build_ids=$BUILD_IDS" >> $GITHUB_OUTPUT
-
-          # Wait for all builds in this batch to complete
+          ALL_BUILD_IDS="$(echo "$ALL_BUILD_IDS" | xargs)"
           echo ""
-          echo "========================================"
-          echo "Waiting for batch ${{ matrix.batch.id }} builds to complete..."
-          echo "========================================"
+          echo "All submitted build IDs: $ALL_BUILD_IDS"
+          echo "build_ids=$ALL_BUILD_IDS" >> $GITHUB_OUTPUT
 
-          for build_id in $BUILD_IDS; do
-            echo "Waiting for build $build_id..."
+      - name: Watch all builds
+        id: watch
+        run: |
+          FAILED=""
+          # watch-build blocks per-build, but Copr runs them in parallel where
+          # the batch graph allows, so total wall time = critical path of the
+          # dep chain, not sum of individual builds.
+          for build_id in ${{ steps.submit.outputs.build_ids }}; do
+            echo ""
+            echo "Watching build $build_id..."
             copr-cli watch-build "$build_id" || {
               echo "::warning::Build $build_id failed or was cancelled"
-              # Get package name for this build
-              FAILED="$FAILED (build:$build_id)"
+              FAILED="$FAILED $build_id"
             }
           done
 
           if [[ -n "$FAILED" ]]; then
-            echo ""
-            echo "::error::Some packages failed to build:$FAILED"
+            echo "::error::Failed build IDs:$FAILED"
             exit 1
           fi
-
-          echo ""
-          echo "Batch ${{ matrix.batch.id }} completed successfully!"
 
       - name: Cancel COPR builds on workflow cancellation
         if: cancelled()
         run: |
           echo "Workflow cancelled - cancelling COPR builds..."
-          BUILD_IDS="${{ steps.build.outputs.build_ids }}"
-
-          for build_id in $BUILD_IDS; do
+          for build_id in ${{ steps.submit.outputs.build_ids }}; do
             echo "Cancelling COPR build $build_id..."
-            copr-cli cancel "$build_id" || echo "Could not cancel build $build_id (may have already finished)"
+            copr-cli cancel "$build_id" || echo "Could not cancel $build_id (may have already finished)"
           done
 
-          echo "COPR build cancellation complete"
-
-      - name: Generate batch summary
+      - name: Generate summary
         if: always()
-        run: |
-          echo "## Batch ${{ matrix.batch.id }} Build Results" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Packages:** ${{ join(matrix.batch.packages, ', ') }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "[View builds on COPR](https://copr.fedorainfracloud.org/coprs/${{ env.COPR_PROJECT }}/builds/)" >> $GITHUB_STEP_SUMMARY
-
-  summary:
-    needs: [detect-changes, build-batch]
-    if: always()
-    runs-on: ubuntu-latest
-    steps:
-      - name: Generate final summary
         run: |
           echo "## COPR Package Build Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Packages built:** ${{ needs.detect-changes.outputs.packages }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Status:** ${{ needs.build-batch.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Build IDs:** ${{ steps.submit.outputs.build_ids }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "[View all builds](https://copr.fedorainfracloud.org/coprs/${{ env.COPR_PROJECT }}/builds/)" >> $GITHUB_STEP_SUMMARY
