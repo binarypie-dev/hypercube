@@ -1,0 +1,12 @@
+diff -up lua-5.5.0/src/lstrlib.c.bug2 lua-5.5.0/src/lstrlib.c
+--- lua-5.5.0/src/lstrlib.c.bug2	2026-01-14 16:33:13.073440361 -0500
++++ lua-5.5.0/src/lstrlib.c	2026-01-14 16:33:41.019926479 -0500
+@@ -1726,7 +1726,7 @@ static int str_packsize (lua_State *L) {
+     luaL_argcheck(L, opt != Kstring && opt != Kzstr, 1,
+                      "variable-length format");
+     size += ntoalign;  /* total space used by option */
+-    luaL_argcheck(L, totalsize <= LUA_MAXINTEGER - size,
++    luaL_argcheck(L, totalsize <= MAX_SIZE - size,
+                      1, "format result too large");
+     totalsize += size;
+   }
