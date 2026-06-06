@@ -1,6 +1,6 @@
 Name:           hyprutils
 Version:        0.13.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Hyprland utilities library used across the ecosystem
 
 License:        BSD-3-Clause
@@ -40,7 +40,7 @@ Development files for %{name}.
 %license LICENSE
 %doc README.md
 %{_libdir}/lib%{name}.so.%{version}
-%{_libdir}/lib%{name}.so.10
+%{_libdir}/lib%{name}.so.12
 
 %files devel
 %{_includedir}/%{name}/
@@ -48,6 +48,8 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Sat Jun 06 2026 Hypercube <hypercube@binarypie.dev> - 0.13.1-2
+- Bump SONAME from 10 to 12 to match 0.13.1
 * Mon May 11 2026 Hypercube <hypercube@binarypie.dev> - 0.13.1-1
 - Update to 0.13.1
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.11.0-1
