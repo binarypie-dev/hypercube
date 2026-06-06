@@ -1,9 +1,9 @@
 %global major_version 5.5
 # Normally, this is the same as version, but... not always.
 %global test_version 5.5.0
-# Hypercube: bootstrap=0 because Fedora 43/44 chroots already ship the
-# parallel lua 5.4.8 ABI via Fedora's `lua` package, so we don't need to also
-# build a lua-5.4-libs compat subpackage here.
+# Hypercube: This is a parallel-installable lua 5.5 package that coexists
+# with Fedora's system lua 5.4.  Package name, binaries, headers, and the
+# pkg-config file are all versioned so nothing conflicts with the distro lua.
 %global bootstrap 0
 %global bootstrap_major_version 5.4
 %global bootstrap_version %{bootstrap_major_version}.8
@@ -12,10 +12,10 @@
 %global macrosdir %(d=%{_rpmconfigdir}/macros.d; [ -d $d ] || d=%{_sysconfdir}/rpm; echo $d)
 
 
-Name:           lua
+Name:           lua55
 Version:        %{major_version}.0
 Release:        1%{?dist}
-Summary:        Powerful light-weight programming language
+Summary:        Powerful light-weight programming language (version %{major_version})
 License:        MIT
 URL:            https://www.lua.org/
 Source0:        https://www.lua.org/ftp/lua-%{version}.tar.gz
@@ -27,17 +27,18 @@ Source2:        https://www.lua.org/ftp/lua-%{bootstrap_version}.tar.gz
 Source3:        https://www.lua.org/tests/lua-%{test_version}-tests.tar.gz
 # multilib
 Source4:        luaconf.h
-Patch0:         %{name}-5.5.0-autotoolize.patch
-Patch1:         %{name}-5.4.6-idsize.patch
-#Patch2:         %%{name}-5.3.0-luac-shared-link-fix.patch
-Patch3:         %{name}-5.2.2-configure-linux.patch
-Patch4:         %{name}-5.3.0-configure-compat-module.patch
+# Patch names are hardcoded because Name is lua55 (parallel-install)
+Patch0:         lua-5.5.0-autotoolize.patch
+Patch1:         lua-5.4.6-idsize.patch
+#Patch2:         lua-5.3.0-luac-shared-link-fix.patch
+Patch3:         lua-5.2.2-configure-linux.patch
+Patch4:         lua-5.3.0-configure-compat-module.patch
 %if 0%{?bootstrap}
-Patch5:         %{name}-5.4.8-autotoolize.patch
-Patch6:		%{name}-5.4.8-luac-shared-link-fix.patch
-Patch7:		%{name}-5.4.8-bug1.patch
-Patch8:		%{name}-5.4.8-bug2.patch
-Patch9:		%{name}-5.4.8-bug3.patch
+Patch5:         lua-5.4.8-autotoolize.patch
+Patch6:		lua-5.4.8-luac-shared-link-fix.patch
+Patch7:		lua-5.4.8-bug1.patch
+Patch8:		lua-5.4.8-bug2.patch
+Patch9:		lua-5.4.8-bug3.patch
 %endif
 # https://www.lua.org/bugs.html
 Patch10:	lua-5.5.0-bug1.patch
@@ -45,7 +46,7 @@ Patch11:	lua-5.5.0-bug2.patch
 
 BuildRequires:  automake autoconf libtool readline-devel ncurses-devel
 BuildRequires:  make
-Requires:       lua-libs = %{version}-%{release}
+Requires:       %{name}-libs = %{version}-%{release}
 
 %description
 Lua is a powerful light-weight programming language designed for
@@ -57,45 +58,45 @@ is dynamically typed, interpreted from bytecodes, and has automatic
 memory management with garbage collection, making it ideal for
 configuration, scripting, and rapid prototyping.
 
+This package provides Lua %{major_version} parallel-installable alongside
+the system Lua.
+
 %package devel
-Summary:        Development files for %{name}
-Requires:       %{name}%{?_isa} = %{version}-%{release}
-# The RPM related dependencies bring nothing to a non-RPM Lua developer
-# But we want them when packages BuildRequire lua-devel
-Requires:       (lua-rpm-macros if rpm-build)
+Summary:        Development files for Lua %{major_version}
+Requires:       %{name}-libs%{?_isa} = %{version}-%{release}
 Requires:       pkgconfig
 
 %description devel
-This package contains development files for %{name}.
+This package contains development files for Lua %{major_version}.
 
 %package libs
-Summary:        Libraries for %{name}
+Summary:        Libraries for Lua %{major_version}
 Provides:       lua(abi) = %{major_version}
 
 %description libs
-This package contains the shared libraries for %{name}.
+This package contains the shared libraries for Lua %{major_version}.
 
 %package static
-Summary:        Static library for %{name}
-Requires:       %{name}%{?_isa} = %{version}-%{release}
+Summary:        Static library for Lua %{major_version}
+Requires:       %{name}-devel%{?_isa} = %{version}-%{release}
 
 %description static
-This package contains the static version of liblua for %{name}.
+This package contains the static version of liblua for Lua %{major_version}.
 
 %if 0%{?bootstrap}
-%package -n %{name}%{bootstrap_major_version}-libs
-Summary:        Compat libraries for %{name}%{bootstrap_major_version}
+%package -n lua%{bootstrap_major_version}-libs
+Summary:        Compat libraries for lua%{bootstrap_major_version}
 Provides:       lua(abi) = %{bootstrap_major_version}
 
-%description -n %{name}%{bootstrap_major_version}-libs
+%description -n lua%{bootstrap_major_version}-libs
 This package contains compatibility libraries for lua %{bootstrap_major_version}..
 %endif
 
 %prep
 %if 0%{?bootstrap}
-%setup -q -a 2 -a 3 -n %{name}-%{version}
+%setup -q -a 2 -a 3 -n lua-%{version}
 %else
-%setup -q -a 3
+%setup -q -a 3 -n lua-%{version}
 %endif
 cp %{SOURCE1} .
 mv src/luaconf.h src/luaconf.h.template.in
@@ -155,35 +156,46 @@ sed -i 's|@pkgdatadir@|%{_datadir}|g' src/luaconf.h.template
 popd
 %endif
 
-%check
-cd ./lua-%{test_version}-tests/
-
-# Dont skip the fully portable or ram-hungry tests:
-# sed -i.orig -e '
-#     /attrib.lua/d;
-#     /files.lua/d;
-#     /db.lua/d;
-#     /errors.lua/d;
-#     ' all.lua
-# LD_LIBRARY_PATH=$RPM_BUILD_ROOT/%{_libdir} $RPM_BUILD_ROOT/%{_bindir}/lua all.lua
-
-# Removing tests that fail under mock/koji
-sed -i.orig -e '
-    /db.lua/d;
-    /errors.lua/d;
-    ' all.lua
-LD_LIBRARY_PATH=$RPM_BUILD_ROOT/%{_libdir} $RPM_BUILD_ROOT/%{_bindir}/lua -e"_U=true" all.lua
-
 %install
 %make_install
 rm $RPM_BUILD_ROOT%{_libdir}/*.la
+
+# === Parallel-install: version all installed paths ===
+
+# Move headers into a versioned subdirectory
+mkdir -p $RPM_BUILD_ROOT%{_includedir}/lua-%{major_version}
+mv $RPM_BUILD_ROOT%{_includedir}/lua.h $RPM_BUILD_ROOT%{_includedir}/lua-%{major_version}/
+mv $RPM_BUILD_ROOT%{_includedir}/lualib.h $RPM_BUILD_ROOT%{_includedir}/lua-%{major_version}/
+mv $RPM_BUILD_ROOT%{_includedir}/lauxlib.h $RPM_BUILD_ROOT%{_includedir}/lua-%{major_version}/
+mv $RPM_BUILD_ROOT%{_includedir}/lua.hpp $RPM_BUILD_ROOT%{_includedir}/lua-%{major_version}/
+
+# Multilib luaconf.h in versioned directory
+mv %{buildroot}%{_includedir}/luaconf.h %{buildroot}%{_includedir}/lua-%{major_version}/luaconf-%{_arch}.h
+install -p -m 644 %{SOURCE4} %{buildroot}%{_includedir}/lua-%{major_version}/luaconf.h
+
+# Rename pkg-config file and fix paths for parallel install
+mv $RPM_BUILD_ROOT%{_libdir}/pkgconfig/lua.pc $RPM_BUILD_ROOT%{_libdir}/pkgconfig/lua55.pc
+sed -i 's|^Cflags:.*|Cflags: -I${includedir}/lua-%{major_version}|' $RPM_BUILD_ROOT%{_libdir}/pkgconfig/lua55.pc
+sed -i 's|-llua |-llua-%{major_version} |' $RPM_BUILD_ROOT%{_libdir}/pkgconfig/lua55.pc
+
+# Rename binaries to avoid conflict with system lua
+mv $RPM_BUILD_ROOT%{_bindir}/lua $RPM_BUILD_ROOT%{_bindir}/lua%{major_version}
+mv $RPM_BUILD_ROOT%{_bindir}/luac $RPM_BUILD_ROOT%{_bindir}/luac%{major_version}
+
+# Rename man pages
+mv $RPM_BUILD_ROOT%{_mandir}/man1/lua.1 $RPM_BUILD_ROOT%{_mandir}/man1/lua%{major_version}.1
+mv $RPM_BUILD_ROOT%{_mandir}/man1/luac.1 $RPM_BUILD_ROOT%{_mandir}/man1/luac%{major_version}.1
+
+# Remove the unversioned liblua.so devel symlink (conflicts with system lua)
+# Consumers link with -llua-5.5 via pkg-config instead
+rm -f $RPM_BUILD_ROOT%{_libdir}/liblua.so
+
+# Rename static library
+mv $RPM_BUILD_ROOT%{_libdir}/liblua.a $RPM_BUILD_ROOT%{_libdir}/liblua-%{major_version}.a
+
+# Create versioned module directories
 mkdir -p $RPM_BUILD_ROOT%{_libdir}/lua/%{major_version}
 mkdir -p $RPM_BUILD_ROOT%{_datadir}/lua/%{major_version}
-
-# Rename luaconf.h to luaconf-<arch>.h to avoid file conflicts on
-# multilib systems and install luaconf.h wrapper
-mv %{buildroot}%{_includedir}/luaconf.h %{buildroot}%{_includedir}/luaconf-%{_arch}.h
-install -p -m 644 %{SOURCE4} %{buildroot}%{_includedir}/luaconf.h
 
 %if 0%{?bootstrap}
 pushd lua-%{bootstrap_version}
@@ -196,11 +208,22 @@ rm -rf $RPM_BUILD_ROOT/installdir
 popd
 %endif
 
+%check
+cd ./lua-%{test_version}-tests/
+
+# Removing tests that fail under mock/koji
+sed -i.orig -e '
+    /db.lua/d;
+    /errors.lua/d;
+    ' all.lua
+LD_LIBRARY_PATH=$RPM_BUILD_ROOT/%{_libdir} $RPM_BUILD_ROOT/%{_bindir}/lua%{major_version} -e"_U=true" all.lua
+
 %files
 %doc README doc/*.html doc/*.css doc/*.png
-%{_bindir}/lua
-%{_bindir}/luac
-%{_mandir}/man1/lua*.1*
+%{_bindir}/lua%{major_version}
+%{_bindir}/luac%{major_version}
+%{_mandir}/man1/lua%{major_version}.1*
+%{_mandir}/man1/luac%{major_version}.1*
 
 %files libs
 %{!?_licensedir:%global license %%doc}
@@ -213,7 +236,7 @@ popd
 %dir %{_datadir}/lua/%{major_version}
 
 %if 0%{?bootstrap}
-%files -n %{name}%{bootstrap_major_version}-libs
+%files -n lua%{bootstrap_major_version}-libs
 %license mit.txt
 %dir %{_libdir}/lua/%{bootstrap_major_version}
 %{_libdir}/liblua-%{bootstrap_major_version}.so
@@ -221,15 +244,20 @@ popd
 %endif
 
 %files devel
-%{_includedir}/l*.h
-%{_includedir}/l*.hpp
-%{_libdir}/liblua.so
-%{_libdir}/pkgconfig/*.pc
+%dir %{_includedir}/lua-%{major_version}
+%{_includedir}/lua-%{major_version}/*.h
+%{_includedir}/lua-%{major_version}/*.hpp
+%{_libdir}/pkgconfig/lua55.pc
 
 %files static
-%{_libdir}/*.a
+%{_libdir}/liblua-%{major_version}.a
 
 %changelog
+* Fri Jun 06 2026 Hypercube <hypercube@binarypie.dev> - 5.5.0-1
+- Rename to lua55 for parallel installation alongside system lua 5.4
+- Version all installed paths: headers, pkg-config, binaries, man pages
+- Fixes hyprland COPR build failure caused by lua-libs conflict with libinput
+
 * Tue Feb 10 2026 Tom Callaway <spot@fedoraproject.org> - 5.5.0-1
 - update to 5.5.0
 - make lua5.4-libs as a compat bootstrap
@@ -474,7 +502,7 @@ popd
 - update to 5.2.2
 - incorporate Aaron Faanes's changes
 
-* Thu Feb 14 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 5.1.4-12
+* Thu Feb 14 2013 Fedora Release Engineering <releng@fedoraproject.org> - 5.1.4-12
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_19_Mass_Rebuild
 
 * Thu Jul 19 2012 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 5.1.4-11
@@ -527,7 +555,7 @@ popd
   search path for Lua. Packaging them properly allows for easy creation of
   Lua addon packages.
 
-* Tue Feb 19 2008 Fedora Release Engineering <rel-eng@fedoraproject.org> - 5.1.3-2
+* Tue Feb 19 2008 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 5.1.3-2
 - Autorebuild for GCC 4.3
 
 * Sat Jan 26 2008 Hans de Goede <j.w.r.degoede@hhs.nl> 5.1.3-1
@@ -537,7 +565,7 @@ popd
 - Fix libdir in lua.pc being /usr/lib on x86_64 (bz 399101)
 
 * Sun Oct 21 2007 Hans de Goede <j.w.r.degoede@hhs.nl> 5.1.2-3
-- Also use lib64 instead of lib on ia64 and sparc64 
+- Also use lib64 instead of lib on ia64 and sparc64
 
 * Sun Oct 21 2007 Hans de Goede <j.w.r.degoede@hhs.nl> 5.1.2-2
 - Fix multilib condlict in luaconf.h (bz 342561)
