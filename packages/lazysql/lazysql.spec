@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           lazysql
-Version:        0.5.0
+Version:        0.5.3
 Release:        1%{?dist}
 Summary:        TUI database management client
 
@@ -37,6 +37,8 @@ install -Dpm 0755 %{name} %{buildroot}%{_bindir}/%{name}
 %{_bindir}/%{name}
 
 %changelog
+* Tue Jun 02 2026 Hypercube <hypercube@binarypie.dev> - 0.5.3-1
+- Update to 0.5.3
 * Fri May 08 2026 Hypercube <hypercube@binarypie.dev> - 0.5.0-1
 - Update to 0.5.0
 * Wed Feb 18 2026 Hypercube <hypercube@binarypie.dev> - 0.4.8-1
