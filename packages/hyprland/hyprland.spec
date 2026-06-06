@@ -14,6 +14,7 @@ BuildRequires:  gcc-c++
 BuildRequires:  git-core
 BuildRequires:  meson
 BuildRequires:  glaze-devel
+BuildRequires:  glslang-devel
 BuildRequires:  pkgconfig(aquamarine)
 BuildRequires:  pkgconfig(cairo)
 BuildRequires:  pkgconfig(egl)
