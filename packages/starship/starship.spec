@@ -12,7 +12,7 @@ Source0:        %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
 BuildRequires:  cargo >= 1.80
 BuildRequires:  rust >= 1.80
 BuildRequires:  gcc
-BuildRequires:  cmake3
+BuildRequires:  cmake
 BuildRequires:  pkgconfig(openssl)
 BuildRequires:  pkgconfig(zlib)
 
@@ -30,7 +30,7 @@ Ion, Elvish, Tcsh, Xonsh, Nushell, and Cmd.
 
 %install
 export CARGO_PROFILE_RELEASE_BUILD_OVERRIDE_OPT_LEVEL=3
-export CMAKE=cmake3
+export CMAKE=cmake
 RUSTFLAGS='-C strip=symbols' cargo install --root=%{buildroot}%{_prefix} --path=.
 
 # Generate and install shell completions
