@@ -61,6 +61,12 @@ dnf5 -y update mesa* || true
 
 # Fetch and run Universal Blue's nvidia-install script
 curl -sSL "https://raw.githubusercontent.com/ublue-os/main/main/build_files/nvidia-install.sh" -o /tmp/nvidia-install.sh
+# Workaround for negativo17 fedora-nvidia repo: in 610.x the i686 libnvidia-ml
+# subpackage was rolled into nvidia-driver-common.i686, but the stale 595.x
+# libnvidia-ml.i686 RPMs are still in the repo. Explicitly requesting the
+# obsoleted name pulls the stale 595.x and creates an unresolvable conflict
+# with the new nvidia-driver-common.i686 that nvidia-driver-libs.i686 needs.
+sed -i '/^[[:space:]]*libnvidia-ml\.i686[[:space:]]*\\$/d' /tmp/nvidia-install.sh
 chmod +x /tmp/nvidia-install.sh
 IMAGE_NAME="base-main" RPMFUSION_MIRROR="" /tmp/nvidia-install.sh
 
