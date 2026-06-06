@@ -124,13 +124,17 @@ jobs:
 
           echo "Initially changed packages: $CHANGED_PKGS"
           echo ""
-          echo "Checking which packages actually need building..."
-          echo ""
 
-          # Use the check-copr-versions script to filter packages
-          if [[ -z "$CHANGED_PKGS" ]]; then
+          # rebuild_all bypasses the version filter so stale Copr builds
+          # (same version, but linked against an older soname) get refreshed.
+          if [[ "${{ inputs.rebuild_all }}" == "true" ]]; then
+            echo "rebuild_all=true: skipping version check, forcing rebuild of all packages"
+            NEEDS_BUILD="$CHANGED_PKGS"
+          elif [[ -z "$CHANGED_PKGS" ]]; then
             NEEDS_BUILD=""
           else
+            echo "Checking which packages actually need building..."
+            echo ""
             # Run the version check script
             SCRIPT_OUTPUT=$(./scripts/packages/check-copr-versions.sh $CHANGED_PKGS 2>&1)
             echo "$SCRIPT_OUTPUT"
