@@ -24,6 +24,8 @@ BuildRequires:  pkgconfig(libpng)
 BuildRequires:  pkgconfig(pangocairo)
 BuildRequires:  pkgconfig(libheif)
 BuildRequires:  pkgconfig(librsvg-2.0)
+BuildRequires:  pkgconfig(opengl)
+BuildRequires:  pkgconfig(glesv2)
 
 %description
 %{summary}.
