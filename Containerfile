@@ -5,7 +5,7 @@
 # ============================================
 # Build Arguments
 # ============================================
-ARG FEDORA_VERSION="43"
+ARG FEDORA_VERSION="44"
 ARG IMAGE_NAME=hypercube
 ARG IMAGE_VENDOR=binarypie-dev
 ARG SHA_HEAD_SHORT=""

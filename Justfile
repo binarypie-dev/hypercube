@@ -4,7 +4,7 @@
 # Configuration
 export repo_organization := env("REPO_ORGANIZATION", "binarypie-dev")
 export image_name := env("IMAGE_NAME", "hypercube")
-export fedora_version := env("FEDORA_VERSION", "43")
+export fedora_version := env("FEDORA_VERSION", "44")
 export akmods_flavor := env("AKMODS_FLAVOR", "main")
 
 # Runtime detection
