@@ -26,29 +26,12 @@ screen_width = Window.GetWidth();
 screen_height = Window.GetHeight();
 
 // ============================================================================
-// Logo Display
+// Background Image (scaled to fill the screen)
 // ============================================================================
-logo.image = Image("logo.png");
-logo.sprite = Sprite(logo.image);
-
-logo.width = logo.image.GetWidth();
-logo.height = logo.image.GetHeight();
-
-// Center logo horizontally, position in upper third of screen
-logo.x = Window.GetX() + (screen_width - logo.width) / 2;
-logo.y = Window.GetY() + (screen_height / 4) - (logo.height / 2);
-
-logo.sprite.SetPosition(logo.x, logo.y, 10);
-logo.sprite.SetOpacity(1.0);
-
-// ============================================================================
-// Animation Variables for subtle logo pulse
-// ============================================================================
-global.pulse_direction = 1;
-global.pulse_opacity = 1.0;
-global.pulse_min = 0.85;
-global.pulse_max = 1.0;
-global.pulse_speed = 0.003;
+background.image = Image("background.png").Scale(screen_width, screen_height);
+background.sprite = Sprite(background.image);
+background.sprite.SetPosition(Window.GetX(), Window.GetY(), 0);
+background.sprite.SetOpacity(1.0);
 
 // ============================================================================
 // Password Dialog Elements
@@ -66,7 +49,7 @@ entry.height = entry.image.GetHeight();
 bullet.width = bullet.image.GetWidth();
 bullet.height = bullet.image.GetHeight();
 
-// Dialog positioning (centered, below logo)
+// Dialog positioning (centered, slightly below screen middle)
 box.x = Window.GetX() + (screen_width - box.width) / 2;
 box.y = Window.GetY() + (screen_height / 2) + 20;
 
@@ -105,6 +88,11 @@ fun CreateTextImage(text, r, g, b) {
 // Password Dialog Functions
 // ============================================================================
 fun ShowPasswordDialog(prompt) {
+    // systemd-cryptsetup sends prompts like
+    // "Please enter passphrase for disk luks-<uuid>:" which overflow the
+    // 400px box. Use a fixed short string instead.
+    prompt = "Unlock Hypercube";
+
     global.dialog_visible = 1;
     global.prompt_text = prompt;
     global.bullet_count = 0;
@@ -233,12 +221,12 @@ Plymouth.SetMessageFunction(
         local.message_image = CreateTextImage(message, local.r, local.g, local.b);
         local.message_sprite = Sprite(local.message_image);
 
-        // Position message below the dialog (or below logo if dialog not visible)
+        // Position message below the dialog, or near screen center if no dialog
         local.message_y;
         if (global.dialog_visible) {
             local.message_y = box.y + box.height + 20 + (global.message_count * 25);
         } else {
-            local.message_y = logo.y + logo.height + 60 + (global.message_count * 25);
+            local.message_y = (screen_height / 2) + (global.message_count * 25);
         }
 
         local.message_x = (screen_width - local.message_image.GetWidth()) / 2;
@@ -257,25 +245,6 @@ Plymouth.SetUpdateStatusFunction(
     }
 );
 
-// ============================================================================
-// Refresh Callback (Animation Loop)
-// ============================================================================
-Plymouth.SetRefreshFunction(
-    fun() {
-        // Subtle logo pulse animation
-        global.pulse_opacity += global.pulse_direction * global.pulse_speed;
-
-        if (global.pulse_opacity >= global.pulse_max) {
-            global.pulse_opacity = global.pulse_max;
-            global.pulse_direction = -1;
-        } else if (global.pulse_opacity <= global.pulse_min) {
-            global.pulse_opacity = global.pulse_min;
-            global.pulse_direction = 1;
-        }
-
-        logo.sprite.SetOpacity(global.pulse_opacity);
-    }
-);
 
 // ============================================================================
 // Boot Progress (optional spinner/progress display)
@@ -295,8 +264,8 @@ Plymouth.SetBootProgressFunction(
 // ============================================================================
 Plymouth.SetQuitFunction(
     fun() {
-        // Fade out logo
-        logo.sprite.SetOpacity(0);
+        // Fade out background
+        background.sprite.SetOpacity(0);
         HidePasswordDialog();
 
         // Hide all messages
