@@ -30,6 +30,7 @@ env:
 
 jobs:
   build:
+    name: build ${{ matrix.display }}
     runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
@@ -38,9 +39,11 @@ jobs:
           - platform: linux/amd64
             runner: ubuntu-latest-m
             suffix: amd64
+            display: x86
           - platform: linux/arm64
             runner: ubuntu-latest-m-arm
             suffix: arm64
+            display: arm
     permissions:
       contents: read
       packages: write
