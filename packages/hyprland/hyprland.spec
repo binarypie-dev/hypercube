@@ -32,6 +32,7 @@ BuildRequires:  pkgconfig(libdisplay-info)
 BuildRequires:  pkgconfig(libdrm)
 BuildRequires:  pkgconfig(libinput) >= 1.28
 BuildRequires:  pkgconfig(lcms2)
+BuildRequires:  pkgconfig(lua55)
 BuildRequires:  pkgconfig(libliftoff)
 BuildRequires:  pkgconfig(libseat)
 BuildRequires:  pkgconfig(libudev)

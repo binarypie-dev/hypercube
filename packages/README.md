@@ -151,18 +151,30 @@ These must be built first as other packages depend on them.
 
 ---
 
+### 12. lua55
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/lua` |
+| Spec File | `lua.spec` |
+| Version | 5.5.0 |
+| Dependencies | None |
+| Notes | Parallel-installable Lua 5.5 (coexists with system lua 5.4). Required by hyprland for embedded scripting. |
+
+---
+
 ## Priority 2: Hyprland Compositor & Tools
 
 Build after core libraries are available.
 
-### 12. hyprland
+### 13. hyprland
 
 | Setting | Value |
 |---------|-------|
 | Subdir | `packages/hyprland` |
 | Spec File | `hyprland.spec` |
 | Version | 0.52.2 |
-| Dependencies | aquamarine, hyprcursor, hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner |
+| Dependencies | aquamarine, hyprcursor, hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner, lua55 |
 
 ---
 
@@ -435,21 +447,22 @@ To ensure dependencies are satisfied, build in this order:
 3. hyprland-protocols
 4. glaze
 5. uwsm
-6. eza
-7. starship
-8. lazygit
-9. ghostty
-10. quickshell
-11. livesys-scripts
-12. wifitui
-13. resvg
-14. yazi
-15. bluetui
-16. iamb
-17. meli
-18. lazyjournal
-19. lazysql
-20. resterm
+6. lua55
+7. eza
+8. starship
+9. lazygit
+10. ghostty
+11. quickshell
+12. livesys-scripts
+13. wifitui
+14. resvg
+15. yazi
+16. bluetui
+17. iamb
+18. meli
+19. lazyjournal
+20. lazysql
+21. resterm
 
 **Batch 2** (depends on Batch 1):
 1. hyprlang (needs hyprutils)
@@ -461,12 +474,8 @@ To ensure dependencies are satisfied, build in this order:
 1. hyprcursor (needs hyprlang)
 2. hyprland-qt-support (needs hyprlang)
 
-**Batch 3** (depends on Batch 2):
-1. hyprcursor (needs hyprlang)
-2. hyprland-qt-support (needs hyprlang)
-
 **Batch 4** (depends on Batch 3):
-1. hyprland (needs aquamarine, hyprcursor, hyprgraphics, hyprlang, hyprutils, glaze)
+1. hyprland (needs aquamarine, hyprcursor, hyprgraphics, hyprlang, hyprutils, glaze, lua55)
 2. hyprlock (needs hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner)
 3. hypridle (needs hyprland-protocols, hyprlang, hyprutils, hyprwayland-scanner)
 4. hyprpaper (needs hyprgraphics, hyprlang, hyprtoolkit, hyprutils, hyprwayland-scanner, hyprwire)
@@ -493,26 +502,27 @@ To ensure dependencies are satisfied, build in this order:
 | 8 | hyprland-qt-support | `packages/hyprland-qt-support` | `hyprland-qt-support.spec` | 0.1.0 |
 | 9 | glaze | `packages/glaze` | `glaze.spec` | 6.1.0 |
 | 10 | uwsm | `packages/uwsm` | `uwsm.spec` | 0.23.3 |
-| 11 | hyprland | `packages/hyprland` | `hyprland.spec` | 0.52.2 |
-| 12 | hyprlock | `packages/hyprlock` | `hyprlock.spec` | 0.9.2 |
-| 13 | hypridle | `packages/hypridle` | `hypridle.spec` | 0.1.7 |
-| 14 | hyprpaper | `packages/hyprpaper` | `hyprpaper.spec` | 0.7.6 |
-| 15 | xdg-desktop-portal-hyprland | `packages/xdg-desktop-portal-hyprland` | `xdg-desktop-portal-hyprland.spec` | 1.3.11 |
-| 16 | hyprpolkitagent | `packages/hyprpolkitagent` | `hyprpolkitagent.spec` | 0.1.3 |
-| 17 | hyprtoolkit | `packages/hyprtoolkit` | `hyprtoolkit.spec` | 0.4.1 |
-| 18 | hyprland-guiutils | `packages/hyprland-guiutils` | `hyprland-guiutils.spec` | 0.2.0 |
-| 19 | eza | `packages/eza` | `eza.spec` | 0.20.21 |
-| 20 | starship | `packages/starship` | `starship.spec` | 1.24.1 |
-| 21 | lazygit | `packages/lazygit` | `lazygit.spec` | 0.57.0 |
-| 22 | ghostty | `packages/ghostty` | `ghostty.spec` | 1.2.3^git |
-| 23 | quickshell | `packages/quickshell` | `quickshell.spec` | 0.2.1 |
-| 24 | livesys-scripts | `packages/livesys-scripts` | `livesys-scripts.spec` | 0.9.1 |
-| 25 | wifitui | `packages/wifitui` | `wifitui.spec` | 0.9.0 |
-| 26 | resvg | `packages/resvg` | `resvg.spec` | 0.46.0 |
-| 27 | yazi | `packages/yazi` | `yazi.spec` | 26.1.22 |
-| 28 | bluetui | `packages/bluetui` | `bluetui.spec` | 0.8.1 |
-| 29 | iamb | `packages/iamb` | `iamb.spec` | 0.0.11 |
-| 30 | meli | `packages/meli` | `meli.spec` | 0.8.13 |
-| 31 | lazyjournal | `packages/lazyjournal` | `lazyjournal.spec` | 0.8.4 |
-| 32 | lazysql | `packages/lazysql` | `lazysql.spec` | 0.4.6 |
-| 33 | resterm | `packages/resterm` | `resterm.spec` | 0.20.3 |
+| 11 | lua55 | `packages/lua` | `lua.spec` | 5.5.0 |
+| 12 | hyprland | `packages/hyprland` | `hyprland.spec` | 0.52.2 |
+| 13 | hyprlock | `packages/hyprlock` | `hyprlock.spec` | 0.9.2 |
+| 14 | hypridle | `packages/hypridle` | `hypridle.spec` | 0.1.7 |
+| 15 | hyprpaper | `packages/hyprpaper` | `hyprpaper.spec` | 0.7.6 |
+| 16 | xdg-desktop-portal-hyprland | `packages/xdg-desktop-portal-hyprland` | `xdg-desktop-portal-hyprland.spec` | 1.3.11 |
+| 17 | hyprpolkitagent | `packages/hyprpolkitagent` | `hyprpolkitagent.spec` | 0.1.3 |
+| 18 | hyprtoolkit | `packages/hyprtoolkit` | `hyprtoolkit.spec` | 0.4.1 |
+| 19 | hyprland-guiutils | `packages/hyprland-guiutils` | `hyprland-guiutils.spec` | 0.2.0 |
+| 20 | eza | `packages/eza` | `eza.spec` | 0.20.21 |
+| 21 | starship | `packages/starship` | `starship.spec` | 1.24.1 |
+| 22 | lazygit | `packages/lazygit` | `lazygit.spec` | 0.57.0 |
+| 23 | ghostty | `packages/ghostty` | `ghostty.spec` | 1.2.3^git |
+| 24 | quickshell | `packages/quickshell` | `quickshell.spec` | 0.2.1 |
+| 25 | livesys-scripts | `packages/livesys-scripts` | `livesys-scripts.spec` | 0.9.1 |
+| 26 | wifitui | `packages/wifitui` | `wifitui.spec` | 0.9.0 |
+| 27 | resvg | `packages/resvg` | `resvg.spec` | 0.46.0 |
+| 28 | yazi | `packages/yazi` | `yazi.spec` | 26.1.22 |
+| 29 | bluetui | `packages/bluetui` | `bluetui.spec` | 0.8.1 |
+| 30 | iamb | `packages/iamb` | `iamb.spec` | 0.0.11 |
+| 31 | meli | `packages/meli` | `meli.spec` | 0.8.13 |
+| 32 | lazyjournal | `packages/lazyjournal` | `lazyjournal.spec` | 0.8.4 |
+| 33 | lazysql | `packages/lazysql` | `lazysql.spec` | 0.4.6 |
+| 34 | resterm | `packages/resterm` | `resterm.spec` | 0.20.3 |

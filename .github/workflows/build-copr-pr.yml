@@ -40,7 +40,7 @@ jobs:
           fetch-depth: 0
 
       - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+        run: sudo apt-get update && sudo apt-get install -y jq rpm
 
       - name: Detect changed packages
         id: detect
@@ -79,7 +79,7 @@ jobs:
       - name: Install COPR CLI
         run: |
           sudo apt-get update
-          sudo apt-get install -y python3-pip jq
+          sudo apt-get install -y python3-pip jq rpm
           pip3 install copr-cli
 
       - name: Configure COPR CLI
