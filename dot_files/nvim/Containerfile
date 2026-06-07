@@ -4,7 +4,7 @@
 # Build: podman build -t nvim-dev .
 # Use:   distrobox create --name nvim-dev --image localhost/nvim-dev
 
-FROM registry.fedoraproject.org/fedora-toolbox:43
+FROM registry.fedoraproject.org/fedora-toolbox:44
 
 # =============================================================================
 # LAYER 1: System packages
