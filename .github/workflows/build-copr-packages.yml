@@ -138,8 +138,15 @@ jobs:
             SCRIPT_OUTPUT=$(./scripts/packages/check-copr-versions.sh $CHANGED_PKGS 2>&1)
             echo "$SCRIPT_OUTPUT"
 
-            # Extract packages that need building from the script output
-            NEEDS_BUILD=$(echo "$SCRIPT_OUTPUT" | grep "^NEEDS_BUILD_JSON=" | sed 's/^NEEDS_BUILD_JSON=//' | jq -r '.[]' | tr '\n' ' ')
+            # Extract packages that need building from the script output.
+            # `grep` exits 1 when nothing matches (all packages up to date);
+            # tolerate that so set -o pipefail doesn't kill the step.
+            JSON_LINE=$(echo "$SCRIPT_OUTPUT" | grep "^NEEDS_BUILD_JSON=" || true)
+            if [[ -n "$JSON_LINE" ]]; then
+              NEEDS_BUILD=$(echo "$JSON_LINE" | sed 's/^NEEDS_BUILD_JSON=//' | jq -r '.[]' | tr '\n' ' ')
+            else
+              NEEDS_BUILD=""
+            fi
           fi
 
           echo ""
