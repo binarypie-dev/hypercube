@@ -37,6 +37,7 @@ RUN dnf update -y && dnf install -y \
     sqlite-devel \
     bzip2-devel \
     xz-devel \
+    libatomic \
     # Utilities
     procps-ng \
     findutils \
