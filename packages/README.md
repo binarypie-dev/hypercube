@@ -5,7 +5,7 @@ This document lists all packages to configure in the `binarypie/hypercube` COPR 
 ## COPR Repository Settings
 
 - **Project Name**: `hypercube`
-- **Chroot Targets**: `fedora-43-x86_64`
+- **Chroot Targets**: `fedora-44-x86_64`
 - **Build Method**: SCM (Source Control Management)
 
 ---

@@ -53,7 +53,7 @@
 
 </details>
 
-Hypercube is an opinionated, ready-to-use development environment built on [Universal Blue's base-main](https://github.com/ublue-os/main) image with Fedora 43. It provides a complete Hyprland-based workflow with consistent vim keybindings across all tools and Tokyo Night theming throughout.
+Hypercube is an opinionated, ready-to-use development environment built on [Universal Blue's base-main](https://github.com/ublue-os/main) image with Fedora 44. It provides a complete Hyprland-based workflow with consistent vim keybindings across all tools and Tokyo Night theming throughout.
 
 ## Features
 
@@ -114,14 +114,14 @@ Tokyo Night color scheme everywhere:
 From your existing Fedora Atomic system:
 
 ```bash
-rpm-ostree rebase ostree-unverified-registry:ghcr.io/binarypie-dev/hypercube:43
+rpm-ostree rebase ostree-unverified-registry:ghcr.io/binarypie-dev/hypercube:44
 systemctl reboot
 ```
 
 After the first reboot, you can switch to signed images for additional security:
 
 ```bash
-rpm-ostree rebase ostree-image-signed:docker://ghcr.io/binarypie-dev/hypercube:43
+rpm-ostree rebase ostree-image-signed:docker://ghcr.io/binarypie-dev/hypercube:44
 systemctl reboot
 ```
 

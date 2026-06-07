@@ -4,7 +4,7 @@ This file provides guidance to coding agents when working with code in this repo
 
 ## Project Overview
 
-Hypercube is a container-based Linux distribution built on Fedora Atomic (via Universal Blue's `base-main:43`). It's a keyboard-first Hyprland desktop with vim keybindings, Tokyo Night theming, and developer tooling. The image is built as an OCI container and deployed via bootc.
+Hypercube is a container-based Linux distribution built on Fedora Atomic (via Universal Blue's `base-main:44`). It's a keyboard-first Hyprland desktop with vim keybindings, Tokyo Night theming, and developer tooling. The image is built as an OCI container and deployed via bootc.
 
 ## Build Commands
 
@@ -43,7 +43,7 @@ just run-iso <file>      # Test ISO in QEMU VM
 The `Containerfile` defines a multi-stage build:
 
 1. **Stage `ctx`**: Aggregates `system_files/` and `build_files/` into `/ctx`
-2. **Main stage**: Builds from `ghcr.io/ublue-os/base-main:43`, mounts `dot_files/` at `/dot_files`, runs `build.sh`
+2. **Main stage**: Builds from `ghcr.io/ublue-os/base-main:44`, mounts `dot_files/` at `/dot_files`, runs `build.sh`
 
 `build_files/shared/build.sh` orchestrates the build:
 
