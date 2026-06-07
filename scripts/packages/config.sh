@@ -40,14 +40,14 @@ declare -gA PACKAGE_REPOS=(
     [glaze]="stephenberry/glaze"
     [uwsm]="Vladimir-csp/uwsm"
     [quickshell]="quickshell-mirror/quickshell"
-    [lua]="lua/lua"
+    [lua55]="lua/lua"
 )
 
 # Version source (release or tag, default is release)
 declare -gA VERSION_SOURCES=(
     [uwsm]="tag"
     [quickshell]="tag"
-    [lua]="tag"
+    [lua55]="tag"
 )
 
 # Package dependencies (for determining build order)
@@ -73,7 +73,7 @@ declare -gA PACKAGE_DEPS=(
     [lazyjournal]=""
     [lazysql]=""
     [resterm]=""
-    [lua]=""
+    [lua55]=""
 
     # Packages with dependencies
     [hyprlang]="hyprutils"
@@ -81,7 +81,7 @@ declare -gA PACKAGE_DEPS=(
     [aquamarine]="hyprutils hyprwayland-scanner"
     [hyprcursor]="hyprlang"
     [hyprland-qt-support]="hyprlang"
-    [hyprland]="aquamarine hyprcursor hyprgraphics hyprlang hyprutils hyprwire glaze lua"
+    [hyprland]="aquamarine hyprcursor hyprgraphics hyprlang hyprutils hyprwire glaze lua55"
     [hyprlock]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
     [hypridle]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
     [hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner hyprwire hyprtoolkit"
@@ -93,7 +93,7 @@ declare -gA PACKAGE_DEPS=(
 
 # Build batches (packages in same batch can build in parallel)
 declare -gA BUILD_BATCHES=(
-    [1]="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui resvg yazi bluetui iamb meli lazyjournal lazysql resterm lua"
+    [1]="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui resvg yazi bluetui iamb meli lazyjournal lazysql resterm lua55"
     [2]="hyprlang hyprgraphics aquamarine"
     [3]="hyprcursor hyprland-qt-support"
     [4]="hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprpolkitagent hyprtoolkit"
