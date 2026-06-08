@@ -88,7 +88,7 @@ jobs:
 
       - name: Upload ISO to release
         if: inputs.create-release == true && inputs.release-tag != ''
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ inputs.release-tag }}
           files: |
