@@ -152,7 +152,7 @@ jobs:
           echo "build_pairs=$ALL_BUILD_IDS" >> $GITHUB_OUTPUT
 
       - name: Comment on PR with build links
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         with:
           script: |
             const pairs = '${{ steps.submit.outputs.build_pairs }}'.trim().split(/\s+/).filter(Boolean);
