@@ -190,8 +190,10 @@ USER root
 WORKDIR /
 
 # =============================================================================
-# LAYER 11: Terminal compatibility
+# LAYER 11: Terminal compatibility (xterm-ghostty terminfo)
 # =============================================================================
+# Install Ghostty's terminfo so TERM=xterm-ghostty resolves inside the
+# container and TUIs (nvim, lazygit, ...) don't emit awkward escape sequences.
 RUN curl -fsSL https://raw.githubusercontent.com/ghostty-org/ghostty/main/src/terminfo/ghostty.terminfo \
     | tic -x -o /etc/terminfo -
 
@@ -201,6 +203,27 @@ RUN curl -fsSL https://raw.githubusercontent.com/ghostty-org/ghostty/main/src/te
 # Distrobox maps the host user into the container, so we need to ensure
 # all tool directories are accessible
 RUN chmod -R 777 /home/linuxbrew
+
+# =============================================================================
+# LAYER 13: TERM fallback safety net (xterm-ghostty)
+# =============================================================================
+# distrobox shares the host TERM (usually xterm-ghostty) and the terminfo is
+# installed above. As a safety net, if an unknown or empty TERM ever reaches an
+# interactive shell, fall back to xterm-256color so programs don't emit raw
+# escape sequences. Covers POSIX shells and fish (distrobox uses the host shell).
+RUN mkdir -p /etc/profile.d /etc/fish/conf.d \
+    && printf '%s\n' \
+        '# Fall back to a known-good TERM if the current one has no terminfo entry.' \
+        'if [ -n "${TERM:-}" ] && ! infocmp "$TERM" >/dev/null 2>&1; then' \
+        '    export TERM=xterm-256color' \
+        'fi' \
+        > /etc/profile.d/10-term-fallback.sh \
+    && printf '%s\n' \
+        '# Fall back to a known-good TERM if the current one has no terminfo entry.' \
+        'if test -n "$TERM"; and not infocmp "$TERM" >/dev/null 2>&1' \
+        '    set -gx TERM xterm-256color' \
+        'end' \
+        > /etc/fish/conf.d/10-term-fallback.fish
 
 # Labels for GitHub Container Registry
 LABEL org.opencontainers.image.source="https://github.com/binarypie/hypercube"
