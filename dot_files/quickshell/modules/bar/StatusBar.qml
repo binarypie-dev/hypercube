@@ -215,7 +215,7 @@ PanelWindow {
                 Layout.preferredWidth: root.barHeight
                 color: "transparent"
 
-                property bool isRunning: Services.Updates.preinstallRunning ?? false
+                property bool isRunning: Services.Updates.checking ?? false
                 property bool needsAttention: Services.Updates.needsAttention ?? false
 
                 Common.Icon {
@@ -231,7 +231,7 @@ PanelWindow {
                         : Common.Appearance.colors.fgDark
 
                     RotationAnimation on rotation {
-                        running: Services.Updates.preinstallRunning ?? false
+                        running: Services.Updates.checking ?? false
                         from: 0
                         to: 360
                         duration: 1000

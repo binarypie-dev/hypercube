@@ -18,16 +18,27 @@ Singleton {
     // Whether we need user attention
     property bool needsAttention: updateCount > 0
 
+    // Holds the most recent process output (Process.stdout is a sink, not a
+    // readable string, so we collect it here via StdioCollector below).
+    property string pendingOutput: ""
+
     // Update query script
     readonly property string updateQueryScript: "
         if command -v rpm-ostree &>/dev/null; then
-            STATUS=$(rpm-ostree status --json 2>/dev/null)
-            if echo \"$STATUS\" | grep -q '\"pending\"'; then
+            # On ostree-container / bootc systems this reconciles against the
+            # registry image (e.g. ghcr.io/binarypie-dev/hypercube:44) via the
+            # privileged daemon, so it works from a user-context process.
+            OUTPUT=$(rpm-ostree upgrade --check 2>/dev/null)
+            if echo \"$OUTPUT\" | grep -q \"AvailableUpdate\"; then
                 echo \"updateCount=1\"
-                echo \"update:System update available\"
+                VERSION=$(echo \"$OUTPUT\" | grep -i \"Version:\" | head -1 | sed 's/.*Version:[[:space:]]*//')
+                if [ -n \"$VERSION\" ]; then
+                    echo \"update:New image: $VERSION\"
+                else
+                    echo \"update:System image update available\"
+                fi
             else
-                UPDATES=$(rpm-ostree upgrade --check 2>/dev/null | grep -c \"Diff\" || echo \"0\")
-                echo \"updateCount=$UPDATES\"
+                echo \"updateCount=0\"
             fi
 
         elif command -v dnf &>/dev/null; then
@@ -54,9 +65,17 @@ Singleton {
         id: updateProcess
         command: ["sh", "-c", root.updateQueryScript]
         running: false
+
+        stdout: StdioCollector {
+            onStreamFinished: root.pendingOutput = this.text
+        }
+
         onExited: root.parseUpdateOutput()
         onRunningChanged: {
-            if (running) checking = true
+            if (running) {
+                checking = true
+                root.pendingOutput = ""
+            }
         }
     }
 
@@ -64,7 +83,7 @@ Singleton {
         checking = false
         error = ""
 
-        const output = updateProcess.stdout || ""
+        const output = root.pendingOutput || ""
         const lines = output.split("\n")
         const newUpdates = []
 
