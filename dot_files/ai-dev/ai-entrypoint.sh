@@ -7,6 +7,14 @@ if [ -n "$HOME" ] && [ "$HOME" != "/root" ]; then
     sed -i "s|root:x:0:0:[^:]*:/root:|root:x:0:0:root:$HOME:|" /etc/passwd 2>/dev/null || true
 fi
 
+# Make sure TERM resolves inside the container. The host usually runs Ghostty
+# (TERM=xterm-ghostty); that terminfo is baked into the image. If an unknown or
+# empty TERM is propagated, fall back to a sane default so programs don't emit
+# raw/awkward escape sequences.
+if [ -z "${TERM:-}" ] || ! infocmp "$TERM" >/dev/null 2>&1; then
+    export TERM=xterm-256color
+fi
+
 # Note: claude/agy are installed under /home/linuxbrew/.local/bin at build time.
 # They are resolved at runtime via PATH (set below), NOT via symlinks into $HOME.
 # Symlinking into $HOME was unsafe: when the wrappers mount the current directory

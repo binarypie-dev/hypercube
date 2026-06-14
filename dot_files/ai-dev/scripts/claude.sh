@@ -10,6 +10,7 @@ exec podman run --rm -it --init \
     --user 0:0 \
     --security-opt label=disable \
     -e HOME="$HOME" \
+    -e TERM="${TERM:-}" \
     -v "$(pwd):$(pwd):rw" \
     -v "$HOME/.claude:$HOME/.claude:rw" \
     -v "$HOME/.claude.json:$HOME/.claude.json:rw" \
