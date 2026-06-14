@@ -7,14 +7,20 @@ if [ -n "$HOME" ] && [ "$HOME" != "/root" ]; then
     sed -i "s|root:x:0:0:[^:]*:/root:|root:x:0:0:root:$HOME:|" /etc/passwd 2>/dev/null || true
 fi
 
-# Symlink native install paths to where the installers expect them at runtime
-# (installed under /home/linuxbrew at build time, but $HOME differs at runtime)
-if [ -n "$HOME" ] && [ "$HOME" != "/home/linuxbrew" ]; then
-    mkdir -p "$HOME/.local/bin" "$HOME/.local/share"
-    ln -sf /home/linuxbrew/.local/bin/claude "$HOME/.local/bin/claude" 2>/dev/null || true
-    ln -sf /home/linuxbrew/.local/share/claude "$HOME/.local/share/claude" 2>/dev/null || true
-    ln -sf /home/linuxbrew/.local/bin/agy "$HOME/.local/bin/agy" 2>/dev/null || true
+# Make sure TERM resolves inside the container. The host usually runs Ghostty
+# (TERM=xterm-ghostty); that terminfo is baked into the image. If an unknown or
+# empty TERM is propagated, fall back to a sane default so programs don't emit
+# raw/awkward escape sequences.
+if [ -z "${TERM:-}" ] || ! infocmp "$TERM" >/dev/null 2>&1; then
+    export TERM=xterm-256color
 fi
+
+# Note: claude/agy are installed under /home/linuxbrew/.local/bin at build time.
+# They are resolved at runtime via PATH (set below), NOT via symlinks into $HOME.
+# Symlinking into $HOME was unsafe: when the wrappers mount the current directory
+# (-v "$(pwd):$(pwd):rw") and the tool is run from the host home directory, those
+# symlinks were written straight through to the host, clobbering the real
+# ~/.local/bin/claude and ~/.local/bin/agy wrapper scripts.
 
 # Ensure claude auth files are readable within the container
 chmod -R a+rX "$HOME/.claude" 2>/dev/null || true

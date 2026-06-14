@@ -15,6 +15,7 @@ exec podman run --rm -it --init \
     --user 0:0 \
     --security-opt label=disable \
     -e HOME="$HOME" \
+    -e TERM="${TERM:-}" \
     $env_flags \
     -v "$(pwd):$(pwd):rw" \
     -v "$HOME/.claude:$HOME/.claude:rw" \

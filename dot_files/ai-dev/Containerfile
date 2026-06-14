@@ -21,9 +21,18 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
 
 # =============================================================================
-# LAYER 3: Entrypoint script (sets PATH, execs command)
+# LAYER 3: Ghostty terminfo (xterm-ghostty)
 # =============================================================================
+# Inherited from nvim-dev, but install explicitly so ai-dev still resolves
+# TERM=xterm-ghostty if the base image ever changes. Prevents awkward escape
+# sequences in the Claude Code / Antigravity TUIs.
 USER root
+RUN curl -fsSL https://raw.githubusercontent.com/ghostty-org/ghostty/main/src/terminfo/ghostty.terminfo \
+    | tic -x -o /etc/terminfo -
+
+# =============================================================================
+# LAYER 4: Entrypoint script (sets PATH, execs command)
+# =============================================================================
 COPY ai-entrypoint.sh /usr/local/bin/ai-entrypoint.sh
 RUN chmod +x /usr/local/bin/ai-entrypoint.sh
 
