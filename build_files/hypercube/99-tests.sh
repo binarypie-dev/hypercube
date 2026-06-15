@@ -47,6 +47,7 @@ REQUIRED_FILES=(
   "/etc/greetd/config.toml"
   # Config files
   "/etc/fish/config.fish"
+  "/etc/profile.d/hypercube-path.sh"
   "/usr/share/hypercube/config/starship/starship.toml"
   # Theming
   "/usr/share/themes/Tokyonight-Dark/gtk-3.0/gtk.css"
