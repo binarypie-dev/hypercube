@@ -16,9 +16,18 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
+-- Personal overrides are bind-mounted from the host at ~/.config/hypercube/nvim.
+-- Append it to the runtimepath so `{ import = "plugins" }` below also picks up
+-- the user's lua/plugins/*.lua and layers them on top of the baked config.
+local override = vim.fn.expand("~/.config/hypercube/nvim")
+if (vim.uv or vim.loop).fs_stat(override) then
+  vim.opt.rtp:append(override)
+end
+
 -- Load Hypercube plugin specs (from runtimepath)
 local hypercube_ui = require("hypercube.plugins.ui")
 local hypercube_extras = require("hypercube.plugins.extras")
+local hypercube_ai = require("hypercube.plugins.ai")
 
 require("lazy").setup({
   spec = {
@@ -28,8 +37,9 @@ require("lazy").setup({
     -- Hypercube customizations (loaded via require)
     hypercube_ui,
     hypercube_extras,
+    hypercube_ai,
 
-    -- Your personal plugins (add files to lua/plugins/)
+    -- Your personal plugins (add files to ~/.config/hypercube/nvim/lua/plugins/)
     { import = "plugins" },
   },
 

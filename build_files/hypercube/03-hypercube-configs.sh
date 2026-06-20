@@ -55,14 +55,40 @@ source = /usr/share/hypercube/config/hypr/hyprland.conf
 
 EOF
 
-### Neovim - skel that loads hypercube plugin from system config
-# System config at /usr/share/hypercube/config/nvim/ provides the hypercube plugin
-# Users get a minimal config that imports it and can add their own plugins
-mkdir -p /etc/skel/.config/nvim/lua/config
-mkdir -p /etc/skel/.config/nvim/lua/plugins
-cp "${CONFIG_DIR}/nvim/skel/init.lua" /etc/skel/.config/nvim/
-cp "${CONFIG_DIR}/nvim/skel/lua/config/lazy.lua" /etc/skel/.config/nvim/lua/config/
-cp "${CONFIG_DIR}/nvim/skel/lua/plugins/example.lua" /etc/skel/.config/nvim/lua/plugins/
+### Neovim - AI-first sandbox overrides
+# The editor config + AI agents ship baked into the podman image
+# (ujust nvim-setup). Users keep ONLY personal plugin overrides here; this
+# directory is bind-mounted into the container's baked LazyVim config and
+# layered on top of it.
+mkdir -p /etc/skel/.config/hypercube/nvim/lua/plugins
+cat > /etc/skel/.config/hypercube/nvim/lua/plugins/example.lua << 'EOF'
+-- Personal Neovim overrides
+-- These are layered on top of Hypercube's baked LazyVim configuration.
+--
+-- To add a new plugin:
+--   return {
+--     "username/plugin-name",
+--     opts = { ... },
+--   }
+--
+-- To override a Hypercube plugin:
+--   return {
+--     "folke/snacks.nvim",
+--     opts = {
+--       dashboard = {
+--         preset = { header = "Your custom header" },
+--       },
+--     },
+--   }
+--
+-- To disable a plugin:
+--   return {
+--     "plugin/name",
+--     enabled = false,
+--   }
+
+return {}
+EOF
 
 ### GTK theme settings - install to /etc/xdg/ for system-wide defaults
 # Users can override by creating ~/.config/gtk-3.0/settings.ini

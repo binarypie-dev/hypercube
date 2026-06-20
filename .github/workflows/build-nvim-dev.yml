@@ -13,11 +13,12 @@ on:
     branches:
       - main
     paths:
-      - 'dot_files/nvim/Containerfile'
+      # Config is baked into the image, so any config change must rebuild.
+      - 'dot_files/nvim/**'
       - '.github/workflows/build-nvim-dev.yml'
   pull_request:
     paths:
-      - 'dot_files/nvim/Containerfile'
+      - 'dot_files/nvim/**'
       - '.github/workflows/build-nvim-dev.yml'
   workflow_dispatch:
   schedule:
@@ -134,6 +135,6 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Usage" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "distrobox create --name nvim-dev --image ${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest" >> $GITHUB_STEP_SUMMARY
-          echo "distrobox enter nvim-dev" >> $GITHUB_STEP_SUMMARY
+          echo "ujust nvim-setup   # pull image + install the 'nvim' wrapper" >> $GITHUB_STEP_SUMMARY
+          echo "nvim               # launch the AI-first editor" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

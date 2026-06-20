@@ -1,127 +1,107 @@
-# My Neovim Configuration
+# Hypercube Neovim — AI-first sandbox
 
-This is my personal Neovim configuration, based on [LazyVim](https://github.com/LazyVim/LazyVim).
+A self-contained, **portable** Neovim environment: [LazyVim](https://github.com/LazyVim/LazyVim)
+plus the full dev toolchain (LSPs/formatters/linters) **and** AI coding agents,
+all baked into one podman image. Launch the agents from inside nvim.
 
-## Overview
+Runs identically on the Hypercube Linux desktop, a remote box, and macOS — no
+distrobox required.
 
-This configuration is built upon the LazyVim distribution and customized with a set of plugins and settings to enhance the development workflow.
+## What's baked in
 
-## Distrobox Development Environment
+- **Editor:** Neovim + LazyVim with Hypercube customizations.
+- **AI agents:** Claude Code (`claude`), OpenAI Codex (`codex`), Antigravity
+  (`agy`), GitHub CLI (`gh`). Wired into nvim via `claudecode.nvim` and
+  `sidekick.nvim`.
+- **Languages & runtimes:** Go, Python 3.12, Node.js, Ruby, Lua, Rust.
+- **Formatters:** stylua, prettier, shfmt, gofumpt, goimports, black, isort, ruff.
+- **Linters:** shellcheck, hadolint, eslint, golangci-lint.
+- **Language servers:** lua-language-server, gopls, pyright,
+  typescript-language-server, vtsls, rust-analyzer, bash-language-server,
+  dockerfile-language-server, yaml-language-server, tailwindcss-language-server.
+- **CLI tools:** ripgrep, fd, fzf, lazygit, bat, eza, delta, jq, yq, just,
+  tree-sitter; Ghostty terminfo; fish.
 
-A pre-built containerized Neovim environment is available via distrobox. The image includes all LSPs, formatters, linters, and language runtimes pre-installed.
+## How it works
 
-### Quick Start (Hypercube Users)
+`scripts/nvim.sh` runs the image as an ephemeral `podman` container and mounts
+only what's needed:
+
+| Mounted in | Purpose |
+|---|---|
+| named volume `hypercube-nvim-home` → `/root` | plugin/mason updates, sessions, shada, **and AI-CLI auth** — seeded from the image on first run, persisted after |
+| current directory | the project you're editing |
+| `~/.config/hypercube/nvim` | **your** plugin overrides, layered on top of the baked config |
+| `~/.gitconfig` (ro) | commit identity |
+| `$SSH_AUTH_SOCK` (Linux) | SSH agent for git/gh |
+
+Everything else (the LazyVim config, plugins, AI CLIs) lives in the image. The
+container runs as `--user 0:0` so files you edit are owned by your host user
+under rootless podman. Multiple sessions run concurrently — there's no fixed
+container name, and nvim safely shares shada/swap.
+
+Clipboard uses **OSC 52** through the terminal, so yank/paste works locally
+(Ghostty) and over SSH without forwarding a Wayland/pbcopy socket.
+
+## Setup (Hypercube)
 
 ```bash
-# One command to set everything up
-just nvim-setup
-
-# Now use nvim directly
-nvim file.rs
+ujust nvim-setup     # pull image + install the 'nvim' wrapper to ~/.local/bin
+nvim file.rs         # launch
 ```
-
-### Quick Start (Any Distrobox User)
-
-```bash
-# Pull the pre-built image
-distrobox create --name nvim-dev --image ghcr.io/binarypie/nvim-dev:latest
-
-# Export nvim to your PATH
-distrobox enter nvim-dev -- distrobox-export --bin /home/linuxbrew/.linuxbrew/bin/nvim --export-path ~/.local/bin
-
-# Use nvim directly
-nvim file.rs
-```
-
-### Available Commands (Hypercube)
 
 | Command | Description |
 |---------|-------------|
-| `just nvim-setup` | Create container + export nvim (one-time setup) |
-| `just nvim-dev` | Enter the container interactively |
-| `just nvim-export` | Export nvim to ~/.local/bin |
-| `just nvim-upgrade` | Upgrade container to latest image |
+| `ujust nvim-setup`   | pull image + install the `nvim` wrapper |
+| `ujust nvim-upgrade` | pull the latest image + refresh the wrapper |
+| `ujust nvim-reset`   | drop the home volume to re-seed (clears plugin state + AI logins) |
+| `ujust nvim-shell`   | debug shell inside a throwaway sandbox container |
 
-### Local Development
+## Setup (macOS / any podman host)
 
-For testing changes to the container image:
+No `ujust` needed — install the wrapper by hand:
+
+```bash
+podman pull ghcr.io/binarypie-dev/nvim-dev:latest
+install -m 0755 dot_files/nvim/scripts/nvim.sh ~/.local/bin/nvim
+nvim
+```
+
+macOS notes:
+- Edit projects under your home directory (the path podman's VM shares).
+- The host SSH agent isn't reachable from the podman VM, so run `gh auth login`
+  once inside nvim's terminal — it persists in the home volume and authenticates
+  git over HTTPS.
+
+## Personal overrides
+
+Drop LazyVim plugin specs in `~/.config/hypercube/nvim/lua/plugins/*.lua`. They're
+bind-mounted in and layered on top of the baked config — add plugins, change
+options, or disable defaults without rebuilding the image. Example:
+
+```lua
+-- ~/.config/hypercube/nvim/lua/plugins/mine.lua
+return {
+  { "folke/snacks.nvim", opts = { dashboard = { preset = { header = "hi" } } } },
+}
+```
+
+## AI keymaps
+
+- `<leader>a…` — Claude Code (claudecode.nvim, LazyVim defaults)
+- `<leader>A…` — sidekick.nvim agents: `Ac` Claude, `Ax` Codex, `Aa` toggle
+  last, `As` send selection, `Ap` ask with prompt
+- `<Tab>` — apply/jump sidekick Next Edit Suggestion (falls through to `<Tab>`
+  when Copilot isn't signed in)
+
+## Local development (editing the image)
 
 ```bash
 cd dot_files/nvim
 
-just build        # Build image locally
-just setup-local  # Create container from local image + export
-just test-build   # Verify all tools are installed
-just clean        # Remove container
+just build         # build localhost/nvim-dev
+just test-build    # verify nvim + toolchain + AI CLIs run
+just run .         # launch the local image (uses a throwaway test volume)
+just shell         # bash in the local image
+just clean-image   # remove the local image
 ```
-
-### What's Pre-Installed
-
-The container image (`ghcr.io/binarypie/nvim-dev`) includes:
-
-**Languages & Runtimes:**
-- Go, Python 3.12, Node.js, Ruby, Lua, Rust
-
-**Formatters:**
-- stylua, prettier, shfmt, gofumpt, goimports, black, isort, ruff
-
-**Linters:**
-- shellcheck, hadolint, eslint, golangci-lint
-
-**Language Servers:**
-- lua-language-server, gopls, pyright, typescript-language-server, vtsls, rust-analyzer, bash-language-server, dockerfile-language-server, yaml-language-server, tailwindcss-language-server
-
-**Infrastructure Tools:**
-- terraform, tflint, helm, sqlfluff
-
-**CLI Tools:**
-- ripgrep, fd, fzf, lazygit, gh, bat, eza, delta, jq, yq
-
-**Other:**
-- Tree-sitter CLI
-- Ghostty terminal support (terminfo)
-- Fish shell
-
-### How It Works
-
-The pre-built image is published to GitHub Container Registry and rebuilt automatically when the Containerfile changes. Users pull the ~2GB image once, then container creation is instant.
-
-Unlike Docker containers, distrobox provides seamless integration:
-- Your `~/.config/nvim` is directly accessible
-- Git credentials, SSH keys, GPG keys all work automatically
-- Clipboard works via OSC 52
-- The exported `nvim` command transparently enters the container
-
-### Updating
-
-```bash
-# Update to latest image
-just nvim-upgrade
-
-# Or manually
-distrobox upgrade nvim-dev
-```
-
-## Plugins
-
-This configuration uses [lazy.nvim](https://github.com/folke/lazy.nvim) to manage plugins.
-
-### Core Plugins (from LazyVim)
-
-* LazyVim, blink.cmp, bufferline.nvim, conform.nvim, flash.nvim
-* gitsigns.nvim, grug-far.nvim, lazy.nvim, lazydev.nvim, lualine.nvim
-* mason.nvim, mason-lspconfig.nvim, mini.ai, mini.icons, mini.pairs
-* noice.nvim, nvim-lint, nvim-lspconfig, nvim-treesitter
-* persistence.nvim, snacks.nvim, todo-comments.nvim, tokyonight.nvim
-* trouble.nvim, which-key.nvim, yanky.nvim
-
-### Language-Specific
-
-* rustaceanvim, crates.nvim, vim-helm
-* vim-dadbod, vim-dadbod-ui, vim-dadbod-completion
-
-## Installation (Without Container)
-
-1. Clone this repository to `~/.config/nvim`
-2. Delete the .git folder
-3. Start Neovim - lazy.nvim will install plugins automatically
