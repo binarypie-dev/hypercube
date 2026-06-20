@@ -1,0 +1,15 @@
+# Hypercube default application associations
+#
+# Registers Firefox as the default handler for web URLs so that xdg-open
+# (used by Ghostty's "open link", agy/claude OAuth logins, and any CLI that
+# shells out to a browser) actually opens a browser instead of failing with
+# "no method available".
+#
+# Users can override per-app in ~/.config/mimeapps.list.
+
+[Default Applications]
+text/html=firefox.desktop
+x-scheme-handler/http=firefox.desktop
+x-scheme-handler/https=firefox.desktop
+x-scheme-handler/about=firefox.desktop
+x-scheme-handler/unknown=firefox.desktop

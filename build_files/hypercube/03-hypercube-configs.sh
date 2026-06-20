@@ -55,14 +55,40 @@ source = /usr/share/hypercube/config/hypr/hyprland.conf
 
 EOF
 
-### Neovim - skel that loads hypercube plugin from system config
-# System config at /usr/share/hypercube/config/nvim/ provides the hypercube plugin
-# Users get a minimal config that imports it and can add their own plugins
-mkdir -p /etc/skel/.config/nvim/lua/config
-mkdir -p /etc/skel/.config/nvim/lua/plugins
-cp "${CONFIG_DIR}/nvim/skel/init.lua" /etc/skel/.config/nvim/
-cp "${CONFIG_DIR}/nvim/skel/lua/config/lazy.lua" /etc/skel/.config/nvim/lua/config/
-cp "${CONFIG_DIR}/nvim/skel/lua/plugins/example.lua" /etc/skel/.config/nvim/lua/plugins/
+### Neovim - AI-first sandbox overrides
+# The editor config + AI agents ship baked into the podman image
+# (ujust nvim-setup). Users keep ONLY personal plugin overrides here; this
+# directory is bind-mounted into the container's baked LazyVim config and
+# layered on top of it.
+mkdir -p /etc/skel/.config/hypercube/nvim/lua/plugins
+cat > /etc/skel/.config/hypercube/nvim/lua/plugins/example.lua << 'EOF'
+-- Personal Neovim overrides
+-- These are layered on top of Hypercube's baked LazyVim configuration.
+--
+-- To add a new plugin:
+--   return {
+--     "username/plugin-name",
+--     opts = { ... },
+--   }
+--
+-- To override a Hypercube plugin:
+--   return {
+--     "folke/snacks.nvim",
+--     opts = {
+--       dashboard = {
+--         preset = { header = "Your custom header" },
+--       },
+--     },
+--   }
+--
+-- To disable a plugin:
+--   return {
+--     "plugin/name",
+--     enabled = false,
+--   }
+
+return {}
+EOF
 
 ### GTK theme settings - install to /etc/xdg/ for system-wide defaults
 # Users can override by creating ~/.config/gtk-3.0/settings.ini
@@ -77,6 +103,13 @@ install -Dm644 "${CONFIG_DIR}/gtk-4.0/settings.ini" /etc/xdg/gtk-4.0/settings.in
 # Qt6ct supports XDG_CONFIG_DIRS for system-wide defaults
 install -Dm644 "${CONFIG_DIR}/qt6ct/qt6ct.conf" /etc/xdg/qt6ct/qt6ct.conf
 install -Dm644 "${CONFIG_DIR}/qt6ct/colors/TokyoNight.conf" /usr/share/qt6ct/colors/TokyoNight.conf
+
+### Default browser / URL handler
+# Register Firefox as the default for http/https so xdg-open works (Ghostty
+# "open link", agy/claude OAuth logins, any CLI that opens a browser). Installed
+# to /usr/share/applications/ (the data-dir default every opener honors); the
+# same file is also reachable via XDG_CONFIG_DIRS at /usr/share/hypercube/config.
+install -Dm644 "${CONFIG_DIR}/mimeapps.list" /usr/share/applications/mimeapps.list
 
 ### Enable xdg-desktop-portal-gtk for dark mode detection (Firefox, etc.)
 # This portal provides the org.freedesktop.appearance.color-scheme setting

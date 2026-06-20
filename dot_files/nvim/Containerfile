@@ -1,8 +1,11 @@
-# Neovim Development Environment for Distrobox
-# Pre-built image with all LSPs, formatters, linters, and tools
+# Hypercube AI-first Neovim sandbox
+#
+# A self-contained, portable podman image: LazyVim (baked in), the full dev
+# toolchain (LSPs/formatters/linters), and AI coding agents (Claude Code, OpenAI
+# Codex, Antigravity, GitHub CLI). Agents are launched from inside nvim.
 #
 # Build: podman build -t nvim-dev .
-# Use:   distrobox create --name nvim-dev --image localhost/nvim-dev
+# Run:   podman run --rm -it nvim-dev          (see scripts/nvim.sh for mounts)
 
 FROM registry.fedoraproject.org/fedora-toolbox:44
 
@@ -38,12 +41,15 @@ RUN dnf update -y && dnf install -y \
     bzip2-devel \
     xz-devel \
     libatomic \
+    # ICU runtime: Mason's prebuilt language servers (e.g. lua-language-server)
+    # dynamically link the system libicu, which fedora-toolbox does not ship.
+    libicu \
     # Utilities
     procps-ng \
     findutils \
     which \
     file \
-    # Clipboard support
+    # Clipboard support (fallback; nvim uses OSC 52 by default in-container)
     xclip \
     xsel \
     wl-clipboard \
@@ -71,9 +77,13 @@ ENV PATH="/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.linuxbrew/sbin:${PATH}
 ENV HOMEBREW_NO_AUTO_UPDATE=1
 ENV HOMEBREW_NO_ANALYTICS=1
 
-# Switch to linuxbrew user for all brew operations
+# Switch to linuxbrew user for all brew operations.
+# HOME must point at the linuxbrew home so brew + the AI-CLI installers below
+# write under /home/linuxbrew (on PATH, never shadowed by the runtime home
+# volume) rather than the root-owned /root.
 USER linuxbrew
 WORKDIR /home/linuxbrew
+ENV HOME=/home/linuxbrew
 
 # Update Homebrew
 RUN brew update
@@ -183,14 +193,32 @@ RUN mkdir -p ${NPM_CONFIG_PREFIX} \
     @tailwindcss/language-server \
     pyright \
     tree-sitter-cli \
-    @mermaid-js/mermaid-cli
+    @mermaid-js/mermaid-cli \
+    # AI: OpenAI Codex CLI (plain npm bin; resolved via PATH, no HOME self-check)
+    @openai/codex
 
-# Switch back to root for system-level operations
+# Switch back to root for system-level operations. From here HOME=/root, which
+# is where the config is baked and where the runtime container (--user 0:0)
+# reads config + AI auth from the persisted home volume.
 USER root
 WORKDIR /
+ENV HOME=/root
 
 # =============================================================================
-# LAYER 11: Terminal compatibility (xterm-ghostty terminfo)
+# LAYER 11: AI coding agents (Claude Code + Antigravity)
+# =============================================================================
+# Installed AS ROOT into /root/.local so they live under $HOME at runtime.
+# The runtime container runs as root (--user 0:0) with HOME=/root, and Claude's
+# launcher validates its own install path against $HOME/.local/bin/claude --
+# installing under /home/linuxbrew makes it report "command missing or broken"
+# even though it's on PATH. /root is seeded into the persisted home volume on
+# first run (podman copy-up), and the CLIs self-update there afterward.
+ENV PATH="/root/.local/bin:${PATH}"
+RUN curl -fsSL https://claude.ai/install.sh | bash
+RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
+
+# =============================================================================
+# LAYER 12: Terminal compatibility (xterm-ghostty terminfo)
 # =============================================================================
 # Install Ghostty's terminfo so TERM=xterm-ghostty resolves inside the
 # container and TUIs (nvim, lazygit, ...) don't emit awkward escape sequences.
@@ -198,19 +226,11 @@ RUN curl -fsSL https://raw.githubusercontent.com/ghostty-org/ghostty/main/src/te
     | tic -x -o /etc/terminfo -
 
 # =============================================================================
-# LAYER 12: Fix permissions for distrobox user mapping
+# LAYER 13: TERM fallback safety net (interactive shells)
 # =============================================================================
-# Distrobox maps the host user into the container, so we need to ensure
-# all tool directories are accessible
-RUN chmod -R 777 /home/linuxbrew
-
-# =============================================================================
-# LAYER 13: TERM fallback safety net (xterm-ghostty)
-# =============================================================================
-# distrobox shares the host TERM (usually xterm-ghostty) and the terminfo is
-# installed above. As a safety net, if an unknown or empty TERM ever reaches an
-# interactive shell, fall back to xterm-256color so programs don't emit raw
-# escape sequences. Covers POSIX shells and fish (distrobox uses the host shell).
+# If an unknown or empty TERM ever reaches an interactive shell, fall back to
+# xterm-256color so programs don't emit raw escape sequences. Covers POSIX
+# shells and fish.
 RUN mkdir -p /etc/profile.d /etc/fish/conf.d \
     && printf '%s\n' \
         '# Fall back to a known-good TERM if the current one has no terminfo entry.' \
@@ -225,7 +245,27 @@ RUN mkdir -p /etc/profile.d /etc/fish/conf.d \
         'end' \
         > /etc/fish/conf.d/10-term-fallback.fish
 
+# =============================================================================
+# LAYER 14: Bake the Neovim configuration + pre-install plugins
+# =============================================================================
+# The full LazyVim config is baked into $HOME/.config/nvim. Personal overrides
+# are bind-mounted at runtime from the host (~/.config/hypercube/nvim) and
+# layered on top via the runtimepath (see lua/config/lazy.lua).
+COPY config/ /root/.config/nvim/
+
+# Pre-install all plugins + build treesitter parsers so first launch is fast and
+# offline. HOME=/root and PATH already include the brew nvim binary.
+RUN nvim --headless "+Lazy! sync" +qa
+
+# =============================================================================
+# LAYER 15: Entrypoint
+# =============================================================================
+COPY entrypoint.sh /usr/local/bin/hypercube-nvim-entrypoint
+RUN chmod +x /usr/local/bin/hypercube-nvim-entrypoint
+ENTRYPOINT ["/usr/local/bin/hypercube-nvim-entrypoint"]
+CMD ["nvim"]
+
 # Labels for GitHub Container Registry
 LABEL org.opencontainers.image.source="https://github.com/binarypie/hypercube"
-LABEL org.opencontainers.image.description="Neovim development environment with LSPs, formatters, and tools"
+LABEL org.opencontainers.image.description="AI-first Neovim sandbox: LazyVim + dev toolchain + Claude Code, Codex, Antigravity, gh"
 LABEL org.opencontainers.image.licenses="MIT"

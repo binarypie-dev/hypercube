@@ -2,7 +2,8 @@
 -- Pre-configured language support and editor enhancements
 
 return {
-  -- AI
+  -- AI: Claude Code (deep in-editor integration: diffs, MCP, terminal).
+  -- Complemented by sidekick.nvim (see ai.lua) for multi-CLI agents + NES.
   { import = "lazyvim.plugins.extras.ai.claudecode" },
 
   -- Coding enhancements

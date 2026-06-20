@@ -1,9 +1,9 @@
-# Neovim Distrobox Development Environment
-# Local development and testing commands
+# Hypercube Neovim sandbox — local development and testing commands
 
-container_name := "nvim-dev"
 local_image := "localhost/nvim-dev"
 remote_image := "ghcr.io/binarypie-dev/nvim-dev:latest"
+# Throwaway volume so local testing never touches the real hypercube-nvim-home.
+test_volume := "hypercube-nvim-test"
 
 # Default recipe - show help
 default:
@@ -31,202 +31,48 @@ push:
     podman push {{remote_image}}
 
 # =============================================================================
-# Container Management (using local image)
+# Usage (against the LOCAL image)
 # =============================================================================
 
-# Create container from LOCAL image (for testing)
-create-local: build
-    #!/usr/bin/bash
-    set -euo pipefail
-    if distrobox list | grep -q "{{container_name}}"; then
-        echo "Container '{{container_name}}' already exists. Run 'just clean' first."
-        exit 1
-    fi
-    echo "Creating {{container_name}} from local image..."
-    distrobox create --name "{{container_name}}" --image "{{local_image}}"
-    echo "Done!"
-
-# Create container from REMOTE image (production)
-create-remote:
-    #!/usr/bin/bash
-    set -euo pipefail
-    if distrobox list | grep -q "{{container_name}}"; then
-        echo "Container '{{container_name}}' already exists. Run 'just clean' first."
-        exit 1
-    fi
-    echo "Creating {{container_name}} from {{remote_image}}..."
-    distrobox create --name "{{container_name}}" --image "{{remote_image}}"
-    echo "Done!"
-
-# Alias for create-remote (default behavior)
-create: create-remote
-
-# =============================================================================
-# Usage
-# =============================================================================
-
-# Enter the container interactively
-enter:
-    #!/usr/bin/bash
-    set -euo pipefail
-    if ! distrobox list | grep -q "{{container_name}}"; then
-        echo "Container not found. Creating from remote image..."
-        just create-remote
-    fi
-    distrobox enter {{container_name}}
-
-# Export nvim to ~/.local/bin
-export:
-    #!/usr/bin/bash
-    set -euo pipefail
-    if ! distrobox list | grep -q "{{container_name}}"; then
-        echo "Error: Container '{{container_name}}' not found. Run 'just create' first."
-        exit 1
-    fi
-    echo "Exporting nvim to ~/.local/bin..."
-    distrobox enter {{container_name}} -- distrobox-export --bin /home/linuxbrew/.linuxbrew/bin/nvim --export-path ~/.local/bin
-    echo ""
-    echo "Done! You can now run 'nvim' directly."
-
-# Run a command inside the container
+# Launch the sandbox from the local image, using a throwaway test volume
 run *args:
-    distrobox enter {{container_name}} -- {{args}}
+    HYPERCUBE_NVIM_IMAGE={{local_image}} HYPERCUBE_NVIM_VOLUME={{test_volume}} ./scripts/nvim.sh {{args}}
+
+# Open a shell in the local image
+shell:
+    podman run --rm -it --init --user 0:0 --security-opt label=disable \
+        -e HYPERCUBE_NVIM=1 -e TERM \
+        -v {{test_volume}}:/root \
+        {{local_image}} bash
 
 # =============================================================================
-# Cleanup
+# Tests
 # =============================================================================
 
-# Remove the container
-clean:
-    #!/usr/bin/bash
-    set -euo pipefail
-    if distrobox list | grep -q "{{container_name}}"; then
-        echo "Removing {{container_name}} container..."
-        distrobox rm -f {{container_name}}
-        echo "Container removed"
-    else
-        echo "Container '{{container_name}}' not found"
-    fi
-
-# Remove container and unexport nvim
-clean-all: clean
-    #!/usr/bin/bash
-    set -euo pipefail
-    if [ -f ~/.local/bin/nvim ]; then
-        rm -f ~/.local/bin/nvim
-        echo "Removed ~/.local/bin/nvim"
-    fi
-
-# Remove local image
-clean-image:
-    -podman rmi {{local_image}}
-
-# =============================================================================
-# Quick Setup
-# =============================================================================
-
-# Full setup with remote image: create + export
-setup: create-remote export
-    @echo ""
-    @echo "Setup complete! Run 'nvim' to use the containerized editor."
-
-# Full setup with local image: build + create + export
-setup-local: create-local export
-    @echo ""
-    @echo "Setup complete! Run 'nvim' to use the locally-built editor."
-
-# =============================================================================
-# Config Management (for testing without installing Hypercube)
-# =============================================================================
-
-# Initialize ~/.config/nvim from skel (uses local repo path)
-init-config:
-    #!/usr/bin/bash
-    set -euo pipefail
-    REPO_DIR="{{justfile_directory()}}"
-
-    if [ -d ~/.config/nvim ]; then
-        echo "~/.config/nvim already exists!"
-        echo "Run 'just clean-config' first to remove it."
-        exit 1
-    fi
-
-    echo "Initializing ~/.config/nvim from skel..."
-    mkdir -p ~/.config/nvim/lua/config
-    mkdir -p ~/.config/nvim/lua/plugins
-
-    # Copy skel files
-    cp "$REPO_DIR/skel/lua/config/lazy.lua" ~/.config/nvim/lua/config/
-    cp "$REPO_DIR/skel/lua/plugins/example.lua" ~/.config/nvim/lua/plugins/
-
-    # Create init.lua pointing to local repo instead of /usr/share
-    cat > ~/.config/nvim/init.lua << 'INITLUA'
-    -- Hypercube Neovim Configuration (LOCAL DEVELOPMENT)
-    -- Using local repo path instead of system path
-
-    -- Add LOCAL config to runtime path (for hypercube plugin)
-    vim.opt.rtp:prepend("REPO_PATH_PLACEHOLDER")
-
-    -- Load hypercube config (autocmds, filetypes, etc.)
-    require("hypercube.config").setup()
-
-    -- Store LazyVim state in data dir (writable)
-    vim.g.lazyvim_json = vim.fn.stdpath("data") .. "/lazyvim.json"
-
-    -- Bootstrap lazy.nvim
-    require("config.lazy")
-    INITLUA
-    sed -i "s|REPO_PATH_PLACEHOLDER|$REPO_DIR|g" ~/.config/nvim/init.lua
-    sed -i 's/^    //' ~/.config/nvim/init.lua
-
-    echo ""
-    echo "Done! ~/.config/nvim initialized for local development."
-    echo "Hypercube plugin path: $REPO_DIR"
-    echo ""
-    echo "Next steps:"
-    echo "  1. Run 'just setup-local' to create the nvim-dev container"
-    echo "  2. Run 'nvim' to test"
-
-# Remove ~/.config/nvim
-clean-config:
-    #!/usr/bin/bash
-    set -euo pipefail
-    if [ -d ~/.config/nvim ]; then
-        echo "Removing ~/.config/nvim..."
-        rm -rf ~/.config/nvim
-        echo "Done!"
-    else
-        echo "~/.config/nvim not found"
-    fi
-
-# Reset config (clean + init)
-reset-config: clean-config init-config
-
-# =============================================================================
-# Development Helpers
-# =============================================================================
-
-# Test the Containerfile builds successfully
+# Verify the image: nvim config loads and the toolchain + AI CLIs are present
 test-build: build
     @echo "Testing container..."
+    podman run --rm {{local_image}} nvim --headless +qa
     podman run --rm {{local_image}} nvim --version
     podman run --rm {{local_image}} go version
     podman run --rm {{local_image}} node --version
     podman run --rm {{local_image}} python3 --version
     podman run --rm {{local_image}} rustc --version
+    podman run --rm {{local_image}} gh --version
+    podman run --rm {{local_image}} claude --version
+    podman run --rm {{local_image}} codex --version
+    podman run --rm {{local_image}} agy --version
     @echo ""
     @echo "All tests passed!"
 
-# Show what's installed in the container
-show-versions:
-    #!/usr/bin/bash
-    echo "=== Versions in {{container_name}} ==="
-    distrobox enter {{container_name}} -- bash -c '
-        echo "neovim: $(nvim --version | head -1)"
-        echo "go: $(go version)"
-        echo "node: $(node --version)"
-        echo "python: $(python3 --version)"
-        echo "rustc: $(rustc --version)"
-        echo "lua: $(lua -v)"
-        echo "ruby: $(ruby --version)"
-    '
+# =============================================================================
+# Cleanup
+# =============================================================================
+
+# Remove the local image
+clean-image:
+    -podman rmi {{local_image}}
+
+# Remove the throwaway test volume
+clean-volume:
+    -podman volume rm -f {{test_volume}}
