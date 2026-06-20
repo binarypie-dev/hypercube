@@ -104,6 +104,13 @@ install -Dm644 "${CONFIG_DIR}/gtk-4.0/settings.ini" /etc/xdg/gtk-4.0/settings.in
 install -Dm644 "${CONFIG_DIR}/qt6ct/qt6ct.conf" /etc/xdg/qt6ct/qt6ct.conf
 install -Dm644 "${CONFIG_DIR}/qt6ct/colors/TokyoNight.conf" /usr/share/qt6ct/colors/TokyoNight.conf
 
+### Default browser / URL handler
+# Register Firefox as the default for http/https so xdg-open works (Ghostty
+# "open link", agy/claude OAuth logins, any CLI that opens a browser). Installed
+# to /usr/share/applications/ (the data-dir default every opener honors); the
+# same file is also reachable via XDG_CONFIG_DIRS at /usr/share/hypercube/config.
+install -Dm644 "${CONFIG_DIR}/mimeapps.list" /usr/share/applications/mimeapps.list
+
 ### Enable xdg-desktop-portal-gtk for dark mode detection (Firefox, etc.)
 # This portal provides the org.freedesktop.appearance.color-scheme setting
 systemctl --global enable xdg-desktop-portal-gtk.service

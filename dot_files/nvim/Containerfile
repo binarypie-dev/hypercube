@@ -41,6 +41,9 @@ RUN dnf update -y && dnf install -y \
     bzip2-devel \
     xz-devel \
     libatomic \
+    # ICU runtime: Mason's prebuilt language servers (e.g. lua-language-server)
+    # dynamically link the system libicu, which fedora-toolbox does not ship.
+    libicu \
     # Utilities
     procps-ng \
     findutils \
