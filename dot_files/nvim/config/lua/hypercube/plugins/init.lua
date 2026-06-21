@@ -6,7 +6,7 @@ return {
   -- Import Hypercube UI customizations
   { import = "hypercube.plugins.ui" },
 
-  -- Import Hypercube extras (language support, claudecode, etc.)
+  -- Import Hypercube extras (language support, etc.)
   { import = "hypercube.plugins.extras" },
 
   -- Import Hypercube AI (sidekick.nvim)

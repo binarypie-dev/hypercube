@@ -12,8 +12,7 @@ distrobox required.
 
 - **Editor:** Neovim + LazyVim with Hypercube customizations.
 - **AI agents:** Claude Code (`claude`), OpenAI Codex (`codex`), Antigravity
-  (`agy`), GitHub CLI (`gh`). Wired into nvim via `claudecode.nvim` and
-  `sidekick.nvim`.
+  (`agy`), GitHub CLI (`gh`). Wired into nvim via `sidekick.nvim`.
 - **Languages & runtimes:** Go, Python 3.12, Node.js, Ruby, Lua, Rust.
 - **Formatters:** stylua, prettier, shfmt, gofumpt, goimports, black, isort, ruff.
 - **Linters:** shellcheck, hadolint, eslint, golangci-lint.
@@ -96,9 +95,8 @@ return {
 
 ## AI keymaps
 
-- `<leader>a…` — Claude Code (claudecode.nvim, LazyVim defaults)
-- `<leader>A…` — sidekick.nvim agents: `Ac` Claude, `Ax` Codex, `Aa` toggle
-  last, `As` send selection, `Ap` ask with prompt
+- `<leader>a…` — sidekick.nvim agents: `ac` Claude, `ax` Codex, `ag`
+  Antigravity, `aa` toggle last, `as` send selection, `ap` ask with prompt
 - `<Tab>` — apply/jump sidekick Next Edit Suggestion (falls through to `<Tab>`
   when Copilot isn't signed in)
 
