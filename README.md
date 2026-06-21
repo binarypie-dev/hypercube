@@ -3,7 +3,7 @@
 > Cloud-native development environment with vim keybindings
 
 [![Build](https://github.com/binarypie-dev/hypercube/actions/workflows/build.yml/badge.svg)](https://github.com/binarypie-dev/hypercube/actions/workflows/build.yml)
-[![nvim-dev](https://github.com/binarypie-dev/hypercube/actions/workflows/build-nvim-dev.yml/badge.svg)](https://github.com/binarypie-dev/hypercube/actions/workflows/build-nvim-dev.yml)
+[![devcube](https://github.com/binarypie-dev/hypercube/actions/workflows/build-devcube.yml/badge.svg)](https://github.com/binarypie-dev/hypercube/actions/workflows/build-devcube.yml)
 [![Copr](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/datacube/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/)
 [![GHCR](https://img.shields.io/badge/GHCR-ghcr.io%2Fbinarypie--dev%2Fhypercube-blue)](https://ghcr.io/binarypie-dev/hypercube)
 

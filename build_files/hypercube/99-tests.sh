@@ -57,7 +57,7 @@ REQUIRED_FILES=(
   # DX config
   "/etc/distrobox/distrobox.ini"
   "/usr/share/ublue-os/just/60-hypercube.just"
-  "/usr/share/ublue-os/just/61-nvim.just"
+  "/usr/share/ublue-os/just/61-devcube.just"
 )
 
 for file in "${REQUIRED_FILES[@]}"; do

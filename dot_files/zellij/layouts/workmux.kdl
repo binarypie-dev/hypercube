@@ -1,0 +1,16 @@
+// workmux workspace layout: a working shell beside a live `workmux sidebar`
+// status pane. Launched by `devc` / `devc workmux` (zellij --layout workmux).
+// From any pane: `workmux add <branch> "<prompt>"` spins up a git worktree +
+// a new tab running the configured agent.
+layout {
+    tab name="workmux" {
+        pane split_direction="vertical" {
+            // Working shell (focus).
+            pane
+            pane size="30%" {
+                command "workmux"
+                args "sidebar"
+            }
+        }
+    }
+}

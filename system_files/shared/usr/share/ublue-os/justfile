@@ -25,6 +25,6 @@ import "/usr/share/ublue-os/just/50-akmods.just"
 # Hypercube commands
 # =============================================================================
 import? "/usr/share/ublue-os/just/60-hypercube.just"
-import? "/usr/share/ublue-os/just/61-nvim.just"
+import? "/usr/share/ublue-os/just/61-devcube.just"
 import? "/usr/share/ublue-os/just/63-migrate.just"
 

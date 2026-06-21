@@ -1,0 +1,23 @@
+# Build context for the devcube image is dot_files/. Exclude everything by
+# default and re-include only the dirs the Containerfile bakes, so the heavy
+# desktop configs (hypr backgrounds, quickshell assets, ...) never enter the
+# build context.
+*
+!devcube/
+!nvim/
+!fish/
+!starship/
+!zellij/
+!workmux/
+
+# Noise inside the kept dirs.
+**/.git
+**/.DS_Store
+**/Thumbs.db
+**/*.log
+**/*.swp
+**/*.swo
+**/*~
+
+# Neovim lock/runtime data shouldn't be baked (mounted/managed at runtime).
+nvim/lazy-lock.json
