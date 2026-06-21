@@ -1,17 +1,32 @@
 #!/usr/bin/env bash
-# Hypercube AI-first Neovim sandbox launcher.
+# Hypercube AI-first sandbox launcher.
 #
-# Runs the baked LazyVim + AI-agent image in an ephemeral podman container,
-# mounting only the current project, your personal overrides, and a few host
+# One podman image bakes Neovim (LazyVim) + the AI coding agents + the dev
+# toolchain. This single wrapper is installed under several names; the name it
+# is invoked as selects what runs inside the (otherwise identical) container:
+#
+#   nvim    -> the editor (launch agents from inside it) -- the default
+#   claude  -> Claude Code CLI, run directly
+#   codex   -> OpenAI Codex CLI, run directly
+#   agy     -> Antigravity CLI, run directly
+#
+# All four share the same home volume, so AI-CLI logins persist across them --
+# log in once (from nvim or any agent wrapper) and every entry point is authed.
+#
+# Mounts only the current project, your personal overrides, and a few host
 # facts (git identity, SSH agent, terminal). Portable across Linux and macOS.
-#
-# Launch AI agents (Claude, Codex, ...) from inside nvim -- there is no separate
-# claude/codex wrapper by design.
 #
 # Env overrides:
 #   HYPERCUBE_NVIM_IMAGE   container image (default ghcr.io/binarypie-dev/nvim-dev:latest)
 #   HYPERCUBE_NVIM_VOLUME  named volume holding state + AI auth (default hypercube-nvim-home)
 set -euo pipefail
+
+# What to run is chosen by the name we were invoked as (symlinks point here).
+CMD="$(basename "$0")"
+case "$CMD" in
+    nvim | claude | codex | agy) ;;
+    *) CMD=nvim ;;
+esac
 
 IMAGE="${HYPERCUBE_NVIM_IMAGE:-ghcr.io/binarypie-dev/nvim-dev:latest}"
 VOLUME="${HYPERCUBE_NVIM_VOLUME:-hypercube-nvim-home}"
@@ -28,7 +43,7 @@ args=(
     run --rm --interactive --tty --init
     --user 0:0
     --security-opt label=disable
-    --hostname nvim
+    --hostname "$CMD"
     -e HYPERCUBE_NVIM=1
     -e TERM
     -e COLORTERM
@@ -55,4 +70,4 @@ if [ "$(uname -s)" = "Linux" ] && [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "${SSH_AUT
     args+=(-v "${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}:rw" -e "SSH_AUTH_SOCK=${SSH_AUTH_SOCK}")
 fi
 
-exec podman "${args[@]}" "$IMAGE" nvim "$@"
+exec podman "${args[@]}" "$IMAGE" "$CMD" "$@"

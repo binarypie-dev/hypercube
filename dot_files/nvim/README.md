@@ -2,7 +2,8 @@
 
 A self-contained, **portable** Neovim environment: [LazyVim](https://github.com/LazyVim/LazyVim)
 plus the full dev toolchain (LSPs/formatters/linters) **and** AI coding agents,
-all baked into one podman image. Launch the agents from inside nvim.
+all baked into one podman image. Launch the agents from inside nvim — or run
+`claude` / `codex` / `agy` directly when you just want the agent.
 
 Runs identically on the Hypercube Linux desktop, a remote box, and macOS — no
 distrobox required.
@@ -24,8 +25,12 @@ distrobox required.
 
 ## How it works
 
-`scripts/nvim.sh` runs the image as an ephemeral `podman` container and mounts
-only what's needed:
+`scripts/sandbox.sh` runs the image as an ephemeral `podman` container and
+mounts only what's needed. It dispatches on the name it's invoked as: installed
+as `nvim` it launches the editor, and it's symlinked to `claude`, `codex`, and
+`agy` so those run the matching agent directly in the same container. All share
+the home volume below, so an AI login from any one entry point works in all of
+them. The mounts:
 
 | Mounted in | Purpose |
 |---|---|
@@ -46,14 +51,15 @@ Clipboard uses **OSC 52** through the terminal, so yank/paste works locally
 ## Setup (Hypercube)
 
 ```bash
-ujust nvim-setup     # pull image + install the 'nvim' wrapper to ~/.local/bin
-nvim file.rs         # launch
+ujust nvim-setup     # pull image + install the nvim + agent wrappers to ~/.local/bin
+nvim file.rs         # launch the editor
+claude               # ...or run an agent directly (also: codex, agy)
 ```
 
 | Command | Description |
 |---------|-------------|
-| `ujust nvim-setup`   | pull image + install the `nvim` wrapper |
-| `ujust nvim-upgrade` | pull the latest image + refresh the wrapper |
+| `ujust nvim-setup`   | pull image + install the `nvim`, `claude`, `codex`, `agy` wrappers |
+| `ujust nvim-upgrade` | pull the latest image + refresh the wrappers |
 | `ujust nvim-reset`   | drop the home volume to re-seed (clears plugin state + AI logins) |
 | `ujust nvim-shell`   | debug shell inside a throwaway sandbox container |
 
@@ -63,7 +69,9 @@ No `ujust` needed — install the wrapper by hand:
 
 ```bash
 podman pull ghcr.io/binarypie-dev/nvim-dev:latest
-install -m 0755 dot_files/nvim/scripts/nvim.sh ~/.local/bin/nvim
+install -m 0755 dot_files/nvim/scripts/sandbox.sh ~/.local/bin/nvim
+# Symlink the agent wrappers (the script dispatches on its invoked name):
+for agent in claude codex agy; do ln -sf nvim ~/.local/bin/$agent; done
 nvim
 ```
 

@@ -34,9 +34,17 @@ push:
 # Usage (against the LOCAL image)
 # =============================================================================
 
-# Launch the sandbox from the local image, using a throwaway test volume
+# Launch the sandbox (nvim) from the local image, using a throwaway test volume
 run *args:
-    HYPERCUBE_NVIM_IMAGE={{local_image}} HYPERCUBE_NVIM_VOLUME={{test_volume}} ./scripts/nvim.sh {{args}}
+    HYPERCUBE_NVIM_IMAGE={{local_image}} HYPERCUBE_NVIM_VOLUME={{test_volume}} ./scripts/sandbox.sh {{args}}
+
+# Launch an agent directly (e.g. `just run-agent claude`) from the local image
+run-agent agent *args:
+    #!/usr/bin/bash
+    set -euo pipefail
+    link="$(mktemp -d)/{{agent}}"
+    ln -s "$(pwd)/scripts/sandbox.sh" "$link"
+    HYPERCUBE_NVIM_IMAGE={{local_image}} HYPERCUBE_NVIM_VOLUME={{test_volume}} "$link" {{args}}
 
 # Open a shell in the local image
 shell:

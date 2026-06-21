@@ -5,7 +5,7 @@
 # Codex, Antigravity, GitHub CLI). Agents are launched from inside nvim.
 #
 # Build: podman build -t nvim-dev .
-# Run:   podman run --rm -it nvim-dev          (see scripts/nvim.sh for mounts)
+# Run:   podman run --rm -it nvim-dev          (see scripts/sandbox.sh for mounts)
 
 FROM registry.fedoraproject.org/fedora-toolbox:44
 
