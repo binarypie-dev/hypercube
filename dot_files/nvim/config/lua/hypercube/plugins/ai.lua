@@ -3,7 +3,7 @@
 -- Edit Suggestions (NES). The agent CLIs are baked into the container image and
 -- resolved via PATH.
 --
--- All agents (Claude, Codex, Antigravity) are bound under `<leader>A`. `claude`
+-- All agents (Claude, Codex, Antigravity) are bound under `<leader>a`. `claude`
 -- and `codex` are sidekick built-in presets; Antigravity is a custom CLI tool.
 
 return {
@@ -37,13 +37,13 @@ return {
         desc = "Sidekick: goto/apply Next Edit Suggestion",
       },
       {
-        "<leader>A",
+        "<leader>a",
         "",
-        desc = "+ai (sidekick)",
+        desc = "+ai",
         mode = { "n", "v" },
       },
       {
-        "<leader>Aa",
+        "<leader>aa",
         function()
           require("sidekick.cli").toggle()
         end,
@@ -51,7 +51,7 @@ return {
         mode = { "n", "v" },
       },
       {
-        "<leader>Ac",
+        "<leader>ac",
         function()
           require("sidekick.cli").toggle({ name = "claude", focus = true })
         end,
@@ -59,7 +59,7 @@ return {
         mode = { "n", "v" },
       },
       {
-        "<leader>Ax",
+        "<leader>ax",
         function()
           require("sidekick.cli").toggle({ name = "codex", focus = true })
         end,
@@ -67,7 +67,7 @@ return {
         mode = { "n", "v" },
       },
       {
-        "<leader>Ag",
+        "<leader>ag",
         function()
           require("sidekick.cli").toggle({ name = "agy", focus = true })
         end,
@@ -75,7 +75,7 @@ return {
         mode = { "n", "v" },
       },
       {
-        "<leader>As",
+        "<leader>as",
         function()
           require("sidekick.cli").send({ msg = "{selection}" })
         end,
@@ -83,7 +83,7 @@ return {
         mode = { "v" },
       },
       {
-        "<leader>Ap",
+        "<leader>ap",
         function()
           require("sidekick.cli").prompt()
         end,
