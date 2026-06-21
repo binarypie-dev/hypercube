@@ -30,3 +30,22 @@ default_shell "fish"
 scrollback_editor "nvim"
 pane_frames true
 default_layout "compact"
+
+// ── Keybindings (zellij DEFAULTS — we don't override them) ──────────────────
+// The live list is always shown in the status bar. Press Ctrl+<key> to enter a
+// mode, then the per-mode keys below; Esc / Enter returns to normal mode.
+//
+//   Ctrl p  PANE    n new · d split-down · r split-right · x close · f fullscreen
+//                   w toggle floating · e embed/float · z toggle frames · c rename
+//   Ctrl t  TAB     n new · x close · r rename · h/l (or ←/→) prev/next · 1-9 jump
+//   Ctrl n  RESIZE  h/j/k/l or +/-          Ctrl h  MOVE   move panes around
+//   Ctrl s  SCROLL  e edit scrollback in nvim · s search
+//   Ctrl o  SESSION d detach (leave it running) · w session manager
+//   Ctrl g  LOCK / unlock (lock when a TUI needs the keys)   Ctrl q  QUIT session
+//
+//   No mode needed:  Alt n new pane · Alt h/j/k/l move focus · Alt +/- resize
+//
+// workmux ↔ zellij:  `workmux add <branch>` opens each git worktree as its own
+//   TAB running the agent (see ../workmux/config.yaml). So your parallel agents
+//   are zellij TABS: switch with Ctrl t then h/l or 1-9. `workmux list` /
+//   `workmux dashboard` show them all. Panes within a tab: Alt h/j/k/l.
