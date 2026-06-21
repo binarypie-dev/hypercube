@@ -95,8 +95,8 @@ return {
 
 ## AI keymaps
 
-- `<leader>A…` — sidekick.nvim agents: `Ac` Claude, `Ax` Codex, `Ag`
-  Antigravity, `Aa` toggle last, `As` send selection, `Ap` ask with prompt
+- `<leader>a…` — sidekick.nvim agents: `ac` Claude, `ax` Codex, `ag`
+  Antigravity, `aa` toggle last, `as` send selection, `ap` ask with prompt
 - `<Tab>` — apply/jump sidekick Next Edit Suggestion (falls through to `<Tab>`
   when Copilot isn't signed in)
 
