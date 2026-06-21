@@ -3,9 +3,8 @@
 -- Edit Suggestions (NES). The agent CLIs are baked into the container image and
 -- resolved via PATH.
 --
--- Claude is handled by the deeper claudecode.nvim integration under `<leader>a`
--- (see extras.lua), so it is intentionally NOT bound here -- sidekick covers the
--- other agents (Codex, Antigravity) under `<leader>A`.
+-- All agents (Claude, Codex, Antigravity) are bound under `<leader>A`. `claude`
+-- and `codex` are sidekick built-in presets; Antigravity is a custom CLI tool.
 
 return {
   {
@@ -49,6 +48,14 @@ return {
           require("sidekick.cli").toggle()
         end,
         desc = "Sidekick: toggle last CLI",
+        mode = { "n", "v" },
+      },
+      {
+        "<leader>Ac",
+        function()
+          require("sidekick.cli").toggle({ name = "claude", focus = true })
+        end,
+        desc = "Sidekick: Claude",
         mode = { "n", "v" },
       },
       {
