@@ -55,7 +55,7 @@ workdir="$(pwd -P)"
 
 # Default: run the tool with only the project mounted. The orchestrators
 # (zellij/workmux) additionally get a per-project worktree volume + the zellij
-# backend, and run inside a project-named zellij session.
+# backend, and run inside a zellij session.
 container_cmd=("$TOOL")
 extra=()
 case "$TOOL" in
@@ -74,10 +74,15 @@ zellij | workmux)
 		# isolated from other projects and survives restarts.
 		-e XDG_STATE_HOME=/worktrees/.local/state
 	)
+	# zellij 0.44.x fails ("There is no active session!") when --layout and
+	# --session are passed together, so we never combine them. The session name
+	# isn't load-bearing -- worktrees + workmux state persist via the volumes
+	# above, not the zellij session -- so we let zellij auto-name it. workmux
+	# operates on whatever the current session is, named or not.
 	if [ "$TOOL" = workmux ]; then
-		container_cmd=(zellij --layout workmux --session "${slug}-${phash}")
+		container_cmd=(zellij --layout workmux)
 	else
-		container_cmd=(zellij --session "${slug}-${phash}")
+		container_cmd=(zellij)
 	fi
 	;;
 esac

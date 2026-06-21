@@ -281,6 +281,13 @@ COPY zellij/   /root/.config/zellij/
 COPY workmux/  /root/.config/workmux/
 COPY starship/ /usr/share/hypercube/config/starship/
 
+# Make fish root's login shell so every interactive shell in the container
+# (zellij panes, `just shell`, any sub-shell) loads the baked fish config --
+# including the WORKMUX_BACKEND=zellij pin in conf.d/10-devcube.fish.
+RUN fish_bin="$(command -v fish)" \
+    && { grep -qxF "$fish_bin" /etc/shells || echo "$fish_bin" >> /etc/shells; } \
+    && usermod --shell "$fish_bin" root
+
 # =============================================================================
 # LAYER 15: Entrypoint
 # =============================================================================

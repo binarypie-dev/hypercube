@@ -1,16 +1,13 @@
-// workmux workspace layout: a working shell beside a live `workmux sidebar`
-// status pane. Launched by `devc` / `devc workmux` (zellij --layout workmux).
-// From any pane: `workmux add <branch> "<prompt>"` spins up a git worktree +
-// a new tab running the configured agent.
+// workmux workspace layout: a clean working shell. From here, run
+// `workmux add <branch> "<prompt>"` to spin up a git worktree + a new tab
+// running the configured agent (see dot_files/workmux/config.yaml).
+//
+// NOTE: workmux's live `sidebar` is tmux-only ("Error: Sidebar requires tmux")
+// and must NOT be used under the zellij backend -- running it here made zellij
+// fail to bring the session up ("There is no active session!"). Under zellij,
+// check status on demand with `workmux list` (or the `workmux dashboard` TUI).
 layout {
-    tab name="workmux" {
-        pane split_direction="vertical" {
-            // Working shell (focus).
-            pane
-            pane size="30%" {
-                command "workmux"
-                args "sidebar"
-            }
-        }
+    tab name="workmux" focus=true {
+        pane
     }
 }

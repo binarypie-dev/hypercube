@@ -52,7 +52,7 @@ shell:
     podman run --rm -it --init --user 0:0 --security-opt label=disable \
         -e DEVCUBE=1 -e TERM \
         -v {{test_volume}}:/root \
-        {{local_image}} bash
+        {{local_image}} fish
 
 # =============================================================================
 # Tests
