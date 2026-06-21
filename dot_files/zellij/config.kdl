@@ -1,0 +1,32 @@
+// Hypercube zellij configuration.
+//
+// Tokyo Night Moon theme to match Neovim/Ghostty. Palette source of truth:
+// dot_files/ghostty/config ("TOKYO NIGHT MOON COLOR SCHEME").
+//
+// zellij keeps its own default keybindings (no seamless vim/zellij nav by
+// design) — only quality-of-life defaults are set below.
+
+themes {
+    tokyo-night-moon {
+        fg "#c8d3f5"
+        bg "#222436"
+        black "#1e2030"
+        red "#ff757f"
+        green "#c3e88d"
+        yellow "#ffc777"
+        blue "#82aaff"
+        magenta "#c099ff"
+        cyan "#86e1fc"
+        // Dim white so UI chrome stays distinct from the foreground.
+        white "#828bb8"
+        // Tokyo Night Moon spec (Ghostty has no dedicated orange slot).
+        orange "#ff966c"
+    }
+}
+
+theme "tokyo-night-moon"
+
+default_shell "fish"
+scrollback_editor "nvim"
+pane_frames true
+default_layout "compact"

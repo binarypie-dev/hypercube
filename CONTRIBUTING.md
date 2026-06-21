@@ -33,9 +33,12 @@ hypercube/
 │   │   ├── hyprlock.conf        # Lock screen
 │   │   ├── hypridle.conf        # Idle management
 │   │   └── hyprpaper.conf       # Wallpaper
+│   ├── devcube/                 # devcube IDE image (Containerfile, devc wrapper)
 │   ├── lazygit/                 # Lazygit config
-│   ├── nvim/                    # Neovim/LazyVim setup
+│   ├── nvim/                    # Neovim/LazyVim config (baked into devcube)
 │   ├── qt6ct/                   # Qt6 theming
+│   ├── workmux/                 # workmux parallel-agent config (baked into devcube)
+│   ├── zellij/                  # zellij multiplexer config (baked into devcube)
 │   ├── quickshell/              # App launcher
 │   └── starship/                # Shell prompt
 │
