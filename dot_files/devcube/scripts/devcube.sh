@@ -20,8 +20,10 @@
 # zellij/workmux run the parallel-agent flow: each `workmux add <branch>`
 # creates a git worktree on a PER-PROJECT named volume mounted at /worktrees,
 # so worktrees (and workmux's state) persist across restarts and never collide
-# with another project's. Everything else mounts only the current project, your
-# personal overrides, and a few host facts. Portable across Linux and macOS.
+# with another project's. The project mount is the git repo root (discovered from
+# the launch dir), or the launch dir itself when not in a repo; workmux requires
+# a repo, the other tools don't. Plus your personal overrides and a few host
+# facts (git identity, SSH agent, terminal). Portable across Linux and macOS.
 #
 # Env overrides:
 #   DEVCUBE_IMAGE      container image (default ghcr.io/binarypie-dev/devcube:latest)
@@ -53,6 +55,18 @@ mkdir -p "$OVERRIDE_DIR/lua/plugins"
 # Physical path so symlinks resolve identically on host and in the container.
 workdir="$(pwd -P)"
 
+# Mount the whole git repo, not just the launch dir, so the repo-root `.git` and
+# the full project are visible inside the container (git/workmux need this). Fall
+# back to the launch dir when not in a repo. workmux REQUIRES a repo -- it creates
+# git worktrees -- so it errors out here; nvim/claude/codex/agy don't care.
+git_root="$(git -C "$workdir" rev-parse --show-toplevel 2>/dev/null || true)"
+project_dir="${git_root:-$workdir}"
+if [ "$TOOL" = workmux ] && [ -z "$git_root" ]; then
+	echo "devc: workmux requires a git repository, but '$workdir' isn't in one." >&2
+	echo "      cd into a repo (or run 'git init') and try again." >&2
+	exit 1
+fi
+
 # Default: run the tool with only the project mounted. The orchestrators
 # (zellij/workmux) additionally get a per-project worktree volume + the zellij
 # backend, and run inside a zellij session.
@@ -60,11 +74,12 @@ container_cmd=("$TOOL")
 extra=()
 case "$TOOL" in
 zellij | workmux)
-	# Stable, path-derived names so a project's worktrees + workmux state
-	# persist across restarts and never collide with another project's.
-	# cksum is available on both Linux and macOS (the wrapper stays portable).
-	slug="$(basename "$workdir" | tr -c 'a-zA-Z0-9_.-' '-')"
-	phash="$(printf '%s' "$workdir" | cksum | cut -d' ' -f1)"
+	# Stable, repo-root-derived names so a project's worktrees + workmux state
+	# persist across restarts, are shared no matter which subdir you launch from,
+	# and never collide with another project's. cksum is available on both Linux
+	# and macOS (the wrapper stays portable).
+	slug="$(basename "$project_dir" | tr -c 'a-zA-Z0-9_.-' '-')"
+	phash="$(printf '%s' "$project_dir" | cksum | cut -d' ' -f1)"
 	wt_volume="${DEVCUBE_WT_PREFIX:-devcube-wt}-${slug}-${phash}"
 	extra=(
 		# Worktrees live here (podman auto-creates the volume on first mount).
@@ -100,11 +115,12 @@ args=(
 	# /root on first run (podman copy-up); never use a fixed container --name so
 	# multiple sessions can run concurrently.
 	-v "${VOLUME}:/root"
-	# The project being edited, at the same path inside the container.
-	-v "${workdir}:${workdir}:rw"
+	# The project -- the git repo root, or the launch dir when not in a repo --
+	# at the same path inside the container.
+	-v "${project_dir}:${project_dir}:rw"
 	# Personal plugin overrides (nested over the home volume).
 	-v "${OVERRIDE_DIR}:/root/.config/hypercube/nvim:rw"
-	-w "${workdir}"
+	-w "${project_dir}"
 )
 
 # Read-only git identity (name/email/aliases) from the host.
