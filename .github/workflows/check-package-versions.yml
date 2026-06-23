@@ -24,7 +24,7 @@ jobs:
       has_updates: ${{ steps.collect.outputs.has_updates }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y jq rpm
@@ -103,7 +103,7 @@ jobs:
       groups: ${{ steps.group.outputs.groups }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Group updates by dependency chain
         id: group
@@ -219,7 +219,7 @@ jobs:
         group: ${{ fromJson(needs.group-updates.outputs.groups) }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y jq rpm
