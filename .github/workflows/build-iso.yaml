@@ -41,10 +41,10 @@ jobs:
         uses: ublue-os/remove-unwanted-software@v9
 
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Checkout titanoboa
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           repository: binarypie-dev/titanoboa
           path: _titanoboa
