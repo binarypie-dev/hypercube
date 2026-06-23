@@ -55,9 +55,9 @@ source = /usr/share/hypercube/config/hypr/hyprland.conf
 
 EOF
 
-### Neovim - AI-first sandbox overrides
-# The editor config + AI agents ship baked into the podman image
-# (ujust nvim-setup). Users keep ONLY personal plugin overrides here; this
+### Neovim - devcube sandbox overrides
+# The editor config + AI agents ship baked into the devcube podman image
+# (ujust devcube-setup). Users keep ONLY personal plugin overrides here; this
 # directory is bind-mounted into the container's baked LazyVim config and
 # layered on top of it.
 mkdir -p /etc/skel/.config/hypercube/nvim/lua/plugins

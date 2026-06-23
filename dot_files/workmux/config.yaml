@@ -1,0 +1,16 @@
+# Hypercube workmux configuration (global; ~/.config/workmux/config.yaml).
+#
+# Worktrees are created on a per-project named volume that devcube mounts at
+# /worktrees, so they persist across container restarts and stay isolated from
+# other projects. (See dot_files/devcube/scripts/devcube.sh.)
+mode: window
+worktree_dir: /worktrees
+
+# Default panes for each worktree window: the agent (focused) + nvim. Swap the
+# agent (codex/agy) or add a shell per-project by committing a .workmux.yaml in
+# the repo root.
+panes:
+  - command: claude
+    focus: true
+  - command: nvim
+    split: horizontal

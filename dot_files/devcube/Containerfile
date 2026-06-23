@@ -1,11 +1,15 @@
-# Hypercube AI-first Neovim sandbox
+# Hypercube devcube — containerized IDE + parallel-agent orchestration
 #
-# A self-contained, portable podman image: LazyVim (baked in), the full dev
-# toolchain (LSPs/formatters/linters), and AI coding agents (Claude Code, OpenAI
-# Codex, Antigravity, GitHub CLI). Agents are launched from inside nvim.
+# A self-contained, portable podman image: Neovim/LazyVim (baked in), the full
+# dev toolchain (LSPs/formatters/linters), AI coding agents (Claude Code, OpenAI
+# Codex, Antigravity, GitHub CLI), plus zellij + workmux for running multiple
+# agents in parallel (each in its own git worktree) and a fish + starship shell.
 #
-# Build: podman build -t nvim-dev .
-# Run:   podman run --rm -it nvim-dev          (see scripts/sandbox.sh for mounts)
+# The build context is the parent dot_files/ dir so the fish/starship/zellij/
+# workmux/nvim configs (top-level dotfiles) can be baked in.
+#
+# Build: cd dot_files && podman build -t devcube -f devcube/Containerfile .
+# Run:   devc            (see devcube/scripts/devcube.sh for mounts + dispatch)
 
 FROM registry.fedoraproject.org/fedora-toolbox:44
 
@@ -131,11 +135,17 @@ RUN brew install \
 # =============================================================================
 # LAYER 6: Infrastructure tools via Homebrew
 # =============================================================================
+# zellij (terminal multiplexer) + workmux (git-worktree -> multiplexer
+# orchestration; a brew tap, auto-tapped by the fully-qualified name) power the
+# parallel-agent workflow. starship renders the fish prompt baked in below.
 RUN brew install \
     opentofu \
     helm \
     sqlfluff \
-    fish
+    fish \
+    starship \
+    zellij \
+    raine/workmux/workmux
 
 # =============================================================================
 # LAYER 7: Rust toolchain (as linuxbrew user)
@@ -251,21 +261,42 @@ RUN mkdir -p /etc/profile.d /etc/fish/conf.d \
 # The full LazyVim config is baked into $HOME/.config/nvim. Personal overrides
 # are bind-mounted at runtime from the host (~/.config/hypercube/nvim) and
 # layered on top via the runtimepath (see lua/config/lazy.lua).
-COPY config/ /root/.config/nvim/
+# NOTE: the build context is dot_files/, so the nvim config lives under nvim/.
+COPY nvim/config/ /root/.config/nvim/
 
 # Pre-install all plugins + build treesitter parsers so first launch is fast and
 # offline. HOME=/root and PATH already include the brew nvim binary.
 RUN nvim --headless "+Lazy! sync" +qa
 
 # =============================================================================
+# LAYER 14b: Bake the shell / multiplexer / orchestrator configs
+# =============================================================================
+# fish + starship give a good in-container shell/prompt; zellij + workmux drive
+# the parallel-agent workflow. These seed into the persisted home volume on
+# first run (podman copy-up), like the nvim config above. starship.toml lands at
+# the exact path dot_files/fish/config.fish hardcodes for STARSHIP_CONFIG, so
+# fish needs no edits (and it lives outside /root, so it's always present).
+COPY fish/     /root/.config/fish/
+COPY zellij/   /root/.config/zellij/
+COPY workmux/  /root/.config/workmux/
+COPY starship/ /usr/share/hypercube/config/starship/
+
+# Make fish root's login shell so every interactive shell in the container
+# (zellij panes, `just shell`, any sub-shell) loads the baked fish config --
+# including the WORKMUX_BACKEND=zellij pin in conf.d/10-devcube.fish.
+RUN fish_bin="$(command -v fish)" \
+    && { grep -qxF "$fish_bin" /etc/shells || echo "$fish_bin" >> /etc/shells; } \
+    && usermod --shell "$fish_bin" root
+
+# =============================================================================
 # LAYER 15: Entrypoint
 # =============================================================================
-COPY entrypoint.sh /usr/local/bin/hypercube-nvim-entrypoint
-RUN chmod +x /usr/local/bin/hypercube-nvim-entrypoint
-ENTRYPOINT ["/usr/local/bin/hypercube-nvim-entrypoint"]
+COPY devcube/entrypoint.sh /usr/local/bin/devcube-entrypoint
+RUN chmod +x /usr/local/bin/devcube-entrypoint
+ENTRYPOINT ["/usr/local/bin/devcube-entrypoint"]
 CMD ["nvim"]
 
 # Labels for GitHub Container Registry
 LABEL org.opencontainers.image.source="https://github.com/binarypie/hypercube"
-LABEL org.opencontainers.image.description="AI-first Neovim sandbox: LazyVim + dev toolchain + Claude Code, Codex, Antigravity, gh"
+LABEL org.opencontainers.image.description="devcube: containerized IDE (Neovim/LazyVim + dev toolchain + Claude Code, Codex, Antigravity, gh) with zellij + workmux parallel-agent orchestration"
 LABEL org.opencontainers.image.licenses="MIT"

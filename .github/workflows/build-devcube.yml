@@ -1,8 +1,8 @@
-# Build and publish nvim-dev container image
-# Triggered on changes to dot_files/nvim/ or manual dispatch
-# Image published to: ghcr.io/binarypie-dev/nvim-dev:latest
+# Build and publish the devcube container image
+# Triggered on changes to the baked dot_files configs or manual dispatch
+# Image published to: ghcr.io/binarypie-dev/devcube:latest
 
-name: Build nvim-dev Image
+name: Build devcube Image
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -13,20 +13,30 @@ on:
     branches:
       - main
     paths:
-      # Config is baked into the image, so any config change must rebuild.
+      # Configs are baked into the image, so any config change must rebuild.
+      - 'dot_files/devcube/**'
       - 'dot_files/nvim/**'
-      - '.github/workflows/build-nvim-dev.yml'
+      - 'dot_files/fish/**'
+      - 'dot_files/starship/**'
+      - 'dot_files/zellij/**'
+      - 'dot_files/workmux/**'
+      - '.github/workflows/build-devcube.yml'
   pull_request:
     paths:
+      - 'dot_files/devcube/**'
       - 'dot_files/nvim/**'
-      - '.github/workflows/build-nvim-dev.yml'
+      - 'dot_files/fish/**'
+      - 'dot_files/starship/**'
+      - 'dot_files/zellij/**'
+      - 'dot_files/workmux/**'
+      - '.github/workflows/build-devcube.yml'
   workflow_dispatch:
   schedule:
     # Rebuild daily to get updated packages
     - cron: '0 6 * * *'
 
 env:
-  IMAGE_NAME: nvim-dev
+  IMAGE_NAME: devcube
   IMAGE_REGISTRY: ghcr.io/${{ github.repository_owner }}
 
 jobs:
@@ -85,8 +95,8 @@ jobs:
       - name: Build and push
         uses: docker/build-push-action@v7
         with:
-          context: dot_files/nvim
-          file: dot_files/nvim/Containerfile
+          context: dot_files
+          file: dot_files/devcube/Containerfile
           platforms: ${{ matrix.platform }}
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
@@ -129,12 +139,12 @@ jobs:
 
       - name: Generate build summary
         run: |
-          echo "## nvim-dev Image Built" >> $GITHUB_STEP_SUMMARY
+          echo "## devcube Image Built" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Image:** \`${{ env.IMAGE_REGISTRY }}/${{ env.IMAGE_NAME }}:latest\`" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Usage" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
-          echo "ujust nvim-setup   # pull image + install the 'nvim' wrapper" >> $GITHUB_STEP_SUMMARY
-          echo "nvim               # launch the AI-first editor" >> $GITHUB_STEP_SUMMARY
+          echo "ujust devcube-setup   # pull image + install the 'devc' wrapper" >> $GITHUB_STEP_SUMMARY
+          echo "devc                  # launch the parallel-agent workspace (workmux)" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

@@ -1,9 +1,13 @@
-# Hypercube Neovim sandbox — local development and testing commands
+# Hypercube devcube — local development and testing commands
+#
+# The build context is the parent dot_files/ dir (so fish/starship/zellij/
+# workmux/nvim configs can be baked), hence `-f Containerfile ..` below.
 
-local_image := "localhost/nvim-dev"
-remote_image := "ghcr.io/binarypie-dev/nvim-dev:latest"
-# Throwaway volume so local testing never touches the real hypercube-nvim-home.
-test_volume := "hypercube-nvim-test"
+local_image := "localhost/devcube"
+remote_image := "ghcr.io/binarypie-dev/devcube:latest"
+# Throwaway volumes so local testing never touches the real per-project state.
+test_volume := "hypercube-devcube-test"
+test_wt_prefix := "devcube-wt-test"
 
 # Default recipe - show help
 default:
@@ -13,16 +17,16 @@ default:
 # Image Building
 # =============================================================================
 
-# Build the container image locally
+# Build the container image locally (context is the parent dot_files/ dir)
 build:
-    @echo "Building nvim-dev image locally..."
-    podman build -t {{local_image}} .
+    @echo "Building devcube image locally..."
+    podman build -t {{local_image}} -f Containerfile ..
     @echo "Done! Image: {{local_image}}"
 
 # Build without cache
 build-no-cache:
-    @echo "Building nvim-dev image (no cache)..."
-    podman build --no-cache -t {{local_image}} .
+    @echo "Building devcube image (no cache)..."
+    podman build --no-cache -t {{local_image}} -f Containerfile ..
     @echo "Done! Image: {{local_image}}"
 
 # Push to GHCR (requires: podman login ghcr.io)
@@ -34,30 +38,27 @@ push:
 # Usage (against the LOCAL image)
 # =============================================================================
 
-# Launch the sandbox (nvim) from the local image, using a throwaway test volume
+# Launch devcube from the local image (e.g. `just run` for workmux, `just run nvim`),
+# using throwaway test volumes.
 run *args:
-    HYPERCUBE_NVIM_IMAGE={{local_image}} HYPERCUBE_NVIM_VOLUME={{test_volume}} ./scripts/sandbox.sh {{args}}
+    DEVCUBE_IMAGE={{local_image}} DEVCUBE_VOLUME={{test_volume}} DEVCUBE_WT_PREFIX={{test_wt_prefix}} ./scripts/devcube.sh {{args}}
 
-# Launch an agent directly (e.g. `just run-agent claude`) from the local image
+# Launch a specific tool directly (e.g. `just run-agent claude`) from the local image
 run-agent agent *args:
-    #!/usr/bin/bash
-    set -euo pipefail
-    link="$(mktemp -d)/{{agent}}"
-    ln -s "$(pwd)/scripts/sandbox.sh" "$link"
-    HYPERCUBE_NVIM_IMAGE={{local_image}} HYPERCUBE_NVIM_VOLUME={{test_volume}} "$link" {{args}}
+    DEVCUBE_IMAGE={{local_image}} DEVCUBE_VOLUME={{test_volume}} DEVCUBE_WT_PREFIX={{test_wt_prefix}} ./scripts/devcube.sh {{agent}} {{args}}
 
 # Open a shell in the local image
 shell:
     podman run --rm -it --init --user 0:0 --security-opt label=disable \
-        -e HYPERCUBE_NVIM=1 -e TERM \
+        -e DEVCUBE=1 -e TERM \
         -v {{test_volume}}:/root \
-        {{local_image}} bash
+        {{local_image}} fish
 
 # =============================================================================
 # Tests
 # =============================================================================
 
-# Verify the image: nvim config loads and the toolchain + AI CLIs are present
+# Verify the image: nvim config loads and the toolchain + AI CLIs + orchestrators are present
 test-build: build
     @echo "Testing container..."
     podman run --rm {{local_image}} nvim --headless +qa
@@ -70,6 +71,10 @@ test-build: build
     podman run --rm {{local_image}} claude --version
     podman run --rm {{local_image}} codex --version
     podman run --rm {{local_image}} agy --version
+    podman run --rm {{local_image}} zellij --version
+    podman run --rm {{local_image}} workmux --version
+    podman run --rm {{local_image}} starship --version
+    podman run --rm {{local_image}} fish --version
     @echo ""
     @echo "All tests passed!"
 
@@ -81,6 +86,7 @@ test-build: build
 clean-image:
     -podman rmi {{local_image}}
 
-# Remove the throwaway test volume
+# Remove the throwaway test volumes (home + any per-project worktree volumes)
 clean-volume:
     -podman volume rm -f {{test_volume}}
+    -podman volume ls -q | grep '^{{test_wt_prefix}}-' | xargs -r podman volume rm -f

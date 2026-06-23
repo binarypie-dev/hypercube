@@ -1,37 +1,38 @@
 #!/bin/bash
-# nvim-launcher - Launch the Hypercube AI-first Neovim sandbox
+# nvim-launcher - Open files in the Hypercube devcube editor
 #
-# The editor + AI agents ship as a podman image run via ~/.local/bin/nvim.
-# On first use this installs the wrapper (pulling the image), then execs it.
+# The editor + AI agents ship as a podman image run via ~/.local/bin/devc.
+# On first use this installs the wrapper (pulling the image), then opens nvim
+# inside it (`devc nvim`).
 
-NVIM_BIN="$HOME/.local/bin/nvim"
+DEVC_BIN="$HOME/.local/bin/devc"
 
-if [ ! -x "$NVIM_BIN" ]; then
-    echo "Neovim Sandbox"
-    echo "=============="
+if [ ! -x "$DEVC_BIN" ]; then
+    echo "devcube"
+    echo "======="
     echo ""
-    echo "The Neovim sandbox is not set up yet."
+    echo "The devcube IDE is not set up yet."
     echo ""
     echo "This will pull the image (several GB on first run) and install the"
-    echo "'nvim' launcher to ~/.local/bin."
+    echo "'devc' launcher to ~/.local/bin."
     echo ""
     read -p "Set up now? [Y/n] " -n 1 -r
     echo ""
 
     if [[ $REPLY =~ ^[Nn]$ ]]; then
-        echo "Setup cancelled. Run 'ujust nvim-setup' when ready."
+        echo "Setup cancelled. Run 'ujust devcube-setup' when ready."
         read -p "Press Enter to close..."
         exit 0
     fi
 
     echo ""
-    ujust nvim-setup
+    ujust devcube-setup
 fi
 
-if [ -x "$NVIM_BIN" ]; then
-    exec "$NVIM_BIN" "$@"
+if [ -x "$DEVC_BIN" ]; then
+    exec "$DEVC_BIN" nvim "$@"
 else
-    echo "Setup may have failed. Try running 'ujust nvim-setup' manually."
+    echo "Setup may have failed. Try running 'ujust devcube-setup' manually."
     read -p "Press Enter to close..."
     exit 1
 fi
