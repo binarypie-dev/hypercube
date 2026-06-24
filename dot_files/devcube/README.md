@@ -79,7 +79,11 @@ only what's needed. The mounts:
 Everything else (the LazyVim config, plugins, AI CLIs, zellij/workmux/fish/
 starship config) lives in the image. The container runs as `--user 0:0` so files
 you edit are owned by your host user under rootless podman. Multiple sessions run
-concurrently.
+concurrently — except that only **one orchestrator** (`devc` / `devc workmux` /
+`devc zellij`) may run per project at a time, since they share that project's
+`/worktrees` volume + workmux state; a second one refuses with a message rather
+than racing into the shared state and corrupting it. Single-tool sessions
+(`devc nvim` / `devc claude` / ...) mount no shared state and stay concurrent.
 
 Clipboard uses **OSC 52** through the terminal, so yank/paste works locally
 (Ghostty) and over SSH without forwarding a Wayland/pbcopy socket.

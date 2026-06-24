@@ -81,6 +81,46 @@ zellij | workmux)
 	slug="$(basename "$project_dir" | tr -c 'a-zA-Z0-9_.-' '-')"
 	phash="$(printf '%s' "$project_dir" | cksum | cut -d' ' -f1)"
 	wt_volume="${DEVCUBE_WT_PREFIX:-devcube-wt}-${slug}-${phash}"
+
+	# Single-instance guard. Two orchestrator sessions on the same project share
+	# ONE /worktrees volume + workmux state (XDG_STATE_HOME) with no locking;
+	# running them at once races and corrupts that per-project state, which then
+	# breaks every later launch on the folder (permission denied) until the
+	# volume is removed. So allow only one orchestrator per project. Single-tool
+	# entry points (nvim/claude/codex/agy) don't mount /worktrees and stay
+	# concurrent. The lock is an atomic `mkdir` dir (portable -- macOS has no
+	# flock), keyed by the per-project volume, auto-reclaimed if the previous
+	# holder died, and released by the EXIT/signal trap when the session ends.
+	lock_dir="${TMPDIR:-/tmp}/devcube-locks/${wt_volume}.lock"
+	mkdir -p "$(dirname "$lock_dir")"
+	if ! mkdir "$lock_dir" 2>/dev/null; then
+		held_pid="$(cat "${lock_dir}/pid" 2>/dev/null || true)"
+		if [ -n "$held_pid" ] && kill -0 "$held_pid" 2>/dev/null; then
+			echo "devc: an orchestrator session for '${project_dir}' is already running (pid ${held_pid})." >&2
+			echo "      A second one would share its /worktrees volume + workmux state and corrupt it." >&2
+			echo "      Switch to that session (or quit it), or launch a single tool that needs no shared" >&2
+			echo "      state: devc nvim | devc claude | devc codex | devc agy." >&2
+			exit 1
+		elif [ -z "$held_pid" ]; then
+			# Lock dir exists but no PID recorded: a session is mid-startup, or a
+			# holder died in the tiny window before writing its PID. Be conservative.
+			echo "devc: an orchestrator session for '${project_dir}' is starting, or its lock is stale." >&2
+			echo "      If you're sure none is running, remove '${lock_dir}' and retry." >&2
+			exit 1
+		fi
+		# Recorded holder is gone -- reclaim the stale lock.
+		rm -rf "$lock_dir"
+		mkdir "$lock_dir" 2>/dev/null || {
+			echo "devc: could not acquire the orchestrator lock '${lock_dir}'." >&2
+			exit 1
+		}
+	fi
+	printf '%s\n' "$$" >"${lock_dir}/pid"
+	cleanup_lock() { [ -n "${lock_dir:-}" ] && rm -rf "$lock_dir"; }
+	trap cleanup_lock EXIT
+	trap 'cleanup_lock; exit 130' INT
+	trap 'cleanup_lock; exit 143' TERM HUP
+
 	extra=(
 		# Worktrees live here (podman auto-creates the volume on first mount).
 		-v "${wt_volume}:/worktrees:rw"
@@ -133,6 +173,15 @@ fi
 # (run once inside; persisted in the home volume) for git-over-HTTPS.
 if [ "$(uname -s)" = "Linux" ] && [ -n "${SSH_AUTH_SOCK:-}" ] && [ -S "${SSH_AUTH_SOCK}" ]; then
 	args+=(-v "${SSH_AUTH_SOCK}:${SSH_AUTH_SOCK}:rw" -e "SSH_AUTH_SOCK=${SSH_AUTH_SOCK}")
+fi
+
+# Orchestrator sessions hold the per-project lock for the container's lifetime,
+# so we run podman in the foreground (not exec) and let the EXIT trap release the
+# lock when the session ends. Single-tool entry points hold no lock and exec.
+if [ -n "${lock_dir:-}" ]; then
+	rc=0
+	podman "${args[@]}" "$IMAGE" "${container_cmd[@]}" "$@" || rc=$?
+	exit "$rc"
 fi
 
 exec podman "${args[@]}" "$IMAGE" "${container_cmd[@]}" "$@"
