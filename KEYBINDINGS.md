@@ -1,6 +1,31 @@
 # Keybindings Reference
 
-Hypercube uses consistent vim-style keybindings across all tools. This document provides a complete reference.
+Hypercube uses consistent vim-style keybindings across all tools. This document
+provides a complete reference.
+
+## The 3-tier model
+
+Hypercube spans a host desktop and the `devc` container, and your keystrokes pass
+through several programs at once. To avoid the "keyboard dance," keys follow one
+rule: **one modifier per layer, never overlapping.** You only ever reach for one
+of three things, and they live in different worlds:
+
+| Press | Talks to | Layer |
+|---|---|---|
+| **`Super` + …** | the OS | Hyprland windows & workspaces |
+| **`Ctrl+Space`** then a key | the multiplexer | zellij (inside `devc`): panes, tabs, sessions, agents |
+| **`Space` + …** | the editor | Neovim (LazyVim) |
+
+`Ctrl+Space` is a single **leader**: tap it to enter one mode, then press one key.
+There is no pane-mode vs tab-mode vs resize-mode to juggle. See
+[KEYBINDINGS-PROPOSAL.md](KEYBINDINGS-PROPOSAL.md) for the full rationale
+([#198](https://github.com/binarypie-dev/hypercube/issues/198)).
+
+> **In progress.** zellij's single-leader scheme below is live. Two follow-ups
+> from the proposal are not done yet, so today's behavior still differs in two
+> spots, both noted inline: Ghostty keeps its own `Ctrl+a` terminal leader
+> (step 2), and Neovim still uses `Ctrl+hjkl` for window nav rather than the
+> seamless `Alt+hjkl` (step 3).
 
 ## Hyprland Window Management
 
@@ -71,7 +96,15 @@ The **Super** key (Windows/Command key) is the main modifier.
 
 ## Ghostty Terminal
 
-Ghostty uses **Ctrl+A** as the leader key (similar to tmux/screen).
+Ghostty is the **host** terminal. It uses **Ctrl+A** as a leader (similar to
+tmux/screen) for its own tabs and splits — handy when you run Ghostty directly on
+the desktop.
+
+> **Note (step 2 of [#198](https://github.com/binarypie-dev/hypercube/issues/198)).**
+> Inside `devc`, **zellij** owns multiplexing (see the next section), so Ghostty's
+> tab/split leader is redundant there. Consolidating it — letting zellij be the
+> sole multiplexer inside the container — is a planned follow-up. Until then, both
+> leaders exist; prefer zellij's `Ctrl+Space` when inside `devc`.
 
 ### Tabs
 
@@ -114,6 +147,83 @@ Ghostty uses **Ctrl+A** as the leader key (similar to tmux/screen).
 |------------|--------|
 | `Ctrl+A, [` | Enter copy mode (vim navigation) |
 | `Ctrl+A, Shift+R` | Reload config |
+
+---
+
+## zellij (devcube multiplexer)
+
+Inside `devc`, **zellij** is the terminal multiplexer — it manages your panes,
+tabs, and sessions, and each parallel agent (workmux worktree) is a zellij tab.
+
+The leader is **`Ctrl+Space`**. Tap it to enter **HYPER mode**, then press one
+key. Every key runs its action and returns to Normal, so it reads like a leader
+sequence — `Ctrl+Space |` splits, `Ctrl+Space c` makes a tab. There is only one
+mode to learn. `Esc` / `Enter` leaves HYPER mode.
+
+### Panes
+
+| Keybinding | Action |
+|------------|--------|
+| `Ctrl+Space` `\|` | Split right (vertical) |
+| `Ctrl+Space` `-` | Split down (horizontal) |
+| `Ctrl+Space` `n` | New pane |
+| `Ctrl+Space` `x` | Close pane |
+| `Ctrl+Space` `z` | Toggle zoom/fullscreen |
+| `Ctrl+Space` `w` | Toggle floating panes |
+| `Ctrl+Space` `e` | Embed / float pane |
+| `Ctrl+Space` `h/j/k/l` | Move focus |
+| `Ctrl+Space` `H/J/K/L` | Move the pane |
+
+### Tabs (workmux worktrees)
+
+| Keybinding | Action |
+|------------|--------|
+| `Ctrl+Space` `c` | New tab |
+| `Ctrl+Space` `[` / `]` | Previous / next tab |
+| `Ctrl+Space` `1`–`9` | Jump to tab _n_ |
+| `Ctrl+Space` `,` | Rename tab |
+
+### Resize, session, lock
+
+| Keybinding | Action |
+|------------|--------|
+| `Ctrl+Space` `r` | Resize sub-mode (then `h/j/k/l` or `+`/`-`; `Esc` exits) |
+| `Ctrl+Space` `s` | Session manager |
+| `Ctrl+Space` `d` | Detach session (leave agents running) |
+| `Ctrl+Space` `q` | Quit session |
+| `Ctrl+Space` `g` | Lock — pass every key to a focused TUI; `Ctrl+Space` again unlocks |
+
+### No leader needed
+
+These work everywhere, no mode required:
+
+| Keybinding | Action |
+|------------|--------|
+| `Alt + h/j/k/l` | Move focus (hops between tabs at the edges) |
+| `Alt + =` / `Alt + -` | Grow / shrink pane |
+
+> **Note (step 3 of [#198](https://github.com/binarypie-dev/hypercube/issues/198)).**
+> `Alt+hjkl` moves focus between zellij panes today. Making it step *seamlessly*
+> through Neovim's internal splits too (via `vim-zellij-navigator`, so the editor
+> ↔ agent boundary needs no gear-change) is a planned follow-up. Until then,
+> Neovim window nav is `Ctrl+hjkl` (see the Neovim section).
+
+---
+
+## workmux (parallel agents)
+
+[workmux](https://github.com/raine/workmux) orchestrates parallel agents on top of
+zellij: each `workmux add` creates a git worktree and opens it as **its own zellij
+tab** running the agent. So workmux has no separate keybindings — you navigate its
+worktrees with the zellij tab keys above (`Ctrl+Space [` / `]` or `Ctrl+Space 1-9`).
+
+| Command (run in any pane) | Action |
+|---|---|
+| `workmux add <branch> "<prompt>"` | New worktree + zellij tab running the agent |
+| `workmux list` | Show worktrees + agent status |
+| `workmux merge <branch>` | Merge and clean up |
+| `workmux remove <branch>` | Remove without merging |
+| `workmux dashboard` | Live control center (the default `devc` layout) |
 
 ---
 
@@ -196,10 +306,15 @@ Neovim uses LazyVim with **Space** as the leader key.
 
 | Keybinding | Action |
 |------------|--------|
-| `Ctrl+H/J/K/L` | Navigate windows |
+| `Ctrl+H/J/K/L` | Navigate windows (see note) |
 | `Space w` | Window menu |
 | `Space -` | Horizontal split |
 | `Space \|` | Vertical split |
+
+> Window nav is `Ctrl+hjkl` for now. Step 3 of
+> [#198](https://github.com/binarypie-dev/hypercube/issues/198) will switch this to
+> `Alt+hjkl` so focus moves seamlessly between Neovim splits and zellij panes with
+> one chord.
 
 ### Buffers
 

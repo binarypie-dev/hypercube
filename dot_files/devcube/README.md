@@ -56,6 +56,11 @@ workmux merge <branch>            # merge and clean up
 workmux remove <branch>           # remove without merging
 ```
 
+Each `add` opens a new zellij **tab**, so switch between agents with the
+multiplexer leader: `Ctrl+Space` then `[` / `]` or `1`–`9`. zellij uses a single
+leader-entered mode for everything (panes, tabs, sessions) — full keymap in
+[KEYBINDINGS.md](../../KEYBINDINGS.md).
+
 Worktrees are created on a **per-project named volume** mounted at `/worktrees`,
 so they persist across restarts and stay isolated from other projects. The
 volume name is derived from the launch path, so `~/Code/myrepo` always gets the
