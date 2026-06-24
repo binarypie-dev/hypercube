@@ -75,6 +75,9 @@ test-build: build
     podman run --rm {{local_image}} workmux --version
     podman run --rm {{local_image}} starship --version
     podman run --rm {{local_image}} fish --version
+    # The entrypoint must pin $SHELL to fish so workmux drops new worktrees into
+    # fish (its default-shell fallback is /bin/sh otherwise).
+    podman run --rm {{local_image}} sh -c '[ "$SHELL" = "$(command -v fish)" ]'
     @echo ""
     @echo "All tests passed!"
 
