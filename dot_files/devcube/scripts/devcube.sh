@@ -108,6 +108,10 @@ args=(
 	--security-opt label=disable
 	--hostname "$TOOL"
 	-e DEVCUBE=1
+	# Host OS (Darwin/Linux). The container is always Linux, so `uname` inside
+	# can't tell a Mac host from a Linux one -- but the clipboard behaves
+	# differently per host (see nvim's clipboard config), so we pass it through.
+	-e "DEVCUBE_HOST_OS=$(uname -s)"
 	-e TERM
 	-e COLORTERM
 	"${extra[@]}"
