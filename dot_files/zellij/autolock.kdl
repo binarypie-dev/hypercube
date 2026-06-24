@@ -1,0 +1,36 @@
+// zellij-autolock — DEVCUBE ONLY. The devcube Containerfile appends this onto
+// config.kdl at build time (it is not merged on the host base image, whose
+// /etc/zellij/config.kdl stays plain — see build_files/.../03-hypercube-configs.sh).
+//
+// What it does: whenever the focused pane is running an editor or fullscreen TUI
+// (see `triggers`), the plugin flips zellij into Locked mode so every key —
+// Alt+hjkl included — passes straight through to that program instead of the
+// multiplexer. Paired with zellij-nav.nvim (Alt+hjkl in the baked Neovim config),
+// this makes Alt+hjkl move seamlessly between Neovim splits and zellij panes:
+// inside nvim it walks windows, and at the edge nvim hands off to the adjacent
+// zellij pane via `zellij action`. When focus leaves the editor, autolock unlocks.
+//
+// The wasm is baked at /usr/share/zellij/plugins/zellij-autolock.wasm (a stable
+// image path, so it can't be shadowed by a stale home volume). zellij prompts to
+// grant the plugin its permissions once on first launch.
+load_plugins {
+    autolock
+}
+
+plugins {
+    autolock location="file:/usr/share/zellij/plugins/zellij-autolock.wasm" {
+        is_enabled true
+        // Pipe-separated commands that should hold zellij in Locked mode.
+        triggers "nvim|vim|hx|lazygit|fzf|btop|htop|less|man"
+        reaction_seconds "0.3"
+        print_to_log false
+    }
+}
+
+keybinds {
+    // A command can change a pane's foreground process without emitting a pane
+    // event, so nudge autolock to re-assess right after one runs.
+    normal {
+        bind "Enter" { WriteChars "\u{000D}"; MessagePlugin "autolock" {}; }
+    }
+}

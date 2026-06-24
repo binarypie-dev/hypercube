@@ -21,11 +21,9 @@ There is no pane-mode vs tab-mode vs resize-mode to juggle. See
 [KEYBINDINGS-PROPOSAL.md](KEYBINDINGS-PROPOSAL.md) for the full rationale
 ([#198](https://github.com/binarypie-dev/hypercube/issues/198)).
 
-> **In progress.** zellij's single-leader scheme below is live. Two follow-ups
-> from the proposal are not done yet, so today's behavior still differs in two
-> spots, both noted inline: Ghostty keeps its own `Ctrl+a` terminal leader
-> (step 2), and Neovim still uses `Ctrl+hjkl` for window nav rather than the
-> seamless `Alt+hjkl` (step 3).
+> The scheme is now in place end to end: zellij owns multiplexing under the
+> `Ctrl+Space` leader, Ghostty is a plain renderer (no terminal leader), and
+> `Alt+hjkl` moves focus seamlessly between Neovim splits and zellij panes.
 
 ## Hyprland Window Management
 
@@ -96,57 +94,19 @@ The **Super** key (Windows/Command key) is the main modifier.
 
 ## Ghostty Terminal
 
-Ghostty is the **host** terminal. It uses **Ctrl+A** as a leader (similar to
-tmux/screen) for its own tabs and splits — handy when you run Ghostty directly on
-the desktop.
+Ghostty is a plain, chrome-less renderer. **Multiplexing — tabs, splits,
+panes — is owned by zellij** (see the next section), so Ghostty defines no
+terminal leader of its own. Dropping the old `Ctrl+A` prefix also frees it as
+readline "beginning of line" when you run `devc claude` in a plain window.
 
-> **Note (step 2 of [#198](https://github.com/binarypie-dev/hypercube/issues/198)).**
-> Inside `devc`, **zellij** owns multiplexing (see the next section), so Ghostty's
-> tab/split leader is redundant there. Consolidating it — letting zellij be the
-> sole multiplexer inside the container — is a planned follow-up. Until then, both
-> leaders exist; prefer zellij's `Ctrl+Space` when inside `devc`.
-
-### Tabs
+Ghostty keeps just two custom binds (plus its built-in copy/paste and
+scrollback defaults):
 
 | Keybinding | Action |
 |------------|--------|
-| `Ctrl+A, C` | New tab |
-| `Ctrl+A, N` | Next tab |
-| `Ctrl+A, P` | Previous tab |
-| `Ctrl+A, W` | Tab overview |
-
-### Panes (Splits)
-
-| Keybinding | Action |
-|------------|--------|
-| `Ctrl+A, Shift+\` | Vertical split |
-| `Ctrl+A, -` | Horizontal split |
-| `Ctrl+A, X` | Close pane |
-| `Ctrl+A, Z` | Zoom/unzoom pane |
-| `Alt+F` | Toggle fullscreen pane |
-
-### Pane Navigation (Vim-style)
-
-| Keybinding | Action |
-|------------|--------|
-| `Ctrl+A, H` | Focus pane left |
-| `Ctrl+A, J` | Focus pane down |
-| `Ctrl+A, K` | Focus pane up |
-| `Ctrl+A, L` | Focus pane right |
-
-### Pane Resizing
-
-| Keybinding | Action |
-|------------|--------|
-| `Ctrl+A, R` | Enter resize mode |
-| Then `H/J/K/L` | Resize in direction |
-
-### Other
-
-| Keybinding | Action |
-|------------|--------|
-| `Ctrl+A, [` | Enter copy mode (vim navigation) |
-| `Ctrl+A, Shift+R` | Reload config |
+| `Ctrl+Shift+N` | New window (for local console work outside the multiplexer) |
+| `Ctrl+Shift+,` | Reload config |
+| `Ctrl+Shift+C` / `V` | Copy / paste (Ghostty default) |
 
 ---
 
@@ -202,11 +162,12 @@ These work everywhere, no mode required:
 | `Alt + h/j/k/l` | Move focus (hops between tabs at the edges) |
 | `Alt + =` / `Alt + -` | Grow / shrink pane |
 
-> **Note (step 3 of [#198](https://github.com/binarypie-dev/hypercube/issues/198)).**
-> `Alt+hjkl` moves focus between zellij panes today. Making it step *seamlessly*
-> through Neovim's internal splits too (via `vim-zellij-navigator`, so the editor
-> ↔ agent boundary needs no gear-change) is a planned follow-up. Until then,
-> Neovim window nav is `Ctrl+hjkl` (see the Neovim section).
+> **Seamless with Neovim.** `Alt+hjkl` also steps *into* and out of Neovim's
+> own splits, so the editor ↔ agent boundary needs no gear-change. Inside `devc`
+> this is handled by `zellij-autolock` (holds zellij in locked mode while nvim is
+> focused, so the keys reach nvim) plus `zellij-nav.nvim` (does the in-editor
+> move and hands off to the next zellij pane at the edge). On first launch zellij
+> asks once to grant the autolock plugin its permissions.
 
 ---
 
@@ -306,15 +267,14 @@ Neovim uses LazyVim with **Space** as the leader key.
 
 | Keybinding | Action |
 |------------|--------|
-| `Ctrl+H/J/K/L` | Navigate windows (see note) |
+| `Alt+H/J/K/L` | Navigate windows — and out into zellij panes at the edge |
 | `Space w` | Window menu |
 | `Space -` | Horizontal split |
 | `Space \|` | Vertical split |
 
-> Window nav is `Ctrl+hjkl` for now. Step 3 of
-> [#198](https://github.com/binarypie-dev/hypercube/issues/198) will switch this to
-> `Alt+hjkl` so focus moves seamlessly between Neovim splits and zellij panes with
-> one chord.
+> `Alt+hjkl` is the single nav chord across Neovim and zellij (see the zellij
+> section). LazyVim's old `Ctrl+hjkl` window nav is retired
+> ([#198](https://github.com/binarypie-dev/hypercube/issues/198)).
 
 ### Buffers
 

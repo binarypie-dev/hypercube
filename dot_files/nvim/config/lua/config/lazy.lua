@@ -28,6 +28,7 @@ end
 local hypercube_ui = require("hypercube.plugins.ui")
 local hypercube_extras = require("hypercube.plugins.extras")
 local hypercube_ai = require("hypercube.plugins.ai")
+local hypercube_nav = require("hypercube.plugins.nav")
 
 require("lazy").setup({
   spec = {
@@ -38,6 +39,7 @@ require("lazy").setup({
     hypercube_ui,
     hypercube_extras,
     hypercube_ai,
+    hypercube_nav,
 
     -- Your personal plugins (add files to ~/.config/hypercube/nvim/lua/plugins/)
     { import = "plugins" },

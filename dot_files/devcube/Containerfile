@@ -281,6 +281,18 @@ COPY zellij/   /root/.config/zellij/
 COPY workmux/  /root/.config/workmux/
 COPY starship/ /usr/share/hypercube/config/starship/
 
+# zellij-autolock: bake the wasm at a stable image path (so a stale home volume
+# can't shadow it) and fold its config (zellij/autolock.kdl) into the seeded
+# config.kdl. With zellij-nav.nvim in the baked Neovim config this gives
+# seamless Alt+hjkl navigation between Neovim splits and zellij panes (#198).
+# DEVCUBE ONLY — the host base image keeps a plain /etc/zellij/config.kdl.
+ARG ZELLIJ_AUTOLOCK_VERSION=0.2.2
+RUN mkdir -p /usr/share/zellij/plugins \
+    && curl -fsSL "https://github.com/fresh2dev/zellij-autolock/releases/download/${ZELLIJ_AUTOLOCK_VERSION}/zellij-autolock.wasm" \
+       -o /usr/share/zellij/plugins/zellij-autolock.wasm \
+    && cat /root/.config/zellij/autolock.kdl >> /root/.config/zellij/config.kdl \
+    && rm /root/.config/zellij/autolock.kdl
+
 # Make fish root's login shell so every interactive shell in the container
 # (zellij panes, `just shell`, any sub-shell) loads the baked fish config --
 # including the WORKMUX_BACKEND=zellij pin in conf.d/10-devcube.fish.
