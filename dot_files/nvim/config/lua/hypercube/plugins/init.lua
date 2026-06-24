@@ -11,7 +11,4 @@ return {
 
   -- Import Hypercube AI (sidekick.nvim)
   { import = "hypercube.plugins.ai" },
-
-  -- Import Hypercube navigation (seamless Neovim ↔ zellij)
-  { import = "hypercube.plugins.nav" },
 }

@@ -21,9 +21,10 @@ There is no pane-mode vs tab-mode vs resize-mode to juggle. See
 [KEYBINDINGS-PROPOSAL.md](KEYBINDINGS-PROPOSAL.md) for the full rationale
 ([#198](https://github.com/binarypie-dev/hypercube/issues/198)).
 
-> The scheme is now in place end to end: zellij owns multiplexing under the
-> `Ctrl+Space` leader, Ghostty is a plain renderer (no terminal leader), and
-> `Alt+hjkl` moves focus seamlessly between Neovim splits and zellij panes.
+> zellij owns multiplexing under the `Ctrl+Space` leader and Ghostty is a plain
+> renderer (no terminal leader). Within a tab, `Alt+hjkl` moves between zellij
+> panes; Neovim keeps its own `Ctrl+hjkl` for moving between its splits. The two
+> are intentionally separate — Neovim is the editor layer, zellij the mux layer.
 
 ## Hyprland Window Management
 
@@ -162,12 +163,9 @@ These work everywhere, no mode required:
 | `Alt + h/j/k/l` | Move focus (hops between tabs at the edges) |
 | `Alt + =` / `Alt + -` | Grow / shrink pane |
 
-> **Seamless with Neovim.** `Alt+hjkl` also steps *into* and out of Neovim's
-> own splits, so the editor ↔ agent boundary needs no gear-change. Inside `devc`
-> this is handled by `zellij-autolock` (holds zellij in locked mode while nvim is
-> focused, so the keys reach nvim) plus `zellij-nav.nvim` (does the in-editor
-> move and hands off to the next zellij pane at the edge). On first launch zellij
-> asks once to grant the autolock plugin its permissions.
+> `Alt+hjkl` moves between zellij **panes**. Inside Neovim, use Neovim's own
+> `Ctrl+hjkl` to move between **its** splits (see the Neovim section); the two
+> navigation layers are kept separate by design.
 
 ---
 
@@ -267,14 +265,13 @@ Neovim uses LazyVim with **Space** as the leader key.
 
 | Keybinding | Action |
 |------------|--------|
-| `Alt+H/J/K/L` | Navigate windows — and out into zellij panes at the edge |
+| `Ctrl+H/J/K/L` | Navigate Neovim windows |
 | `Space w` | Window menu |
 | `Space -` | Horizontal split |
 | `Space \|` | Vertical split |
 
-> `Alt+hjkl` is the single nav chord across Neovim and zellij (see the zellij
-> section). LazyVim's old `Ctrl+hjkl` window nav is retired
-> ([#198](https://github.com/binarypie-dev/hypercube/issues/198)).
+> `Ctrl+hjkl` moves between Neovim's own splits; `Alt+hjkl` moves between zellij
+> panes (see the zellij section). They're separate layers by design.
 
 ### Buffers
 

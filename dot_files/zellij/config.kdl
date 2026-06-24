@@ -43,9 +43,9 @@ default_layout "compact"
 //   ESCAPE   g lock (pass every key to a focused TUI; Ctrl+Space unlocks)
 //   Esc / Enter returns to Normal.
 //
-// NO leader needed — these work everywhere (and cross into nvim splits once
-// vim-zellij-navigator is wired up, see KEYBINDINGS-PROPOSAL.md step 3):
+// NO leader needed — these move focus between zellij panes from anywhere:
 //   Alt h/j/k/l  move focus      Alt = / Alt -  grow / shrink pane
+// (Inside Neovim, use Neovim's own Ctrl+hjkl for its splits — separate layer.)
 //
 // workmux ↔ zellij:  `workmux add <branch>` opens each git worktree as its own
 //   TAB running the agent (see ../workmux/config.yaml). So your parallel agents
@@ -60,8 +60,7 @@ keybinds clear-defaults=true {
         bind "Ctrl Space" { SwitchToMode "tmux"; }
 
         // Bare directional focus + resize — no mode, muscle memory everywhere.
-        // MoveFocusOrTab so h/l also hop between tabs at the edges. nvim grabs
-        // these first when focused, falling through to zellij at split edges.
+        // MoveFocusOrTab so h/l also hop between tabs at the pane-grid edges.
         bind "Alt h" "Alt Left"  { MoveFocusOrTab "Left"; }
         bind "Alt l" "Alt Right" { MoveFocusOrTab "Right"; }
         bind "Alt j" "Alt Down"  { MoveFocus "Down"; }

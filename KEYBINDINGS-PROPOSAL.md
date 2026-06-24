@@ -3,8 +3,16 @@
 > Addresses [#198](https://github.com/binarypie-dev/hypercube/issues/198) —
 > "devcube: Fix keybindings mess."
 >
-> Status: **proposal / RFC.** No configs are changed by this document. It
-> describes the target scheme, the rationale, and a staged migration.
+> Status: **proposal / RFC.** It describes the target scheme, the rationale, and
+> a staged migration.
+>
+> **Adopted:** the single `Ctrl+Space` zellij leader (§"Tier 2"), Ghostty as a
+> plain renderer (§"Tier 4"/step 2), and shipping zellij in the base image.
+> **Declined:** the seamless cross-boundary `Alt+hjkl` of §4 / step 3 (the
+> `vim-zellij-navigator` / autolock route below). It needs a baked wasm plugin
+> and a first-run permission grant for marginal benefit, so Neovim keeps its own
+> `Ctrl+hjkl` for splits and `Alt+hjkl` stays scoped to zellij panes — the two
+> nav layers are intentionally separate. The §4 design is kept for the record.
 
 ## The problem
 
