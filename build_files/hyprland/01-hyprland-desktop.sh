@@ -56,6 +56,12 @@ dnf5 -y install \
 ### Fish Shell (set as default)
 dnf5 -y install fish
 
+### Terminal multiplexer - zellij (in Fedora repos)
+# Same multiplexer the devcube image uses, so the unified Ctrl+Space keymap
+# (see /etc/zellij/config.kdl, installed by 03-hypercube-configs.sh) is
+# available for local console work on the host too.
+dnf5 -y install zellij
+
 ### Terminal - Ghostty (from scottames COPR)
 dnf5 -y copr enable scottames/ghostty
 dnf5 -y install ghostty
