@@ -289,10 +289,15 @@ RUN fish_bin="$(command -v fish)" \
     && usermod --shell "$fish_bin" root
 
 # =============================================================================
-# LAYER 15: Entrypoint
+# LAYER 15: Entrypoint + orchestrator preflight
 # =============================================================================
+# devcube-orchestrate enforces one orchestrator (zellij/workmux) per project via
+# an advisory lock on the shared /worktrees volume; the devc wrapper routes
+# orchestrator launches through it (see devcube/scripts/devcube.sh). flock comes
+# from util-linux (present in fedora-toolbox); the script fails open if absent.
 COPY devcube/entrypoint.sh /usr/local/bin/devcube-entrypoint
-RUN chmod +x /usr/local/bin/devcube-entrypoint
+COPY devcube/scripts/orchestrate.sh /usr/local/bin/devcube-orchestrate
+RUN chmod +x /usr/local/bin/devcube-entrypoint /usr/local/bin/devcube-orchestrate
 ENTRYPOINT ["/usr/local/bin/devcube-entrypoint"]
 CMD ["nvim"]
 

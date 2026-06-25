@@ -75,6 +75,10 @@ test-build: build
     podman run --rm {{local_image}} workmux --version
     podman run --rm {{local_image}} starship --version
     podman run --rm {{local_image}} fish --version
+    # Orchestrator single-instance guard: the preflight is installed and its
+    # flock dependency is present (else the guard silently fails open).
+    podman run --rm {{local_image}} test -x /usr/local/bin/devcube-orchestrate
+    podman run --rm {{local_image}} flock --version
     @echo ""
     @echo "All tests passed!"
 
