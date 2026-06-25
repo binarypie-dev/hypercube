@@ -289,12 +289,13 @@ RUN fish_bin="$(command -v fish)" \
     && usermod --shell "$fish_bin" root
 
 # =============================================================================
-# LAYER 15: Entrypoint + session runner
+# LAYER 15: Entrypoint + session dispatcher
 # =============================================================================
-# devcube-session enforces one session (zellij/workmux) per project via an
-# advisory lock on the shared /worktrees volume; the devc wrapper routes session
-# launches through it (see devcube/scripts/devcube.sh). flock comes from
-# util-linux (present in fedora-toolbox); the script fails open if absent.
+# devcube-session is the in-container dispatcher: the thin devc wrapper forwards
+# every command (nvim/claude/.../workmux/zellij/session ...) to it, and it decides
+# what to run -- including the single-session-per-project guard (an advisory flock
+# on the shared /worktrees volume). flock comes from util-linux (present in
+# fedora-toolbox); the guard fails open if it's absent.
 COPY devcube/entrypoint.sh /usr/local/bin/devcube-entrypoint
 COPY devcube/scripts/session.sh /usr/local/bin/devcube-session
 RUN chmod +x /usr/local/bin/devcube-entrypoint /usr/local/bin/devcube-session

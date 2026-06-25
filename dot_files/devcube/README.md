@@ -84,27 +84,29 @@ them from inside `devc`, not via `git worktree` on the host.)
 
 ## How it works
 
-`scripts/devcube.sh` runs the image as an ephemeral `podman` container and mounts
-only what's needed. The mounts:
+`scripts/devcube.sh` is a thin wrapper: it sets up an ephemeral `podman`
+container and forwards the command + args to `devcube-session` inside the image,
+which decides what to actually run. The mounts:
 
 | Mounted in | Purpose |
 |---|---|
 | named volume `hypercube-devcube-home` → `/root` | plugin/mason updates, sessions, shada, **and AI-CLI auth** — seeded from the image on first run, persisted after |
 | current directory | the project you're editing |
-| per-project volume `devcube-wt-<proj>-<hash>` → `/worktrees` | worktrees + workmux state (sessions only) |
+| per-project volume `devcube-wt-<proj>-<hash>` → `/worktrees` | worktrees + workmux/zellij session state (used by the session workspaces) |
 | `~/.config/hypercube/nvim` | **your** plugin overrides, layered on top of the baked config |
 | `~/.gitconfig` (ro) | commit identity |
 | `$SSH_AUTH_SOCK` (Linux) | SSH agent for git/gh |
 
 Everything else (the LazyVim config, plugins, AI CLIs, zellij/workmux/fish/
-starship config) lives in the image. The container runs as `--user 0:0` so files
-you edit are owned by your host user under rootless podman. Multiple sessions run
+starship config) lives in the image, as does all per-command behavior
+(`devcube-session`). The container runs as `--user 0:0` so files you edit are
+owned by your host user under rootless podman. Multiple containers run
 concurrently — except that only **one session** (`devc` / `devc workmux` /
 `devc zellij`) may run per project at a time, since they share that project's
 `/worktrees` volume + workmux state; a second one refuses with a message rather
 than racing into the shared state and corrupting it (manage them with
-`devc session`). Single-tool sessions (`devc nvim` / `devc claude` / ...) mount no
-shared state and stay concurrent.
+`devc session`). Single-tool commands (`devc nvim` / `devc claude` / ...) don't
+touch that shared state, so they stay concurrent.
 
 Clipboard uses **OSC 52** through the terminal, so yank/paste works locally
 (Ghostty) and over SSH without forwarding a Wayland/pbcopy socket.
