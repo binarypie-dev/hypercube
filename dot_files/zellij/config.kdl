@@ -3,24 +3,139 @@
 // Tokyo Night Moon theme to match Neovim/Ghostty. Palette source of truth:
 // dot_files/ghostty/config ("TOKYO NIGHT MOON COLOR SCHEME").
 //
+// We use zellij's advanced UI-component theme format (not the simple
+// fg/bg/red/green… palette) on purpose. With the simple palette zellij hardwires
+// the bright lime `green` (#c3e88d) onto the selected mode ribbon and active tab,
+// which lights up the whole status bar — loud/"offensive". The component format
+// lets us repaint that chrome with a calmer Tokyo Night Moon blue and muted
+// backgrounds while keeping the same palette identity. Each component takes a
+// `base` (text), a `background`, and four `emphasis_*` accent slots.
+//
 // zellij keeps its own default keybindings (no seamless vim/zellij nav by
 // design) — only quality-of-life defaults are set below.
 
 themes {
     tokyo-night-moon {
-        fg "#c8d3f5"
-        bg "#222436"
-        black "#1e2030"
-        red "#ff757f"
-        green "#c3e88d"
-        yellow "#ffc777"
-        blue "#82aaff"
-        magenta "#c099ff"
-        cyan "#86e1fc"
-        // Dim white so UI chrome stays distinct from the foreground.
-        white "#828bb8"
-        // Tokyo Night Moon spec (Ghostty has no dedicated orange slot).
-        orange "#ff966c"
+        // Bare text (search paging, plain UI labels).
+        text_unselected {
+            base "#c8d3f5"
+            background "#222436"
+            emphasis_0 "#ff966c"
+            emphasis_1 "#86e1fc"
+            emphasis_2 "#c3e88d"
+            emphasis_3 "#c099ff"
+        }
+        text_selected {
+            base "#c8d3f5"
+            background "#2f334d"
+            emphasis_0 "#ff966c"
+            emphasis_1 "#86e1fc"
+            emphasis_2 "#c3e88d"
+            emphasis_3 "#c099ff"
+        }
+        // Ribbons = status-bar mode pills + tabs. The selected one used to be
+        // bright green; soft blue on a dark base is far easier on the eyes.
+        ribbon_selected {
+            base "#1e2030"
+            background "#82aaff"
+            emphasis_0 "#ffc777"
+            emphasis_1 "#ff966c"
+            emphasis_2 "#c099ff"
+            emphasis_3 "#86e1fc"
+        }
+        ribbon_unselected {
+            base "#c8d3f5"
+            background "#2f334d"
+            emphasis_0 "#ffc777"
+            emphasis_1 "#ff966c"
+            emphasis_2 "#c099ff"
+            emphasis_3 "#86e1fc"
+        }
+        table_title {
+            base "#82aaff"
+            background "#222436"
+            emphasis_0 "#ff966c"
+            emphasis_1 "#86e1fc"
+            emphasis_2 "#c3e88d"
+            emphasis_3 "#c099ff"
+        }
+        table_cell_selected {
+            base "#c8d3f5"
+            background "#2f334d"
+            emphasis_0 "#ff966c"
+            emphasis_1 "#86e1fc"
+            emphasis_2 "#c3e88d"
+            emphasis_3 "#c099ff"
+        }
+        table_cell_unselected {
+            base "#c8d3f5"
+            background "#222436"
+            emphasis_0 "#ff966c"
+            emphasis_1 "#86e1fc"
+            emphasis_2 "#c3e88d"
+            emphasis_3 "#c099ff"
+        }
+        list_selected {
+            base "#c8d3f5"
+            background "#2f334d"
+            emphasis_0 "#ff966c"
+            emphasis_1 "#86e1fc"
+            emphasis_2 "#c3e88d"
+            emphasis_3 "#c099ff"
+        }
+        list_unselected {
+            base "#c8d3f5"
+            background "#222436"
+            emphasis_0 "#ff966c"
+            emphasis_1 "#86e1fc"
+            emphasis_2 "#c3e88d"
+            emphasis_3 "#c099ff"
+        }
+        // Focused-pane border: soft blue instead of a loud accent.
+        frame_selected {
+            base "#82aaff"
+            background "#222436"
+            emphasis_0 "#86e1fc"
+            emphasis_1 "#ffc777"
+            emphasis_2 "#c099ff"
+            emphasis_3 "#c8d3f5"
+        }
+        frame_highlight {
+            base "#ff966c"
+            background "#222436"
+            emphasis_0 "#ff966c"
+            emphasis_1 "#ff966c"
+            emphasis_2 "#ff966c"
+            emphasis_3 "#ff966c"
+        }
+        exit_code_success {
+            base "#c3e88d"
+            background "#222436"
+            emphasis_0 "#86e1fc"
+            emphasis_1 "#2f334d"
+            emphasis_2 "#c099ff"
+            emphasis_3 "#c3e88d"
+        }
+        exit_code_error {
+            base "#ff757f"
+            background "#222436"
+            emphasis_0 "#ffc777"
+            emphasis_1 "#222436"
+            emphasis_2 "#222436"
+            emphasis_3 "#222436"
+        }
+        multiplayer_user_colors {
+            player_1 "#c099ff"
+            player_2 "#82aaff"
+            player_3 "#ff966c"
+            player_4 "#ffc777"
+            player_5 "#86e1fc"
+            player_6 "#ff757f"
+            player_7 "#c3e88d"
+            player_8 "#828bb8"
+            player_9 "#c099ff"
+            player_10 "#82aaff"
+        }
     }
 }
 
