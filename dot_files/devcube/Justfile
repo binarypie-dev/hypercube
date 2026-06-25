@@ -58,7 +58,7 @@ shell:
 # Tests
 # =============================================================================
 
-# Verify the image: nvim config loads and the toolchain + AI CLIs + orchestrators are present
+# Verify the image: nvim config loads and the toolchain + AI CLIs + session runner are present
 test-build: build
     @echo "Testing container..."
     podman run --rm {{local_image}} nvim --headless +qa
@@ -75,9 +75,9 @@ test-build: build
     podman run --rm {{local_image}} workmux --version
     podman run --rm {{local_image}} starship --version
     podman run --rm {{local_image}} fish --version
-    # Orchestrator single-instance guard: the preflight is installed and its
-    # flock dependency is present (else the guard silently fails open).
-    podman run --rm {{local_image}} test -x /usr/local/bin/devcube-orchestrate
+    # Session single-instance guard: the runner is installed and its flock
+    # dependency is present (else the guard silently fails open).
+    podman run --rm {{local_image}} test -x /usr/local/bin/devcube-session
     podman run --rm {{local_image}} flock --version
     @echo ""
     @echo "All tests passed!"

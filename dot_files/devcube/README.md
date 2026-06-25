@@ -41,9 +41,26 @@ Linux desktop, a remote box, and macOS — no distrobox required.
 | `devc claude`     | Claude Code CLI, run directly |
 | `devc codex`      | OpenAI Codex CLI, run directly |
 | `devc agy`        | Antigravity CLI, run directly |
+| `devc session …`  | manage running sessions (see below) |
 
 All entry points share one home volume, so an AI login from any of them works in
 all of them.
+
+### Managing sessions
+
+Only one session (`devc` / `devc workmux` / `devc zellij`) runs per project at a
+time — a second on the same folder would share its `/worktrees` volume + workmux
+state and corrupt it, so it's refused. `devc session` inspects and manages them
+from the host:
+
+| Command | What it does |
+|---|---|
+| `devc session list`              | list running devcube sessions (project, tool, status) |
+| `devc session stop [<path>\|all]` | stop a running session — defaults to the current project |
+| `devc session remove [<path>]`   | remove a project's worktree/state volume (the per-project state that gets corrupted); refuses while a session is running |
+
+Single-tool sessions (`devc nvim` / `devc claude` / …) mount no shared state and
+stay fully concurrent.
 
 ### Parallel agents
 
@@ -71,7 +88,7 @@ only what's needed. The mounts:
 |---|---|
 | named volume `hypercube-devcube-home` → `/root` | plugin/mason updates, sessions, shada, **and AI-CLI auth** — seeded from the image on first run, persisted after |
 | current directory | the project you're editing |
-| per-project volume `devcube-wt-<proj>-<hash>` → `/worktrees` | worktrees + workmux state (orchestrators only) |
+| per-project volume `devcube-wt-<proj>-<hash>` → `/worktrees` | worktrees + workmux state (sessions only) |
 | `~/.config/hypercube/nvim` | **your** plugin overrides, layered on top of the baked config |
 | `~/.gitconfig` (ro) | commit identity |
 | `$SSH_AUTH_SOCK` (Linux) | SSH agent for git/gh |
@@ -79,11 +96,12 @@ only what's needed. The mounts:
 Everything else (the LazyVim config, plugins, AI CLIs, zellij/workmux/fish/
 starship config) lives in the image. The container runs as `--user 0:0` so files
 you edit are owned by your host user under rootless podman. Multiple sessions run
-concurrently — except that only **one orchestrator** (`devc` / `devc workmux` /
+concurrently — except that only **one session** (`devc` / `devc workmux` /
 `devc zellij`) may run per project at a time, since they share that project's
 `/worktrees` volume + workmux state; a second one refuses with a message rather
-than racing into the shared state and corrupting it. Single-tool sessions
-(`devc nvim` / `devc claude` / ...) mount no shared state and stay concurrent.
+than racing into the shared state and corrupting it (manage them with
+`devc session`). Single-tool sessions (`devc nvim` / `devc claude` / ...) mount no
+shared state and stay concurrent.
 
 Clipboard uses **OSC 52** through the terminal, so yank/paste works locally
 (Ghostty) and over SSH without forwarding a Wayland/pbcopy socket.

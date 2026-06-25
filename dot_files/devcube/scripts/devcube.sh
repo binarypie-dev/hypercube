@@ -12,6 +12,7 @@
 #   devc claude     -> Claude Code CLI, run directly
 #   devc codex      -> OpenAI Codex CLI, run directly
 #   devc agy        -> Antigravity CLI, run directly
+#   devc session .. -> manage running sessions: list | stop | remove (host-side)
 #
 # Extra args after the tool are passed through (e.g. `devc nvim file.rs`,
 # `devc claude --resume`). All entry points share the same home volume, so
@@ -31,6 +32,88 @@
 #   DEVCUBE_WT_PREFIX  prefix for the per-project worktree volume (default devcube-wt)
 set -euo pipefail
 
+# ---------------------------------------------------------------------------
+# `devc session` — manage running sessions and their persisted per-project
+# state. Sessions are the podman containers devc launches (labeled io.devcube.*),
+# so this is host-side (podman) and never enters a container:
+#   devc session list               list running devcube sessions
+#   devc session stop [<path>|all]   stop a running session (default: this project)
+#   devc session remove [<path>]     remove a project's worktree/state volume --
+#                                    the per-project state that gets corrupted by
+#                                    concurrent sessions; refuses while one is up.
+# ---------------------------------------------------------------------------
+if [ "${1:-}" = session ]; then
+	shift || true
+	sub="${1:-list}"
+	if [ $# -gt 0 ]; then shift; fi
+
+	if ! command -v podman >/dev/null 2>&1; then
+		echo "devc: podman not found; 'devc session' needs it." >&2
+		exit 1
+	fi
+
+	# The git repo root for a path (or the path itself when not in a repo) -- the
+	# same key devc launches under, so labels and volume names line up.
+	session_project_dir() {
+		local d="${1:-$(pwd -P)}"
+		d="$(cd "$d" 2>/dev/null && pwd -P || printf '%s' "$d")"
+		git -C "$d" rev-parse --show-toplevel 2>/dev/null || printf '%s' "$d"
+	}
+	# The per-project worktree/state volume name (must match the launch path below).
+	session_volume() {
+		local pd slug phash
+		pd="$1"
+		slug="$(basename "$pd" | tr -c 'a-zA-Z0-9_.-' '-')"
+		phash="$(printf '%s' "$pd" | cksum | cut -d' ' -f1)"
+		printf '%s' "${DEVCUBE_WT_PREFIX:-devcube-wt}-${slug}-${phash}"
+	}
+
+	case "$sub" in
+	list | ls)
+		podman ps --filter "label=io.devcube.session=1" \
+			--format 'table {{.Names}}\t{{index .Labels "io.devcube.tool"}}\t{{index .Labels "io.devcube.project"}}\t{{.Status}}'
+		;;
+	stop)
+		if [ "${1:-}" = all ]; then
+			ids="$(podman ps -q --filter "label=io.devcube.session=1")"
+			label="all sessions"
+		else
+			pd="$(session_project_dir "${1:-}")"
+			ids="$(podman ps -q --filter "label=io.devcube.project=${pd}")"
+			label="'${pd}'"
+		fi
+		if [ -z "${ids:-}" ]; then
+			echo "devc: no running session for ${label}." >&2
+			exit 1
+		fi
+		# shellcheck disable=SC2086
+		podman stop $ids
+		;;
+	remove | rm)
+		pd="$(session_project_dir "${1:-}")"
+		if [ -n "$(podman ps -q --filter "label=io.devcube.project=${pd}")" ]; then
+			echo "devc: a session for '${pd}' is still running -- run 'devc session stop' first." >&2
+			exit 1
+		fi
+		vol="$(session_volume "$pd")"
+		if podman volume rm -f "$vol" >/dev/null 2>&1; then
+			echo "devc: removed session state volume '${vol}' for '${pd}'."
+		else
+			echo "devc: no session state volume for '${pd}' (nothing to remove)."
+		fi
+		;;
+	-h | --help | help)
+		echo "usage: devc session [list | stop [<path>|all] | remove [<path>]]"
+		;;
+	*)
+		echo "devc session: unknown subcommand '${sub}'" >&2
+		echo "usage: devc session [list | stop [<path>|all] | remove [<path>]]" >&2
+		exit 1
+		;;
+	esac
+	exit 0
+fi
+
 # The tool to run is the first argument; default to the workmux workspace.
 TOOL="${1:-workmux}"
 case "$TOOL" in
@@ -40,6 +123,7 @@ nvim | claude | codex | agy | zellij | workmux)
 *)
 	echo "devc: unknown command '$TOOL'" >&2
 	echo "usage: devc [nvim|claude|codex|agy|zellij|workmux] [args...]  (no args -> workmux)" >&2
+	echo "       devc session [list|stop|remove] ...                   (manage sessions)" >&2
 	exit 1
 	;;
 esac
@@ -67,7 +151,7 @@ if [ "$TOOL" = workmux ] && [ -z "$git_root" ]; then
 	exit 1
 fi
 
-# Default: run the tool with only the project mounted. The orchestrators
+# Default: run the tool with only the project mounted. The session workspaces
 # (zellij/workmux) additionally get a per-project worktree volume + the zellij
 # backend, and run inside a zellij session.
 container_cmd=("$TOOL")
@@ -90,10 +174,10 @@ zellij | workmux)
 		# isolated from other projects and survives restarts.
 		-e XDG_STATE_HOME=/worktrees/.local/state
 	)
-	# Only one orchestrator may run per project: two would share this project's
+	# Only one session may run per project: two would share this project's
 	# /worktrees volume + workmux state (XDG_STATE_HOME above) and racing them
 	# corrupts it, which then breaks every later launch on the folder ("permission
-	# denied") until the volume is removed. `devcube-orchestrate` (baked into the
+	# denied") until the volume is removed. `devcube-session` (baked into the
 	# image) enforces single-instance IN-CONTAINER, via an advisory lock on the
 	# shared /worktrees volume, and refuses a second launch. Keeping the guard in
 	# the image -- not here on the host -- means it relies on real session liveness
@@ -107,9 +191,9 @@ zellij | workmux)
 	# above, not the zellij session -- so we let zellij auto-name it. workmux
 	# operates on whatever the current session is, named or not.
 	if [ "$TOOL" = workmux ]; then
-		container_cmd=(devcube-orchestrate zellij --layout workmux)
+		container_cmd=(devcube-session zellij --layout workmux)
 	else
-		container_cmd=(devcube-orchestrate zellij)
+		container_cmd=(devcube-session zellij)
 	fi
 	;;
 esac
@@ -119,6 +203,11 @@ args=(
 	--user 0:0
 	--security-opt label=disable
 	--hostname "$TOOL"
+	# Labels let `devc session list|stop|remove` find this container (and derive
+	# its per-project state volume) from the host without a fixed --name.
+	--label io.devcube.session=1
+	--label "io.devcube.tool=${TOOL}"
+	--label "io.devcube.project=${project_dir}"
 	-e DEVCUBE=1
 	-e TERM
 	-e COLORTERM
