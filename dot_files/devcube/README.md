@@ -50,17 +50,20 @@ all of them.
 
 Only one session (`devc` / `devc workmux` / `devc zellij`) runs per project at a
 time — a second on the same folder would share its `/worktrees` volume + workmux
-state and corrupt it, so it's refused. `devc session` inspects and manages them
-from the host:
+state and corrupt it, so it's refused. `devc session` inspects and manages the
+current project's sessions (it runs `devcube-session` inside a container against
+the project's shared zellij state, so it sees sessions running in other
+containers of the same project):
 
 | Command | What it does |
 |---|---|
-| `devc session list`              | list running devcube sessions (project, tool, status) |
-| `devc session stop [<path>\|all]` | stop a running session — defaults to the current project |
-| `devc session remove [<path>]`   | remove a project's worktree/state volume (the per-project state that gets corrupted); refuses while a session is running |
+| `devc session list`             | list this project's zellij sessions |
+| `devc session stop [name…]`     | stop a running session — a named one, or all |
+| `devc session remove [name…]`   | delete saved session state — a named one, or all |
 
 Single-tool sessions (`devc nvim` / `devc claude` / …) mount no shared state and
-stay fully concurrent.
+stay fully concurrent. To wipe a project's persisted worktree/state **volume**
+(the host-side recovery if state ever gets corrupted), use `ujust devcube-reset`.
 
 ### Parallel agents
 

@@ -1,50 +1,81 @@
 #!/usr/bin/env bash
-# devcube session runner — baked into the image as `devcube-session`.
+# devcube-session — run and manage a project's session, from INSIDE the container.
 #
-# Runs INSIDE the container, immediately before the zellij/workmux session, and
-# enforces a single session per project. Two sessions on the same project share
-# one /worktrees volume + workmux state (XDG_STATE_HOME); running them at once
-# races and corrupts that per-project state, after which every later launch on
-# the folder fails with "permission denied" until the volume is wiped. (Manage
-# sessions from the host with `devc session list|stop|remove`.)
+# The devc wrapper routes both session launches and `devc session <sub>` here, so
+# all session logic lives in the image (not the host wrapper). Subcommands:
 #
-# Detection is one advisory file lock (flock) on the per-project /worktrees
-# volume. That volume is shared across this project's containers and the host
-# kernel is shared, so the lock is visible to every same-project session. It is
-# taken on a file descriptor that the exec'd session process inherits, so the
-# kernel holds it for exactly that process's lifetime and releases it the instant
-# the process exits — even on crash or kill. No PIDs, no host-side state, no stale
-# locks to reclaim: liveness is the lock itself. A second launch is refused
-# immediately. This is why the guard lives in the image, not the host wrapper —
-# it keys off real session liveness rather than guesswork.
+#   run <cmd...>    take the per-project lock and exec <cmd> holding it, so only
+#                   one session runs per project. Used by devc to launch
+#                   zellij/workmux.
+#   list           list this project's zellij sessions
+#   stop [name...]  stop running session(s) — a specific one, else all
+#   remove [name...] delete saved session state — a specific one, else all
 #
-# Usage: devcube-session <cmd> [args...]   (e.g. `devcube-session zellij`)
+# Single-instance: two sessions on one project share its /worktrees volume +
+# workmux state (XDG_STATE_HOME); racing them corrupts it, after which every
+# later launch on the folder fails with "permission denied". `run` guards against
+# that with one advisory flock on the shared /worktrees volume, held on a fd the
+# exec'd session inherits — so the kernel holds it for exactly the session's
+# lifetime and frees it the instant it exits (crash/kill included). No PIDs, no
+# host state, no stale locks: liveness is the lock itself.
+#
+# list/stop/remove act through zellij, whose IPC sockets live on the shared
+# per-project /worktrees volume (ZELLIJ_SOCKET_DIR, set by devc), so this
+# container sees and can act on sessions started by other containers of the same
+# project.
 set -euo pipefail
 
 lock="/worktrees/.devcube-session.lock"
 
-# Fail open everywhere: a missing flock, a non-session invocation (no /worktrees),
-# or an unwritable volume must never block a legitimate launch — at worst the
-# guard is a no-op. It only ever *refuses* on a confirmed conflict.
-if ! command -v flock >/dev/null 2>&1 || [ ! -w /worktrees ]; then
-	exec "$@"
-fi
+cmd="${1:-list}"
+if [ $# -gt 0 ]; then shift; fi
 
-# Open the lock fd (9). With /worktrees confirmed writable above this won't fail
-# in practice; guard it anyway and fail open if it somehow does.
-if ! exec 9>"$lock"; then
+case "$cmd" in
+run)
+	[ $# -ge 1 ] || {
+		echo "devcube-session run: needs a command to run" >&2
+		exit 2
+	}
+	# Fail open: a missing flock or unwritable /worktrees must never block a
+	# launch — at worst the guard is a no-op. It only refuses on a real conflict.
+	if ! command -v flock >/dev/null 2>&1 || [ ! -w /worktrees ]; then
+		exec "$@"
+	fi
+	# /worktrees confirmed writable, so opening the lock fd won't fail here.
+	exec 9>"$lock"
+	if ! flock -n 9; then
+		echo "devc: a session is already running for this project." >&2
+		echo "      A second one would share its /worktrees volume + workmux state" >&2
+		echo "      and corrupt it. Reattach to it, stop it with 'devc session stop'," >&2
+		echo "      or launch a single tool that needs no shared state:" >&2
+		echo "        devc nvim | devc claude | devc codex | devc agy" >&2
+		exit 1
+	fi
+	# Lock held on fd 9; exec the session so it inherits the fd and holds the lock
+	# for its whole lifetime; the kernel frees it when the session process exits.
 	exec "$@"
-fi
-
-if ! flock -n 9; then
-	echo "devc: a session is already running for this project." >&2
-	echo "      A second one would share its /worktrees volume + workmux state and" >&2
-	echo "      corrupt it. Switch to the running session (or stop it with" >&2
-	echo "      'devc session stop') and retry, or launch a single tool that needs" >&2
-	echo "      no shared state: devc nvim | devc claude | devc codex | devc agy." >&2
+	;;
+list | ls)
+	exec zellij list-sessions "$@"
+	;;
+stop)
+	if [ $# -gt 0 ]; then
+		exec zellij kill-session "$@"
+	fi
+	exec zellij kill-all-sessions --yes
+	;;
+remove | rm | delete)
+	if [ $# -gt 0 ]; then
+		exec zellij delete-session "$@"
+	fi
+	exec zellij delete-all-sessions --yes
+	;;
+-h | --help | help)
+	echo "usage: devcube-session run <cmd...> | list | stop [name...] | remove [name...]"
+	;;
+*)
+	echo "devcube-session: unknown subcommand '$cmd'" >&2
+	echo "usage: devcube-session run <cmd...> | list | stop [name...] | remove [name...]" >&2
 	exit 1
-fi
-
-# Lock held on fd 9. exec the session so it inherits the fd and holds the lock
-# for its whole lifetime; the kernel frees it when the session process exits.
-exec "$@"
+	;;
+esac
