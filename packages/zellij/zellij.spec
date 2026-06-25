@@ -1,10 +1,10 @@
 # NOTE: This package requires "Enable internet access during builds" in COPR
-# settings (cargo fetches crate dependencies during the build).
+# settings — the build bootstraps rustup and cargo fetches crates over the network.
 
 %global debug_package %{nil}
 
 Name:           zellij
-Version:        0.43.1
+Version:        0.44.3
 Release:        1%{?dist}
 Summary:        A terminal workspace and multiplexer
 
@@ -12,10 +12,14 @@ License:        MIT
 URL:            https://github.com/zellij-org/zellij
 Source0:        %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
 
-BuildRequires:  cargo >= 1.84
-BuildRequires:  rust >= 1.84
+# We build with rustup (not Fedora's rust/cargo) so the compiler version is
+# driven by the source tree's rust-toolchain.toml. This lets the package track
+# the latest stable zellij without coordinating with whatever Rust the Fedora
+# chroot happens to ship (latest zellij needs Rust newer than Fedora's).
+BuildRequires:  rustup
 BuildRequires:  gcc
 BuildRequires:  cmake
+BuildRequires:  git
 BuildRequires:  pkgconfig(openssl)
 
 %description
@@ -25,17 +29,29 @@ only the main binary is compiled here (no wasm toolchain required).
 
 %prep
 %autosetup -n %{name}-%{version}
-# Build with the distro's stock rust/cargo. Drop the upstream channel/target pin
-# so mock doesn't try to fetch a rustup toolchain or the wasm32 target — the
-# default plugins are already bundled as prebuilt .wasm under zellij-utils/assets.
-rm -f rust-toolchain.toml
 
 %build
-# Build is handled in %%install: `cargo install --path .` builds only the zellij
-# binary crate (which embeds the prebuilt plugin assets), not the wasm plugin
-# crates, so no wasm32 target is needed.
+# Toolchain bootstrap and build happen in %%install (see below).
 
 %install
+export RUSTUP_HOME=%{_builddir}/.rustup
+export CARGO_HOME=%{_builddir}/.cargo
+export PATH="${CARGO_HOME}/bin:${PATH}"
+
+# Read the Rust channel this release pins (rust-toolchain.toml, currently
+# "1.92.0") and install exactly that with rustup. Reading it from the source
+# tree means bumping Version above is all it takes to follow a new zellij — the
+# build never depends on whatever Rust the Fedora chroot ships. We then remove
+# the file and pin the toolchain explicitly, so cargo doesn't also try to add
+# the wasm32/musl targets it lists (we only build the host binary).
+toolchain="$(sed -n 's/^[[:space:]]*channel[[:space:]]*=[[:space:]]*"\([^"]*\)".*/\1/p' rust-toolchain.toml)"
+rm -f rust-toolchain.toml
+rustup-init -y --no-modify-path --profile minimal --default-toolchain none
+rustup toolchain install "${toolchain}" --profile minimal
+rustup default "${toolchain}"
+
+# Build only the zellij binary crate; the default plugins are embedded from the
+# prebuilt .wasm under zellij-utils/assets, so the wasm32 target is never built.
 RUSTFLAGS='-C strip=symbols' cargo install --locked --root=%{buildroot}%{_prefix} --path .
 
 # Remove cargo bookkeeping created by `cargo install`
@@ -59,5 +75,7 @@ mkdir -p %{buildroot}%{_datadir}/fish/vendor_completions.d
 %{_datadir}/fish/vendor_completions.d/%{name}.fish
 
 %changelog
-* Wed Jun 24 2026 Hypercube <hypercube@binarypie.dev> - 0.43.1-1
+* Wed Jun 24 2026 Hypercube <hypercube@binarypie.dev> - 0.44.3-1
 - Initial package for Hypercube
+- Build with rustup-managed toolchain (per upstream rust-toolchain.toml) so the
+  package tracks the latest stable zellij regardless of Fedora's Rust version

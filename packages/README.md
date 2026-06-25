@@ -443,9 +443,9 @@ These have no hyprland dependencies and can be built in parallel.
 |---------|-------|
 | Subdir | `packages/zellij` |
 | Spec File | `zellij.spec` |
-| Version | 0.43.1 |
+| Version | 0.44.3 |
 | Dependencies | None |
-| Notes | Terminal workspace/multiplexer. **Requires "Enable internet access during builds"** (cargo fetches crates). Pinned to 0.43.1 (Rust 1.84) — newer releases need Rust ≥1.92. |
+| Notes | Terminal workspace/multiplexer. **Requires "Enable internet access during builds"** (bootstraps rustup + cargo fetches crates). Builds with a rustup-managed toolchain driven by the source's `rust-toolchain.toml`, so it tracks the latest stable zellij regardless of Fedora's Rust version. |
 
 ---
 
@@ -539,4 +539,4 @@ To ensure dependencies are satisfied, build in this order:
 | 32 | lazyjournal | `packages/lazyjournal` | `lazyjournal.spec` | 0.8.4 |
 | 33 | lazysql | `packages/lazysql` | `lazysql.spec` | 0.4.6 |
 | 34 | resterm | `packages/resterm` | `resterm.spec` | 0.20.3 |
-| 35 | zellij | `packages/zellij` | `zellij.spec` | 0.43.1 |
+| 35 | zellij | `packages/zellij` | `zellij.spec` | 0.44.3 |
