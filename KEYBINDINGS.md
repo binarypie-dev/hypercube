@@ -151,7 +151,7 @@ mode to learn. `Esc` / `Enter` leaves HYPER mode.
 | `Ctrl+Space` `r` | Resize sub-mode (then `h/j/k/l` or `+`/`-`; `Esc` exits) |
 | `Ctrl+Space` `s` | Session manager |
 | `Ctrl+Space` `d` | Detach session (leave agents running) |
-| `Ctrl+Space` `q` | Quit session |
+| `Ctrl+Space` `q` | Quit — floating prompt: **Save** (resume on next `devc`), **Discard**, or **Cancel** |
 | `Ctrl+Space` `g` | Lock — pass every key to a focused TUI; `Ctrl+Space` again unlocks |
 
 ### No leader needed

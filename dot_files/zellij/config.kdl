@@ -147,6 +147,16 @@ scrollback_editor "nvim"
 pane_frames true
 default_layout "compact"
 
+// Session persistence powers the Ctrl+Space q "Save" path: serialize sessions
+// to disk (the devcube's /root home volume persists across container restarts)
+// so a quit session can be resurrected by the next `devc` with its tabs/panes,
+// per-pane cwds + commands, and scrollback intact. Default here is OFF, so we
+// turn it on explicitly. The short interval keeps the saved snapshot close to
+// the live state at quit time (zellij has no "serialize now" action).
+session_serialization true
+serialize_pane_viewport true
+serialization_interval 5
+
 // ── Keybindings (Hypercube unified scheme) ──────────────────────────────────
 // THE LEADER is Ctrl+Space. Press it to enter HYPER mode, then ONE key:
 //
@@ -154,7 +164,8 @@ default_layout "compact"
 //            w toggle floating · e embed/float · h/j/k/l focus · H/J/K/L move
 //   TABS     c new · [ / ] prev/next · 1-9 jump (your workmux worktrees) · , rename
 //   RESIZE   r  (then h/j/k/l or +/-; Esc exits)
-//   SESSION  s manager · d detach (leave agents running) · q quit
+//   SESSION  s manager · d detach (leave agents running)
+//            q quit (floating prompt: Save resumes next `devc` · Discard · Cancel)
 //   ESCAPE   g lock (pass every key to a focused TUI; Ctrl+Space unlocks)
 //   Esc / Enter returns to Normal.
 //
@@ -225,7 +236,10 @@ keybinds clear-defaults=true {
         // Session / agents
         bind "s" { LaunchOrFocusPlugin "zellij:session-manager" { floating true; }; SwitchToMode "Normal"; }
         bind "d" { Detach; }
-        bind "q" { Quit; }
+        // Quit asks first, in a floating pane (like the session manager): Save
+        // keeps the session so the next `devc` resumes it, Discard deletes it,
+        // Cancel stays. See ../devcube/zj-quit.sh.
+        bind "q" { Run "zj-quit" { floating true; close_on_exit true; name "quit devcube"; }; SwitchToMode "Normal"; }
 
         // Lock: hand every key to a focused TUI; Ctrl+Space unlocks.
         bind "g" { SwitchToMode "Locked"; }
