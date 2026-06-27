@@ -11,8 +11,9 @@
 // backgrounds while keeping the same palette identity. Each component takes a
 // `base` (text), a `background`, and four `emphasis_*` accent slots.
 //
-// zellij keeps its own default keybindings (no seamless vim/zellij nav by
-// design) — only quality-of-life defaults are set below.
+// Keybindings: see the unified scheme in ../../KEYBINDINGS-PROPOSAL.md (#198).
+// We clear zellij's defaults and define ONE leader-entered mode instead of the
+// usual pane/tab/resize/scroll/session mode soup.
 
 themes {
     tokyo-night-moon {
@@ -146,21 +147,126 @@ scrollback_editor "nvim"
 pane_frames true
 default_layout "compact"
 
-// ── Keybindings (zellij DEFAULTS — we don't override them) ──────────────────
-// The live list is always shown in the status bar. Press Ctrl+<key> to enter a
-// mode, then the per-mode keys below; Esc / Enter returns to normal mode.
+// Session persistence powers the Ctrl+Space q "Save" path: serialize sessions
+// to disk (the devcube's /root home volume persists across container restarts)
+// so a quit session can be resurrected by the next `devc` with its tabs/panes,
+// per-pane cwds + commands, and scrollback intact. Default here is OFF, so we
+// turn it on explicitly. The short interval keeps the saved snapshot close to
+// the live state at quit time (zellij has no "serialize now" action).
+session_serialization true
+serialize_pane_viewport true
+serialization_interval 5
+
+// ── Keybindings (Hypercube unified scheme) ──────────────────────────────────
+// THE LEADER is Ctrl+Space. Press it to enter HYPER mode, then ONE key:
 //
-//   Ctrl p  PANE    n new · d split-down · r split-right · x close · f fullscreen
-//                   w toggle floating · e embed/float · z toggle frames · c rename
-//   Ctrl t  TAB     n new · x close · r rename · h/l (or ←/→) prev/next · 1-9 jump
-//   Ctrl n  RESIZE  h/j/k/l or +/-          Ctrl h  MOVE   move panes around
-//   Ctrl s  SCROLL  e edit scrollback in nvim · s search
-//   Ctrl o  SESSION d detach (leave it running) · w session manager
-//   Ctrl g  LOCK / unlock (lock when a TUI needs the keys)   Ctrl q  QUIT session
+//   PANES    | split right · - split down · n new · x close · z zoom
+//            w toggle floating · e embed/float · h/j/k/l focus · H/J/K/L move
+//   TABS     c new · [ / ] prev/next · 1-9 jump (your workmux worktrees) · , rename
+//   RESIZE   r  (then h/j/k/l or +/-; Esc exits)
+//   SESSION  s manager · d detach (leave agents running)
+//            q quit (floating prompt: Save resumes next `devc` · Discard · Cancel)
+//   ESCAPE   g lock (pass every key to a focused TUI; Ctrl+Space unlocks)
+//   Esc / Enter returns to Normal.
 //
-//   No mode needed:  Alt n new pane · Alt h/j/k/l move focus · Alt +/- resize
+// NO leader needed — these move focus between zellij panes from anywhere:
+//   Alt h/j/k/l  move focus      Alt = / Alt -  grow / shrink pane
+// (Inside Neovim, use Neovim's own Ctrl+hjkl for its splits — separate layer.)
 //
 // workmux ↔ zellij:  `workmux add <branch>` opens each git worktree as its own
 //   TAB running the agent (see ../workmux/config.yaml). So your parallel agents
-//   are zellij TABS: switch with Ctrl t then h/l or 1-9. `workmux list` /
+//   are zellij TABS: Ctrl+Space then [ / ] or 1-9. `workmux list` /
 //   `workmux dashboard` show them all. Panes within a tab: Alt h/j/k/l.
+
+keybinds clear-defaults=true {
+    // ── Global chords: active in every mode except Locked ───────────────────
+    shared_except "locked" {
+        // The one leader. Ctrl+Space chosen over Ctrl+a so it never shadows
+        // readline / Claude Code "beginning of line" in a focused agent pane.
+        bind "Ctrl Space" { SwitchToMode "tmux"; }
+
+        // Bare directional focus + resize — no mode, muscle memory everywhere.
+        // MoveFocusOrTab so h/l also hop between tabs at the pane-grid edges.
+        bind "Alt h" "Alt Left"  { MoveFocusOrTab "Left"; }
+        bind "Alt l" "Alt Right" { MoveFocusOrTab "Right"; }
+        bind "Alt j" "Alt Down"  { MoveFocus "Down"; }
+        bind "Alt k" "Alt Up"    { MoveFocus "Up"; }
+        bind "Alt =" "Alt +"     { Resize "Increase"; }
+        bind "Alt -"             { Resize "Decrease"; }
+    }
+
+    // ── HYPER: the single leader mode (every action returns to Normal, so it
+    //    reads like a leader sequence — Ctrl+Space | splits, Ctrl+Space c tabs).
+    tmux {
+        // Panes
+        bind "|" { NewPane "Right"; SwitchToMode "Normal"; }
+        bind "-" { NewPane "Down";  SwitchToMode "Normal"; }
+        bind "n" { NewPane;         SwitchToMode "Normal"; }
+        bind "x" { CloseFocus;      SwitchToMode "Normal"; }
+        bind "z" { ToggleFocusFullscreen; SwitchToMode "Normal"; }
+        bind "w" { ToggleFloatingPanes;   SwitchToMode "Normal"; }
+        bind "e" { TogglePaneEmbedOrFloating; SwitchToMode "Normal"; }
+        bind "h" { MoveFocus "Left";  SwitchToMode "Normal"; }
+        bind "j" { MoveFocus "Down";  SwitchToMode "Normal"; }
+        bind "k" { MoveFocus "Up";    SwitchToMode "Normal"; }
+        bind "l" { MoveFocus "Right"; SwitchToMode "Normal"; }
+        bind "H" { MovePane "Left";  SwitchToMode "Normal"; }
+        bind "J" { MovePane "Down";  SwitchToMode "Normal"; }
+        bind "K" { MovePane "Up";    SwitchToMode "Normal"; }
+        bind "L" { MovePane "Right"; SwitchToMode "Normal"; }
+
+        // Tabs (= your workmux worktrees)
+        bind "c" { NewTab;          SwitchToMode "Normal"; }
+        bind "[" { GoToPreviousTab; SwitchToMode "Normal"; }
+        bind "]" { GoToNextTab;     SwitchToMode "Normal"; }
+        bind "1" { GoToTab 1; SwitchToMode "Normal"; }
+        bind "2" { GoToTab 2; SwitchToMode "Normal"; }
+        bind "3" { GoToTab 3; SwitchToMode "Normal"; }
+        bind "4" { GoToTab 4; SwitchToMode "Normal"; }
+        bind "5" { GoToTab 5; SwitchToMode "Normal"; }
+        bind "6" { GoToTab 6; SwitchToMode "Normal"; }
+        bind "7" { GoToTab 7; SwitchToMode "Normal"; }
+        bind "8" { GoToTab 8; SwitchToMode "Normal"; }
+        bind "9" { GoToTab 9; SwitchToMode "Normal"; }
+        bind "," { SwitchToMode "RenameTab"; TabNameInput 0; }
+
+        // Resize — the one optional nested mode (Esc/Ctrl+Space exits it).
+        bind "r" { SwitchToMode "Resize"; }
+
+        // Session / agents
+        bind "s" { LaunchOrFocusPlugin "zellij:session-manager" { floating true; }; SwitchToMode "Normal"; }
+        bind "d" { Detach; }
+        // Quit asks first, in a floating pane (like the session manager): Save
+        // keeps the session so the next `devc` resumes it, Discard deletes it,
+        // Cancel stays. See ../devcube/zj-quit.sh.
+        bind "q" { Run "zj-quit" { floating true; close_on_exit true; name "quit devcube"; }; SwitchToMode "Normal"; }
+
+        // Lock: hand every key to a focused TUI; Ctrl+Space unlocks.
+        bind "g" { SwitchToMode "Locked"; }
+
+        // Leave the leader mode.
+        bind "Esc" "Enter" "Ctrl Space" { SwitchToMode "Normal"; }
+    }
+
+    // ── Locked: pass everything through to the focused program. One key out. ──
+    locked {
+        bind "Ctrl Space" { SwitchToMode "Normal"; }
+    }
+
+    // ── Resize sub-mode (reached via Ctrl+Space r) ──────────────────────────
+    resize {
+        bind "h" "Left"  { Resize "Increase Left"; }
+        bind "j" "Down"  { Resize "Increase Down"; }
+        bind "k" "Up"    { Resize "Increase Up"; }
+        bind "l" "Right" { Resize "Increase Right"; }
+        bind "=" "+"     { Resize "Increase"; }
+        bind "-"         { Resize "Decrease"; }
+        bind "Esc" "Enter" "Ctrl Space" { SwitchToMode "Normal"; }
+    }
+
+    // ── Rename tab: text entry, then Enter to keep / Esc to cancel ───────────
+    renametab {
+        bind "Enter" { SwitchToMode "Normal"; }
+        bind "Esc"   { UndoRenameTab; SwitchToMode "Normal"; }
+    }
+}

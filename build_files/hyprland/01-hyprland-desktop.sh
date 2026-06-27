@@ -56,6 +56,22 @@ dnf5 -y install \
 ### Fish Shell (set as default)
 dnf5 -y install fish
 
+### Terminal multiplexer - zellij
+# zellij isn't packaged in the ublue/Fedora repos (`dnf install zellij` ->
+# "No match"), so install the official static musl binary. The base image is
+# amd64-only (no platform matrix in build.yml), so x86_64 is sufficient. Pinned
+# for reproducibility. Gives the host the same Ctrl+Space multiplexer keymap
+# (installed to /etc/zellij/config.kdl by 03-hypercube-configs.sh) as devcube.
+#
+# TODO(#198): a COPR spec now exists at packages/zellij/zellij.spec. Once the
+# `zellij` package is configured + built in the binarypie/hypercube COPR (already
+# enabled in base/01-base-system.sh), replace this block with `dnf5 -y install
+# zellij` and move the test in hypercube/99-tests.sh back to REQUIRED_PACKAGES.
+ZELLIJ_VERSION=0.44.3
+curl -fsSL "https://github.com/zellij-org/zellij/releases/download/v${ZELLIJ_VERSION}/zellij-x86_64-unknown-linux-musl.tar.gz" \
+  | tar -xz -C /usr/bin zellij
+chmod 0755 /usr/bin/zellij
+
 ### Terminal - Ghostty (from scottames COPR)
 dnf5 -y copr enable scottames/ghostty
 dnf5 -y install ghostty
