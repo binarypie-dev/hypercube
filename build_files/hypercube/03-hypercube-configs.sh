@@ -26,6 +26,12 @@ sed -i 's|^SHELL=.*|SHELL=/usr/bin/fish|' /etc/default/useradd 2>/dev/null || \
 # Starship config is read from STARSHIP_CONFIG env var set in fish config
 # Config lives at /usr/share/hypercube/config/starship/starship.toml (read-only)
 
+### zellij multiplexer - system default config
+# zellij doesn't honor XDG_CONFIG_DIRS (like fish), so its config can't live in
+# /usr/share/hypercube/config. Install the unified keymap as the system default
+# at /etc/zellij; users override it at ~/.config/zellij/config.kdl.
+install -Dm644 "${CONFIG_DIR}/zellij/config.kdl" /etc/zellij/config.kdl
+
 ### Ghostty terminal - stub that sources system config
 # Users can customize by adding settings after the config-file line
 mkdir -p /etc/skel/.config/ghostty

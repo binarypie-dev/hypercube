@@ -289,7 +289,17 @@ RUN fish_bin="$(command -v fish)" \
     && usermod --shell "$fish_bin" root
 
 # =============================================================================
-# LAYER 15: Entrypoint
+# LAYER 15: Session helpers
+# =============================================================================
+# devcube-session: the attach-or-create launcher the `devc` wrapper runs as the
+#   container command, so closing + reopening lands back in the same workspace.
+# zj-quit: the floating "Save / Discard / Cancel" quit prompt (Ctrl+Space q).
+COPY devcube/devcube-session.sh /usr/local/bin/devcube-session
+COPY devcube/zj-quit.sh /usr/local/bin/zj-quit
+RUN chmod +x /usr/local/bin/devcube-session /usr/local/bin/zj-quit
+
+# =============================================================================
+# LAYER 16: Entrypoint
 # =============================================================================
 COPY devcube/entrypoint.sh /usr/local/bin/devcube-entrypoint
 RUN chmod +x /usr/local/bin/devcube-entrypoint

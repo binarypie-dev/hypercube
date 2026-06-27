@@ -56,11 +56,30 @@ workmux merge <branch>            # merge and clean up
 workmux remove <branch>           # remove without merging
 ```
 
+Each `add` opens a new zellij **tab**, so switch between agents with the
+multiplexer leader: `Ctrl+Space` then `[` / `]` or `1`–`9`. zellij uses a single
+leader-entered mode for everything (panes, tabs, sessions) — full keymap in
+[KEYBINDINGS.md](../../KEYBINDINGS.md).
+
 Worktrees are created on a **per-project named volume** mounted at `/worktrees`,
 so they persist across restarts and stay isolated from other projects. The
 volume name is derived from the launch path, so `~/Code/myrepo` always gets the
 same worktrees back. (Worktrees live on the volume, not on the host — manage
 them from inside `devc`, not via `git worktree` on the host.)
+
+### Closing & resuming
+
+`Ctrl+Space q` opens a floating prompt to leave the devcube and drop back to your
+host shell:
+
+- **Save** keeps the session. zellij serializes it to the persisted home volume,
+  and the next `devc` from the same project reattaches to it — same tabs,
+  worktrees, panes, cwds, and scrollback.
+- **Discard** deletes the session, so the next `devc` starts fresh.
+- **Cancel** stays put.
+
+The session name is stable per project (derived from the launch path), which is
+what lets `devc` find and resume the saved session.
 
 ## How it works
 

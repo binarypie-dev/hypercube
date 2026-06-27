@@ -81,6 +81,12 @@ zellij | workmux)
 	slug="$(basename "$project_dir" | tr -c 'a-zA-Z0-9_.-' '-')"
 	phash="$(printf '%s' "$project_dir" | cksum | cut -d' ' -f1)"
 	wt_volume="${DEVCUBE_WT_PREFIX:-devcube-wt}-${slug}-${phash}"
+	# Stable, per-project zellij session name so closing the devcube (Ctrl+Space
+	# q -> Save) and reopening it resumes the SAME session. The home volume
+	# (/root) is shared across every project, so the name must be unique per
+	# project -> include phash. zellij session names can't contain '.', so the
+	# slug's dots are squashed to '-' (the volume name keeps them; it's separate).
+	session="devcube-$(printf '%s' "$slug" | tr '.' '-')-${phash}"
 	extra=(
 		# Worktrees live here (podman auto-creates the volume on first mount).
 		-v "${wt_volume}:/worktrees:rw"
@@ -89,15 +95,16 @@ zellij | workmux)
 		# isolated from other projects and survives restarts.
 		-e XDG_STATE_HOME=/worktrees/.local/state
 	)
-	# zellij 0.44.x fails ("There is no active session!") when --layout and
-	# --session are passed together, so we never combine them. The session name
-	# isn't load-bearing -- worktrees + workmux state persist via the volumes
-	# above, not the zellij session -- so we let zellij auto-name it. workmux
-	# operates on whatever the current session is, named or not.
+	# Hand off to the in-image launcher, which resurrects the named session if it
+	# exists (left by Ctrl+Space q -> Save) or creates it fresh otherwise. It has
+	# to run inside the container because that's where the sessions live, and it
+	# uses --new-session-with-layout (not --layout) to dodge zellij 0.44.x's
+	# "There is no active session!" when --layout is combined with --session.
+	# workmux operates on whatever the current session is.
 	if [ "$TOOL" = workmux ]; then
-		container_cmd=(zellij --layout workmux)
+		container_cmd=(devcube-session "$session" workmux)
 	else
-		container_cmd=(zellij)
+		container_cmd=(devcube-session "$session")
 	fi
 	;;
 esac
