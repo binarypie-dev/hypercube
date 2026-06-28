@@ -50,9 +50,10 @@ REQUIRED_FILES=(
   "/etc/fish/config.fish"
   "/etc/zellij/config.kdl"
   "/usr/share/hypercube/config/starship/starship.toml"
-  # Local-config sync (nvim/zellij run locally with the baked config)
-  "/usr/libexec/hypercube/sync-local-config"
-  "/etc/fish/conf.d/20-local-config.fish"
+  # Local nvim/zellij: skel configs + the baked source they point at
+  "/etc/skel/.config/nvim/init.lua"
+  "/etc/skel/.config/zellij/config.kdl"
+  "/etc/skel/.config/zellij/layouts/workmux.kdl"
   "/usr/share/hypercube/config/nvim/config/init.lua"
   "/usr/share/hypercube/config/zellij/config.kdl"
   # Theming
@@ -75,12 +76,12 @@ for file in "${REQUIRED_FILES[@]}"; do
   echo "  OK: $file exists"
 done
 
-### Check the local-config sync helper is executable
-if [ ! -x /usr/libexec/hypercube/sync-local-config ]; then
-  echo "ERROR: /usr/libexec/hypercube/sync-local-config is not executable!"
+### Check the nvim skel stub points at the baked config
+if ! grep -q "/usr/share/hypercube/config/nvim/config" /etc/skel/.config/nvim/init.lua; then
+  echo "ERROR: nvim skel stub does not reference the baked config path!"
   exit 1
 fi
-echo "  OK: sync-local-config is executable"
+echo "  OK: nvim skel stub references the baked config"
 
 ### Check os-release branding
 if ! grep -q "ID=hypercube" /usr/lib/os-release; then
