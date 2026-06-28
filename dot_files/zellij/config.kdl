@@ -11,8 +11,8 @@
 // backgrounds while keeping the same palette identity. Each component takes a
 // `base` (text), a `background`, and four `emphasis_*` accent slots.
 //
-// zellij keeps its own default keybindings (no seamless vim/zellij nav by
-// design) — only quality-of-life defaults are set below.
+// Seamless vim/zellij navigation is provided by the workbox plugin (Ctrl+h/j/k/l,
+// bound below); everything else keeps zellij's default keybindings.
 
 themes {
     tokyo-night-moon {
@@ -146,6 +146,24 @@ scrollback_editor "nvim"
 pane_frames true
 default_layout "compact"
 
+// ── workbox plugin + seamless navigation ────────────────────────────────────
+// Register the workbox plugin under an alias so keybinds and layouts can refer to
+// it by name, then bind Ctrl+h/j/k/l to seamless focus movement. When nvim is the
+// focused pane the plugin hands the keystroke to smart-splits.nvim; otherwise it
+// moves the zellij pane (or switches tab at an edge). See ../devcube/workbox/.
+plugins {
+    workbox location="file:/root/.config/zellij/plugins/workbox.wasm"
+}
+
+keybinds {
+    shared_except "locked" {
+        bind "Ctrl h" { MessagePlugin "workbox" { name "move_focus_or_tab"; payload "left"; move_mod "ctrl"; }; }
+        bind "Ctrl j" { MessagePlugin "workbox" { name "move_focus_or_tab"; payload "down"; move_mod "ctrl"; }; }
+        bind "Ctrl k" { MessagePlugin "workbox" { name "move_focus_or_tab"; payload "up"; move_mod "ctrl"; }; }
+        bind "Ctrl l" { MessagePlugin "workbox" { name "move_focus_or_tab"; payload "right"; move_mod "ctrl"; }; }
+    }
+}
+
 // ── Keybindings (zellij DEFAULTS — we don't override them) ──────────────────
 // The live list is always shown in the status bar. Press Ctrl+<key> to enter a
 // mode, then the per-mode keys below; Esc / Enter returns to normal mode.
@@ -158,9 +176,13 @@ default_layout "compact"
 //   Ctrl o  SESSION d detach (leave it running) · w session manager
 //   Ctrl g  LOCK / unlock (lock when a TUI needs the keys)   Ctrl q  QUIT session
 //
-//   No mode needed:  Alt n new pane · Alt h/j/k/l move focus · Alt +/- resize
+//   No mode needed:  Alt n new pane · Alt +/- resize
+//   Seamless nav:    Ctrl h/j/k/l move focus across zellij panes AND nvim splits
+//                    (workbox plugin → smart-splits.nvim). Alt h/j/k/l also works
+//                    as a plain zellij-only move-focus.
 //
-// workmux ↔ zellij:  `workmux add <branch>` opens each git worktree as its own
-//   TAB running the agent (see ../workmux/config.yaml). So your parallel agents
-//   are zellij TABS: switch with Ctrl t then h/l or 1-9. `workmux list` /
-//   `workmux dashboard` show them all. Panes within a tab: Alt h/j/k/l.
+// workbox ↔ zellij:  `:WorkboxAdd <branch> "<prompt>"` (from nvim) or
+//   `zellij pipe --name workbox-add --args branch=<branch>` opens each git
+//   worktree as its own TAB running the agent (see ../devcube/workbox/). So your
+//   parallel agents are zellij TABS: switch with Ctrl t then h/l or 1-9; the
+//   workbox dashboard pane lists them all.

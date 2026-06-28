@@ -2,11 +2,12 @@
 #
 # A self-contained, portable podman image: Neovim/LazyVim (baked in), the full
 # dev toolchain (LSPs/formatters/linters), AI coding agents (Claude Code, OpenAI
-# Codex, Antigravity, GitHub CLI), plus zellij + workmux for running multiple
-# agents in parallel (each in its own git worktree) and a fish + starship shell.
+# Codex, Antigravity, GitHub CLI), plus zellij + the workbox plugin for running
+# multiple agents in parallel (each in its own git worktree) and a fish + starship
+# shell.
 #
 # The build context is the parent dot_files/ dir so the fish/starship/zellij/
-# workmux/nvim configs (top-level dotfiles) can be baked in.
+# nvim configs and the devcube/workbox plugin crate can be baked in.
 #
 # Build: cd dot_files && podman build -t devcube -f devcube/Containerfile .
 # Run:   devc            (see devcube/scripts/devcube.sh for mounts + dispatch)
@@ -135,17 +136,17 @@ RUN brew install \
 # =============================================================================
 # LAYER 6: Infrastructure tools via Homebrew
 # =============================================================================
-# zellij (terminal multiplexer) + workmux (git-worktree -> multiplexer
-# orchestration; a brew tap, auto-tapped by the fully-qualified name) power the
-# parallel-agent workflow. starship renders the fish prompt baked in below.
+# zellij (terminal multiplexer) powers the parallel-agent workflow; the worktree
+# orchestration + seamless-nav layer on top of it is the workbox plugin, built
+# from source in layer 7b (no external workmux dependency). starship renders the
+# fish prompt baked in below.
 RUN brew install \
     opentofu \
     helm \
     sqlfluff \
     fish \
     starship \
-    zellij \
-    raine/workmux/workmux
+    zellij
 
 # =============================================================================
 # LAYER 7: Rust toolchain (as linuxbrew user)
@@ -156,7 +157,22 @@ ENV PATH="/home/linuxbrew/.linuxbrew/opt/rustup/bin:${CARGO_HOME}/bin:${PATH}"
 
 RUN brew install rustup \
     && rustup default stable \
-    && rustup component add rustfmt clippy rust-analyzer
+    && rustup component add rustfmt clippy rust-analyzer \
+    && rustup target add wasm32-wasip1
+
+# =============================================================================
+# LAYER 7b: Build the workbox zellij plugin (wasm)
+# =============================================================================
+# workbox is devcube's parallel-agent orchestrator (git worktree -> tab + agent)
+# AND the seamless nvim<->zellij navigator, replacing workmux + a separate nav
+# plugin. Built here as the linuxbrew user (which owns the cargo/rustup home)
+# for the wasm target added above; the .wasm is installed into zellij's plugin
+# dir as root in layer 14b. The build context is dot_files/, so the crate lives
+# at devcube/workbox/. The core logic's host tests run here as a build gate.
+COPY --chown=linuxbrew:linuxbrew devcube/workbox/ /home/linuxbrew/workbox/
+RUN cd /home/linuxbrew/workbox \
+    && cargo test -p workbox-core \
+    && cargo build --release --target wasm32-wasip1 -p workbox
 
 # =============================================================================
 # LAYER 8: Go tools (as linuxbrew user)
@@ -271,19 +287,24 @@ RUN nvim --headless "+Lazy! sync" +qa
 # =============================================================================
 # LAYER 14b: Bake the shell / multiplexer / orchestrator configs
 # =============================================================================
-# fish + starship give a good in-container shell/prompt; zellij + workmux drive
-# the parallel-agent workflow. These seed into the persisted home volume on
-# first run (podman copy-up), like the nvim config above. starship.toml lands at
-# the exact path dot_files/fish/config.fish hardcodes for STARSHIP_CONFIG, so
-# fish needs no edits (and it lives outside /root, so it's always present).
+# fish + starship give a good in-container shell/prompt; zellij + the workbox
+# plugin drive the parallel-agent workflow. These seed into the persisted home
+# volume on first run (podman copy-up), like the nvim config above. starship.toml
+# lands at the exact path dot_files/fish/config.fish hardcodes for STARSHIP_CONFIG,
+# so fish needs no edits (and it lives outside /root, so it's always present).
 COPY fish/     /root/.config/fish/
 COPY zellij/   /root/.config/zellij/
-COPY workmux/  /root/.config/workmux/
 COPY starship/ /usr/share/hypercube/config/starship/
 
+# Install the workbox plugin built in layer 7b into zellij's plugin dir -- the
+# exact path the layout + keybinds reference
+# (file:/root/.config/zellij/plugins/workbox.wasm).
+RUN mkdir -p /root/.config/zellij/plugins \
+    && cp /home/linuxbrew/workbox/target/wasm32-wasip1/release/workbox.wasm \
+          /root/.config/zellij/plugins/workbox.wasm
+
 # Make fish root's login shell so every interactive shell in the container
-# (zellij panes, `just shell`, any sub-shell) loads the baked fish config --
-# including the WORKMUX_BACKEND=zellij pin in conf.d/10-devcube.fish.
+# (zellij panes, `just shell`, any sub-shell) loads the baked fish config.
 RUN fish_bin="$(command -v fish)" \
     && { grep -qxF "$fish_bin" /etc/shells || echo "$fish_bin" >> /etc/shells; } \
     && usermod --shell "$fish_bin" root
@@ -298,5 +319,5 @@ CMD ["nvim"]
 
 # Labels for GitHub Container Registry
 LABEL org.opencontainers.image.source="https://github.com/binarypie/hypercube"
-LABEL org.opencontainers.image.description="devcube: containerized IDE (Neovim/LazyVim + dev toolchain + Claude Code, Codex, Antigravity, gh) with zellij + workmux parallel-agent orchestration"
+LABEL org.opencontainers.image.description="devcube: containerized IDE (Neovim/LazyVim + dev toolchain + Claude Code, Codex, Antigravity, gh) with zellij + workbox plugin parallel-agent orchestration"
 LABEL org.opencontainers.image.licenses="MIT"

@@ -2,9 +2,9 @@
 # Hypercube devcube — containerized IDE + parallel-agent orchestration
 #
 # Neovim/LazyVim, the AI agents (Claude Code, Codex, Antigravity, gh), the dev
-# toolchain, and zellij + workmux ship as a single portable podman image. A thin
-# wrapper at ~/.local/bin/devc runs it: `devc` opens the workmux parallel-agent
-# workspace, and `devc nvim` / `devc claude` / `devc codex` / `devc agy` /
+# toolchain, and zellij + the workbox plugin ship as a single portable podman
+# image. A thin wrapper at ~/.local/bin/devc runs it: `devc` opens the workbox
+# parallel-agent workspace, and `devc nvim` / `devc claude` / `devc codex` / `devc agy` /
 # `devc zellij` launch a single tool. One home volume is shared across them, so
 # AI logins persist. Personal plugin overrides live in
 # ~/.config/hypercube/nvim/lua/plugins/.
@@ -26,7 +26,7 @@ devcube-setup:
     install -m 0755 {{wrapper}} "$HOME/.local/bin/devc"
 
     echo ""
-    echo "Setup complete! Run 'devc' for the parallel-agent workspace (workmux),"
+    echo "Setup complete! Run 'devc' for the parallel-agent workspace (workbox),"
     echo "or 'devc nvim' / 'devc claude' / 'devc codex' / 'devc agy' / 'devc zellij'"
     echo "to launch a single tool."
     echo "Personal nvim overrides go in: ~/.config/hypercube/nvim/lua/plugins/"
@@ -42,7 +42,7 @@ devcube-upgrade:
 
     echo "Done!"
     echo "Tip: run ':Lazy update' inside nvim to update plugins. Baked config"
-    echo "updates (zellij/workmux/fish) only apply to a fresh home volume — run"
+    echo "updates (zellij/workbox/fish) only apply to a fresh home volume — run"
     echo "'ujust devcube-reset' to re-seed (this clears AI logins)."
 
 # Reset persisted state so the next launch re-seeds from the image.

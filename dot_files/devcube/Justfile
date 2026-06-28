@@ -1,7 +1,8 @@
 # Hypercube devcube — local development and testing commands
 #
-# The build context is the parent dot_files/ dir (so fish/starship/zellij/
-# workmux/nvim configs can be baked), hence `-f Containerfile ..` below.
+# The build context is the parent dot_files/ dir (so fish/starship/zellij/nvim
+# configs and the devcube/workbox plugin crate can be baked), hence
+# `-f Containerfile ..` below.
 
 local_image := "localhost/devcube"
 remote_image := "ghcr.io/binarypie-dev/devcube:latest"
@@ -38,8 +39,8 @@ push:
 # Usage (against the LOCAL image)
 # =============================================================================
 
-# Launch devcube from the local image (e.g. `just run` for workmux, `just run nvim`),
-# using throwaway test volumes.
+# Launch devcube from the local image (e.g. `just run` for the workbox workspace,
+# `just run nvim`), using throwaway test volumes.
 run *args:
     DEVCUBE_IMAGE={{local_image}} DEVCUBE_VOLUME={{test_volume}} DEVCUBE_WT_PREFIX={{test_wt_prefix}} ./scripts/devcube.sh {{args}}
 
@@ -72,11 +73,16 @@ test-build: build
     podman run --rm {{local_image}} codex --version
     podman run --rm {{local_image}} agy --version
     podman run --rm {{local_image}} zellij --version
-    podman run --rm {{local_image}} workmux --version
     podman run --rm {{local_image}} starship --version
     podman run --rm {{local_image}} fish --version
-    # The entrypoint must pin $SHELL to fish so workmux drops new worktrees into
-    # fish (its default-shell fallback is /bin/sh otherwise).
+    # The workbox plugin must be built and installed where the layout + keybinds
+    # reference it, and the zellij config (incl. the workbox plugin alias +
+    # keybinds) must parse.
+    podman run --rm {{local_image}} test -f /root/.config/zellij/plugins/workbox.wasm
+    podman run --rm {{local_image}} test -f /root/.config/zellij/layouts/workbox.kdl
+    podman run --rm {{local_image}} zellij setup --check
+    # The entrypoint must pin $SHELL to fish so spawned panes (e.g. the workbox
+    # workspace shell) land in fish, not the /bin/sh fallback.
     podman run --rm {{local_image}} sh -c '[ "$SHELL" = "$(command -v fish)" ]'
     @echo ""
     @echo "All tests passed!"

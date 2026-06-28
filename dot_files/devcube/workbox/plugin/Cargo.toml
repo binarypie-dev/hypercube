@@ -1,0 +1,18 @@
+[package]
+name = "workbox"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+# Produces workbox.wasm (a zellij plugin). Built for wasm32-wasip1 in the
+# devcube Containerfile, never on the host.
+[lib]
+crate-type = ["cdylib"]
+path = "src/main.rs"
+
+[dependencies]
+# IMPORTANT: keep this version aligned with the `zellij` installed in
+# dot_files/devcube/Containerfile (layer 6). zellij runs plugins built against
+# older/equal zellij-tile fine, but bump both together when upgrading zellij.
+zellij-tile = "0.42.2"
+workbox-core = { path = "../core" }

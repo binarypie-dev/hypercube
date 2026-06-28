@@ -10,10 +10,10 @@ export PATH="$HOME/.local/bin:/home/linuxbrew/.linuxbrew/bin:/home/linuxbrew/.li
 # Pin SHELL to fish so anything that spawns "the default shell" lands in fish,
 # not the /bin/sh fallback. usermod makes fish root's login shell in
 # /etc/passwd, but podman never exports $SHELL, so tools that read it miss it.
-# In particular workmux opens a new worktree's interactive pane with
-# get_default_shell() -> $SHELL (else /bin/sh): without this a fresh worktree
-# drops into /bin/sh, bypassing fish + the baked WORKMUX_BACKEND/starship
-# config. (PATH above puts the brew fish on PATH so command -v resolves it.)
+# Any interactive pane that reads $SHELL (else /bin/sh) -- e.g. the workbox
+# workspace's shell pane -- would otherwise drop into /bin/sh, bypassing fish +
+# the baked starship config. (PATH above puts the brew fish on PATH so command -v
+# resolves it.)
 if fish_bin="$(command -v fish 2>/dev/null)"; then
     export SHELL="$fish_bin"
 fi

@@ -1,0 +1,24 @@
+// workbox workspace layout (the default `devc` / `devc workbox` session): the
+// workbox plugin dashboard stacked above a focused shell for driving it.
+//
+// The dashboard pane lists the agent worktrees and the commands to manage them;
+// the shell below is where you run `zellij pipe --name workbox-add ...` (or just
+// launch nvim and use :WorkboxAdd). Each add opens its own zellij TAB with the
+// agent + nvim in a fresh git worktree (see ../../devcube/workbox/).
+//
+// NOTES:
+//  - The plugin reads `repo_root` (default ".", i.e. the session cwd = the
+//    mounted project) and `worktrees_root` (default "/worktrees") from its
+//    configuration; the devcube mounts make the defaults correct, so none is set
+//    here.
+//  - The shell pane is focused and keeps the session alive even when there are
+//    no worktrees yet.
+//  - split_direction="horizontal" stacks the panes (dashboard on top).
+layout {
+    tab name="workbox" focus=true split_direction="horizontal" {
+        pane size="40%" {
+            plugin location="file:/root/.config/zellij/plugins/workbox.wasm"
+        }
+        pane focus=true
+    }
+}

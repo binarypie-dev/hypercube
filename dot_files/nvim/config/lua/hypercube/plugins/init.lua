@@ -11,4 +11,7 @@ return {
 
   -- Import Hypercube AI (sidekick.nvim)
   { import = "hypercube.plugins.ai" },
+
+  -- Import Hypercube workbox (smart-splits nav + :Workbox* worktree commands)
+  { import = "hypercube.plugins.workbox" },
 }

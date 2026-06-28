@@ -8,7 +8,6 @@
 !fish/
 !starship/
 !zellij/
-!workmux/
 
 # Noise inside the kept dirs.
 **/.git
@@ -18,6 +17,9 @@
 **/*.swp
 **/*.swo
 **/*~
+
+# Rust build output for the workbox plugin is rebuilt in the image, never baked.
+devcube/workbox/target/
 
 # Neovim lock/runtime data shouldn't be baked (mounted/managed at runtime).
 nvim/lazy-lock.json

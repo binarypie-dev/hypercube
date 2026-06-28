@@ -3,10 +3,9 @@
 A self-contained, **portable** development environment baked into one podman
 image: [LazyVim](https://github.com/LazyVim/LazyVim), the full dev toolchain
 (LSPs/formatters/linters), the AI coding agents, **and**
-[zellij](https://github.com/zellij-org/zellij) +
-[workmux](https://github.com/raine/workmux) for running multiple agents in
-parallel — each in its own git worktree, all inside a single container (no
-nested podman).
+[zellij](https://github.com/zellij-org/zellij) + the **workbox** plugin
+(`workbox/`) for running multiple agents in parallel — each in its own git
+worktree, all inside a single container (no nested podman).
 
 A single wrapper installed as `devc` runs it. Runs identically on the Hypercube
 Linux desktop, a remote box, and macOS — no distrobox required.
@@ -17,8 +16,10 @@ Linux desktop, a remote box, and macOS — no distrobox required.
 - **AI agents:** Claude Code (`claude`), OpenAI Codex (`codex`), Antigravity
   (`agy`), GitHub CLI (`gh`). Wired into nvim via `claudecode.nvim` and
   `sidekick.nvim`.
-- **Parallel agents:** zellij (terminal multiplexer) + workmux (git-worktree →
-  multiplexer orchestration).
+- **Parallel agents:** zellij (terminal multiplexer) + the workbox plugin
+  (git-worktree → tab/agent orchestration, built from `workbox/`).
+- **Seamless nav:** `Ctrl h/j/k/l` moves focus across zellij panes *and* nvim
+  splits as one motion (workbox plugin ↔ smart-splits.nvim).
 - **Shell:** fish + starship prompt (Tokyo Night Moon, matching nvim/Ghostty).
 - **Languages & runtimes:** Go, Python 3.12, Node.js, Ruby, Lua, Rust.
 - **Formatters:** stylua, prettier, shfmt, gofumpt, goimports, black, isort, ruff.
@@ -35,7 +36,7 @@ Linux desktop, a remote box, and macOS — no distrobox required.
 
 | Command | What it does |
 |---|---|
-| `devc`            | the workmux parallel-agent workspace (a zellij session) — the default |
+| `devc`            | the workbox parallel-agent workspace (a zellij session) — the default |
 | `devc zellij`     | a plain zellij multiplexer session |
 | `devc nvim [file]`| the editor |
 | `devc claude`     | Claude Code CLI, run directly |
@@ -47,14 +48,20 @@ all of them.
 
 ### Parallel agents
 
-Run `devc` (or `devc workmux`) to open the workmux workspace, then from any pane:
+Run `devc` (or `devc workbox`) to open the workbox workspace — a plugin
+dashboard above a shell. From the shell pane (or from inside nvim, see below):
 
 ```bash
-workmux add <branch> "<prompt>"   # new git worktree + a zellij tab running the agent
-workmux list                      # show worktrees + agent status
-workmux merge <branch>            # merge and clean up
-workmux remove <branch>           # remove without merging
+zellij pipe --name workbox-add    --args branch=<branch>,prompt="<prompt>"  # worktree + tab running the agent
+zellij pipe --name workbox-list                                            # refresh the worktree list
+zellij pipe --name workbox-merge  --args branch=<branch>                   # merge and clean up
+zellij pipe --name workbox-remove --args branch=<branch>                   # remove without merging
 ```
+
+From nvim the same actions are `:WorkboxAdd <branch> "<prompt>"`,
+`:WorkboxList`, `:WorkboxMerge <branch>`, `:WorkboxRemove <branch>`. Each agent
+worktree opens as its own zellij **tab**; switch with `Ctrl t` then `h/l` or
+`1-9`, and move within a tab with `Ctrl h/j/k/l` (seamless into nvim splits).
 
 Worktrees are created on a **per-project named volume** mounted at `/worktrees`,
 so they persist across restarts and stay isolated from other projects. The
@@ -71,13 +78,14 @@ only what's needed. The mounts:
 |---|---|
 | named volume `hypercube-devcube-home` → `/root` | plugin/mason updates, sessions, shada, **and AI-CLI auth** — seeded from the image on first run, persisted after |
 | current directory | the project you're editing |
-| per-project volume `devcube-wt-<proj>-<hash>` → `/worktrees` | worktrees + workmux state (orchestrators only) |
+| per-project volume `devcube-wt-<proj>-<hash>` → `/worktrees` | worktrees + per-project agent state (orchestrators only) |
 | `~/.config/hypercube/nvim` | **your** plugin overrides, layered on top of the baked config |
 | `~/.gitconfig` (ro) | commit identity |
 | `$SSH_AUTH_SOCK` (Linux) | SSH agent for git/gh |
 
-Everything else (the LazyVim config, plugins, AI CLIs, zellij/workmux/fish/
-starship config) lives in the image. The container runs as `--user 0:0` so files
+Everything else (the LazyVim config, plugins, AI CLIs, the workbox plugin,
+zellij/fish/starship config) lives in the image. The container runs as
+`--user 0:0` so files
 you edit are owned by your host user under rootless podman. Multiple sessions run
 concurrently.
 
@@ -139,14 +147,15 @@ return {
 ## Local development (editing the image)
 
 The build context is the parent `dot_files/` dir (so the fish/starship/zellij/
-workmux/nvim configs can be baked), which the recipes handle for you:
+nvim configs and the `devcube/workbox` plugin crate can be baked), which the
+recipes handle for you:
 
 ```bash
 cd dot_files/devcube
 
 just build         # build localhost/devcube
-just test-build    # verify nvim + toolchain + AI CLIs + zellij/workmux/fish/starship run
-just run           # launch the workmux workspace from the local image (throwaway volumes)
+just test-build    # verify nvim + toolchain + AI CLIs + zellij/fish/starship + workbox.wasm
+just run           # launch the workbox workspace from the local image (throwaway volumes)
 just run nvim .    # ...or a specific tool
 just shell         # bash in the local image
 just clean-image   # remove the local image

@@ -19,7 +19,6 @@ on:
       - 'dot_files/fish/**'
       - 'dot_files/starship/**'
       - 'dot_files/zellij/**'
-      - 'dot_files/workmux/**'
       - '.github/workflows/build-devcube.yml'
   pull_request:
     paths:
@@ -28,7 +27,6 @@ on:
       - 'dot_files/fish/**'
       - 'dot_files/starship/**'
       - 'dot_files/zellij/**'
-      - 'dot_files/workmux/**'
       - '.github/workflows/build-devcube.yml'
   workflow_dispatch:
   schedule:
@@ -146,5 +144,5 @@ jobs:
           echo "### Usage" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`bash" >> $GITHUB_STEP_SUMMARY
           echo "ujust devcube-setup   # pull image + install the 'devc' wrapper" >> $GITHUB_STEP_SUMMARY
-          echo "devc                  # launch the parallel-agent workspace (workmux)" >> $GITHUB_STEP_SUMMARY
+          echo "devc                  # launch the parallel-agent workspace (workbox)" >> $GITHUB_STEP_SUMMARY
           echo "\`\`\`" >> $GITHUB_STEP_SUMMARY

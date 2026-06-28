@@ -1,0 +1,26 @@
+# workbox — a zellij plugin that owns devcube's parallel-agent worktree
+# orchestration (replacing workmux) and seamless nvim<->zellij navigation
+# (replacing a separate navigator plugin).
+#
+# Two crates:
+#   core/   pure Rust, no zellij-tile — the pipe-message parsing + git/worktree
+#           string helpers. Compiles and unit-tests on the host (`cargo test`).
+#   plugin/ the wasm32-wasip1 cdylib that links zellij-tile and uses core/.
+#           Built in the devcube image (Containerfile), not on the host.
+[workspace]
+resolver = "2"
+members = ["core", "plugin"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+
+# The plugin is loaded as wasm by zellij; optimize the release build for size and
+# never unwind across the wasm boundary. (Profiles only take effect at the
+# workspace root.)
+[profile.release]
+opt-level = "s"
+lto = true
+panic = "abort"
+strip = true

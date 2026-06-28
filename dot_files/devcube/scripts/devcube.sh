@@ -2,11 +2,11 @@
 # devcube — containerized IDE + parallel-agent launcher.
 #
 # One podman image bakes Neovim (LazyVim) + the AI coding agents + the dev
-# toolchain + zellij/workmux + a fish/starship shell. This single wrapper is
+# toolchain + zellij/workbox + a fish/starship shell. This single wrapper is
 # installed as `devc`; the first argument selects what runs inside the
 # (otherwise identical) container:
 #
-#   devc            -> workmux parallel-agent workspace (a zellij session) -- default
+#   devc            -> workbox parallel-agent workspace (a zellij session) -- default
 #   devc zellij     -> a plain zellij multiplexer session
 #   devc nvim       -> the editor (launch agents from inside it)
 #   devc claude     -> Claude Code CLI, run directly
@@ -17,13 +17,14 @@
 # `devc claude --resume`). All entry points share the same home volume, so
 # AI-CLI logins persist across them -- log in once and every tool is authed.
 #
-# zellij/workmux run the parallel-agent flow: each `workmux add <branch>`
-# creates a git worktree on a PER-PROJECT named volume mounted at /worktrees,
-# so worktrees (and workmux's state) persist across restarts and never collide
-# with another project's. The project mount is the git repo root (discovered from
-# the launch dir), or the launch dir itself when not in a repo; workmux requires
-# a repo, the other tools don't. Plus your personal overrides and a few host
-# facts (git identity, SSH agent, terminal). Portable across Linux and macOS.
+# zellij + the workbox plugin run the parallel-agent flow: each worktree add
+# (`zellij pipe --name workbox-add ...`, or `:WorkboxAdd` from nvim) creates a
+# git worktree on a PER-PROJECT named volume mounted at /worktrees, so worktrees
+# persist across restarts and never collide with another project's. The project
+# mount is the git repo root (discovered from the launch dir), or the launch dir
+# itself when not in a repo; the workbox workspace requires a repo, the other
+# tools don't. Plus your personal overrides and a few host facts (git identity,
+# SSH agent, terminal). Portable across Linux and macOS.
 #
 # Env overrides:
 #   DEVCUBE_IMAGE      container image (default ghcr.io/binarypie-dev/devcube:latest)
@@ -31,15 +32,15 @@
 #   DEVCUBE_WT_PREFIX  prefix for the per-project worktree volume (default devcube-wt)
 set -euo pipefail
 
-# The tool to run is the first argument; default to the workmux workspace.
-TOOL="${1:-workmux}"
+# The tool to run is the first argument; default to the workbox workspace.
+TOOL="${1:-workbox}"
 case "$TOOL" in
-nvim | claude | codex | agy | zellij | workmux)
+nvim | claude | codex | agy | zellij | workbox)
 	if [ $# -gt 0 ]; then shift; fi
 	;;
 *)
 	echo "devc: unknown command '$TOOL'" >&2
-	echo "usage: devc [nvim|claude|codex|agy|zellij|workmux] [args...]  (no args -> workmux)" >&2
+	echo "usage: devc [nvim|claude|codex|agy|zellij|workbox] [args...]  (no args -> workbox)" >&2
 	exit 1
 	;;
 esac
@@ -56,46 +57,46 @@ mkdir -p "$OVERRIDE_DIR/lua/plugins"
 workdir="$(pwd -P)"
 
 # Mount the whole git repo, not just the launch dir, so the repo-root `.git` and
-# the full project are visible inside the container (git/workmux need this). Fall
-# back to the launch dir when not in a repo. workmux REQUIRES a repo -- it creates
-# git worktrees -- so it errors out here; nvim/claude/codex/agy don't care.
+# the full project are visible inside the container (git/workbox need this). Fall
+# back to the launch dir when not in a repo. The workbox workspace REQUIRES a repo
+# -- it creates git worktrees -- so it errors out here; nvim/claude/codex/agy
+# don't care.
 git_root="$(git -C "$workdir" rev-parse --show-toplevel 2>/dev/null || true)"
 project_dir="${git_root:-$workdir}"
-if [ "$TOOL" = workmux ] && [ -z "$git_root" ]; then
-	echo "devc: workmux requires a git repository, but '$workdir' isn't in one." >&2
+if [ "$TOOL" = workbox ] && [ -z "$git_root" ]; then
+	echo "devc: the workbox workspace requires a git repository, but '$workdir' isn't in one." >&2
 	echo "      cd into a repo (or run 'git init') and try again." >&2
 	exit 1
 fi
 
 # Default: run the tool with only the project mounted. The orchestrators
-# (zellij/workmux) additionally get a per-project worktree volume + the zellij
-# backend, and run inside a zellij session.
+# (zellij/workbox) additionally get a per-project worktree volume and run inside
+# a zellij session.
 container_cmd=("$TOOL")
 extra=()
 case "$TOOL" in
-zellij | workmux)
-	# Stable, repo-root-derived names so a project's worktrees + workmux state
-	# persist across restarts, are shared no matter which subdir you launch from,
-	# and never collide with another project's. cksum is available on both Linux
-	# and macOS (the wrapper stays portable).
+zellij | workbox)
+	# Stable, repo-root-derived names so a project's worktrees persist across
+	# restarts, are shared no matter which subdir you launch from, and never
+	# collide with another project's. cksum is available on both Linux and macOS
+	# (the wrapper stays portable).
 	slug="$(basename "$project_dir" | tr -c 'a-zA-Z0-9_.-' '-')"
 	phash="$(printf '%s' "$project_dir" | cksum | cut -d' ' -f1)"
 	wt_volume="${DEVCUBE_WT_PREFIX:-devcube-wt}-${slug}-${phash}"
 	extra=(
 		# Worktrees live here (podman auto-creates the volume on first mount).
 		-v "${wt_volume}:/worktrees:rw"
-		-e WORKMUX_BACKEND=zellij
-		# Keep workmux's agent state on the per-project volume too, so it's
+		# Keep per-project agent state on the worktree volume too, so it's
 		# isolated from other projects and survives restarts.
 		-e XDG_STATE_HOME=/worktrees/.local/state
 	)
 	# zellij 0.44.x fails ("There is no active session!") when --layout and
 	# --session are passed together, so we never combine them. The session name
-	# isn't load-bearing -- worktrees + workmux state persist via the volumes
-	# above, not the zellij session -- so we let zellij auto-name it. workmux
-	# operates on whatever the current session is, named or not.
-	if [ "$TOOL" = workmux ]; then
-		container_cmd=(zellij --layout workmux)
+	# isn't load-bearing -- worktrees persist via the volumes above, not the
+	# zellij session -- so we let zellij auto-name it. The workbox plugin operates
+	# on whatever the current session is, named or not.
+	if [ "$TOOL" = workbox ]; then
+		container_cmd=(zellij --layout workbox)
 	else
 		container_cmd=(zellij)
 	fi
