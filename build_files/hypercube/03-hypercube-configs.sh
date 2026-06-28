@@ -26,10 +26,14 @@ sed -i 's|^SHELL=.*|SHELL=/usr/bin/fish|' /etc/default/useradd 2>/dev/null || \
 # Starship config is read from STARSHIP_CONFIG env var set in fish config
 # Config lives at /usr/share/hypercube/config/starship/starship.toml (read-only)
 
-### zellij multiplexer - system default config
+### zellij multiplexer - system default config + local copy
 # zellij doesn't honor XDG_CONFIG_DIRS (like fish), so its config can't live in
 # /usr/share/hypercube/config. Install the unified keymap as the system default
-# at /etc/zellij; users override it at ~/.config/zellij/config.kdl.
+# at /etc/zellij as a base fallback.
+# For the full local experience (config.kdl + layouts/, matching the devcube
+# container), the baked config is also copied into ~/.config/zellij on login by
+# /usr/libexec/hypercube/sync-local-config (see fish/conf.d/20-local-config.fish);
+# that user copy takes precedence over /etc/zellij.
 install -Dm644 "${CONFIG_DIR}/zellij/config.kdl" /etc/zellij/config.kdl
 
 ### Ghostty terminal - stub that sources system config
@@ -61,11 +65,18 @@ source = /usr/share/hypercube/config/hypr/hyprland.conf
 
 EOF
 
-### Neovim - devcube sandbox overrides
-# The editor config + AI agents ship baked into the devcube podman image
-# (ujust devcube-setup). Users keep ONLY personal plugin overrides here; this
-# directory is bind-mounted into the container's baked LazyVim config and
-# layered on top of it.
+### Neovim - local config + personal overrides
+# Two ways to run the same LazyVim config:
+#   * Locally on the host: /usr/libexec/hypercube/sync-local-config copies the
+#     baked config (/usr/share/hypercube/config/nvim/config) into ~/.config/nvim
+#     on login (see fish/conf.d/20-local-config.fish), so a plain `nvim` is
+#     preconfigured. nvim can't read the baked path directly (it ignores
+#     XDG_CONFIG_DIRS for its init), hence the copy.
+#   * Inside the devcube podman image (ujust devcube-setup), where the AI agents
+#     also live.
+# Either way, personal plugin overrides live ONLY in the dir below; it's layered
+# on top of the baked LazyVim config (locally via runtimepath, and bind-mounted
+# into the container) — see nvim/config/lua/config/lazy.lua.
 mkdir -p /etc/skel/.config/hypercube/nvim/lua/plugins
 cat > /etc/skel/.config/hypercube/nvim/lua/plugins/example.lua << 'EOF'
 -- Personal Neovim overrides

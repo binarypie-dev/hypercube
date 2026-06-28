@@ -50,6 +50,11 @@ REQUIRED_FILES=(
   "/etc/fish/config.fish"
   "/etc/zellij/config.kdl"
   "/usr/share/hypercube/config/starship/starship.toml"
+  # Local-config sync (nvim/zellij run locally with the baked config)
+  "/usr/libexec/hypercube/sync-local-config"
+  "/etc/fish/conf.d/20-local-config.fish"
+  "/usr/share/hypercube/config/nvim/config/init.lua"
+  "/usr/share/hypercube/config/zellij/config.kdl"
   # Theming
   "/usr/share/themes/Tokyonight-Dark/gtk-3.0/gtk.css"
   "/usr/share/icons/Tokyonight-Dark/index.theme"
@@ -69,6 +74,13 @@ for file in "${REQUIRED_FILES[@]}"; do
   fi
   echo "  OK: $file exists"
 done
+
+### Check the local-config sync helper is executable
+if [ ! -x /usr/libexec/hypercube/sync-local-config ]; then
+  echo "ERROR: /usr/libexec/hypercube/sync-local-config is not executable!"
+  exit 1
+fi
+echo "  OK: sync-local-config is executable"
 
 ### Check os-release branding
 if ! grep -q "ID=hypercube" /usr/lib/os-release; then

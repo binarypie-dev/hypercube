@@ -1,7 +1,9 @@
 -- Hypercube Neovim Configuration
--- This config is baked into the container image at ~/.config/nvim.
--- Personal overrides live on the host at ~/.config/hypercube/nvim/lua/plugins/
--- (bind-mounted in) and are layered on top of these defaults.
+-- Shared by two front ends, both syncing a copy into ~/.config/nvim:
+--   * the host (local `nvim`): /usr/libexec/hypercube/sync-local-config on login
+--   * the devcube container: its entrypoint, on every start
+-- Personal overrides live at ~/.config/hypercube/nvim/lua/plugins/ (on the
+-- runtimepath locally, bind-mounted in the container) and are layered on top.
 
 -- Load hypercube config (autocmds, filetypes, clipboard, etc.)
 require("hypercube.config").setup()
