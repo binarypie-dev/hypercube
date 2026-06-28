@@ -114,7 +114,7 @@ echo ""
 # 1. Saved session present -> resurrect/attach it, never create. (Save path.)
 FAKE_SESSIONS="devcube-proj-123" FAKE_DEAD="" run_script "devcube-proj-123" "workmux"
 check "attaches an existing (saved/resurrectable) session" \
-	"attach devcube-proj-123"
+	"attach devcube-proj-123 --force-run-commands"
 
 # 2. No session at all (e.g. Discard deleted it) with a layout -> create fresh
 #    with the layout. A stray delete-session first is fine (clears nothing).

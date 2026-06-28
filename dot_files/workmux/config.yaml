@@ -6,6 +6,13 @@
 mode: window
 worktree_dir: /worktrees
 
+# Enable nerdfont icons (the git-branch glyph etc.). workmux otherwise prompts
+# for this on first run and writes the answer back into this file -- but this
+# config is re-synced from the image on every container start (see
+# devcube/entrypoint.sh), which would wipe that answer and re-prompt every
+# session. The host terminal ships a Nerd Font, so the glyphs render: bake it in.
+nerdfont: true
+
 # Default panes for each worktree window: the agent (focused) + nvim. Swap the
 # agent (codex/agy) or add a shell per-project by committing a .workmux.yaml in
 # the repo root.

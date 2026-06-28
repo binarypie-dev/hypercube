@@ -49,8 +49,11 @@ session_attachable() {
 
 if session_attachable; then
 	# Running -> reattach; serialized -> resurrect. `attach` does both, restoring
-	# the saved tabs / panes / worktrees.
-	exec "$zellij_bin" attach "$session"
+	# the saved tabs / panes / worktrees. --force-run-commands re-runs the
+	# serialized command panes (claude, nvim, ...) immediately instead of parking
+	# them behind zellij's "Press ENTER to run" banner, so a resumed devcube comes
+	# back live. (No-op when merely reattaching to a still-running session.)
+	exec "$zellij_bin" attach "$session" --force-run-commands
 fi
 
 # Nothing attachable by this name. A session killed uncleanly (container torn
