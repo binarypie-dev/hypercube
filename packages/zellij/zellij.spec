@@ -5,7 +5,7 @@
 
 Name:           zellij
 Version:        0.44.3
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A terminal workspace and multiplexer
 
 License:        MIT
@@ -37,6 +37,14 @@ only the main binary is compiled here (no wasm toolchain required).
 export RUSTUP_HOME=%{_builddir}/.rustup
 export CARGO_HOME=%{_builddir}/.cargo
 export PATH="${CARGO_HOME}/bin:${PATH}"
+
+# Link against the chroot's system OpenSSL (pulled in via BuildRequires:
+# pkgconfig(openssl)) instead of letting the openssl-sys crate vendor and
+# compile its own copy. The vendored build runs OpenSSL's ./Configure, whose
+# perl needs FindBin.pm — not present in the minimal mock chroot — so it fails
+# with "Can't locate FindBin.pm in @INC". Using the system lib also skips
+# compiling OpenSSL from source entirely, which is faster.
+export OPENSSL_NO_VENDOR=1
 
 # Read the Rust channel this release pins (rust-toolchain.toml, currently
 # "1.92.0") and install exactly that with rustup. Reading it from the source
@@ -75,6 +83,11 @@ mkdir -p %{buildroot}%{_datadir}/fish/vendor_completions.d
 %{_datadir}/fish/vendor_completions.d/%{name}.fish
 
 %changelog
+* Sun Jun 28 2026 Hypercube <hypercube@binarypie.dev> - 0.44.3-2
+- Set OPENSSL_NO_VENDOR=1 so openssl-sys links the chroot's system OpenSSL
+  instead of vendoring its own copy, which failed to configure (missing
+  perl FindBin.pm in the minimal mock chroot)
+
 * Wed Jun 24 2026 Hypercube <hypercube@binarypie.dev> - 0.44.3-1
 - Initial package for Hypercube
 - Build with rustup-managed toolchain (per upstream rust-toolchain.toml) so the
