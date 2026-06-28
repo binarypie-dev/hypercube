@@ -4,9 +4,10 @@
 # Launched in a floating zellij pane (see dot_files/zellij/config.kdl). It asks
 # whether to keep the session before dropping back to your host shell:
 #
-#   Save     -> Quit the session. With session_serialization on, zellij keeps it
-#               as a resurrectable session; the next `devc` reattaches to it
-#               (same tabs / worktrees / panes). See devcube-session.sh.
+#   Save     -> End the session via `kill-session`. With session_serialization
+#               on, zellij keeps it as a resurrectable session; the next `devc`
+#               reattaches to it (same tabs / worktrees / panes). See
+#               devcube-session.sh.
 #   Discard  -> Delete this session (and its serialized state) outright, so the
 #               next `devc` starts fresh from the workmux layout.
 #   Cancel   -> Close this prompt and stay where you are.
@@ -32,17 +33,27 @@ choice="$(
 
 case "$choice" in
 Save*)
-	# Quit -> resurrectable (serialization is enabled in config.kdl).
-	exec zellij action quit
+	# End this session but KEEP it resurrectable. There is no `zellij action
+	# quit` CLI subcommand (Quit is only a keybinding action), so use
+	# kill-session: it terminates the session -- dropping you back to the host
+	# shell -- while leaving the serialized snapshot on disk (serialization is
+	# enabled in config.kdl), so the next `devc` resurrects it. delete-session
+	# (below) is the one that removes that snapshot.
+	if [ -n "$session" ]; then
+		exec zellij kill-session "$session"
+	else
+		# ZELLIJ_SESSION_NAME is always set inside a pane; this is just a guard.
+		exec zellij kill-session
+	fi
 	;;
 Discard*)
 	# Kill the running session AND remove its serialized copy in one shot, so
-	# nothing is left to resurrect. Fall back to a plain quit if, for whatever
+	# nothing is left to resurrect. Fall back to a plain kill if, for whatever
 	# reason, we don't know our own session name.
 	if [ -n "$session" ]; then
 		exec zellij delete-session "$session" --force
 	else
-		exec zellij action quit
+		exec zellij kill-session
 	fi
 	;;
 *)

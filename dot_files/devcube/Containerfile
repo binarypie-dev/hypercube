@@ -258,27 +258,33 @@ RUN mkdir -p /etc/profile.d /etc/fish/conf.d \
 # =============================================================================
 # LAYER 14: Bake the Neovim configuration + pre-install plugins
 # =============================================================================
-# The full LazyVim config is baked into $HOME/.config/nvim. Personal overrides
-# are bind-mounted at runtime from the host (~/.config/hypercube/nvim) and
-# layered on top via the runtimepath (see lua/config/lazy.lua).
+# The full LazyVim config is baked into a PRISTINE, non-volume path under
+# /usr/share/hypercube/config. The entrypoint syncs it into $HOME/.config/nvim
+# on every start, so config updates ship with the image instead of going stale
+# on the persisted (copy-up-seeded) home volume. Personal overrides are
+# bind-mounted at runtime from the host (~/.config/hypercube/nvim) and layered
+# on top via the runtimepath (see lua/config/lazy.lua).
 # NOTE: the build context is dot_files/, so the nvim config lives under nvim/.
-COPY nvim/config/ /root/.config/nvim/
+COPY nvim/config/ /usr/share/hypercube/config/nvim/
 
 # Pre-install all plugins + build treesitter parsers so first launch is fast and
-# offline. HOME=/root and PATH already include the brew nvim binary.
-RUN nvim --headless "+Lazy! sync" +qa
+# offline. Point nvim at the pristine config via XDG_CONFIG_HOME; plugins still
+# land in stdpath('data') = /root/.local/share/nvim, which IS on the home volume
+# (seeded via copy-up on first run, matching the baked lazy-lock.json).
+RUN XDG_CONFIG_HOME=/usr/share/hypercube/config nvim --headless "+Lazy! sync" +qa
 
 # =============================================================================
 # LAYER 14b: Bake the shell / multiplexer / orchestrator configs
 # =============================================================================
 # fish + starship give a good in-container shell/prompt; zellij + workmux drive
-# the parallel-agent workflow. These seed into the persisted home volume on
-# first run (podman copy-up), like the nvim config above. starship.toml lands at
-# the exact path dot_files/fish/config.fish hardcodes for STARSHIP_CONFIG, so
-# fish needs no edits (and it lives outside /root, so it's always present).
-COPY fish/     /root/.config/fish/
-COPY zellij/   /root/.config/zellij/
-COPY workmux/  /root/.config/workmux/
+# the parallel-agent workflow. Like the nvim config above, these are baked into
+# the pristine /usr/share/hypercube/config path and synced into $HOME/.config by
+# the entrypoint on every start (so config updates ship with the image rather
+# than going stale on the home volume). starship.toml already lives here at the
+# exact path dot_files/fish/config.fish hardcodes for STARSHIP_CONFIG.
+COPY fish/     /usr/share/hypercube/config/fish/
+COPY zellij/   /usr/share/hypercube/config/zellij/
+COPY workmux/  /usr/share/hypercube/config/workmux/
 COPY starship/ /usr/share/hypercube/config/starship/
 
 # Make fish root's login shell so every interactive shell in the container

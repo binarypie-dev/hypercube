@@ -26,6 +26,35 @@ if [ -z "${TERM:-}" ] || ! infocmp "$TERM" >/dev/null 2>&1; then
     export TERM=xterm-256color
 fi
 
+# Refresh image-baked editor/shell/multiplexer config into the home volume on
+# every start, so config updates ship with `podman pull` instead of forcing a
+# volume wipe. Only these fully image-owned dirs are replaced; auth + state
+# (~/.local, ~/.claude, ~/.cache, plugin downloads + lazy-lock, shell history,
+# zellij session serialization) live elsewhere on the volume and are untouched.
+# rm -rf + cp -a (not rsync, which isn't installed) so files removed from the
+# image also drop from the dir. The personal nvim override (~/.config/hypercube/
+# nvim) is a different dir and is never touched.
+config_src="/usr/share/hypercube/config"
+for c in nvim fish zellij workmux; do
+    src="$config_src/$c"
+    dest="$HOME/.config/$c"
+    [ -d "$src" ] || continue
+    mkdir -p "$HOME/.config"
+    # fish writes its universal variables (set -U, e.g. fish_user_paths/colors)
+    # to $dest/fish_variables -- that's runtime STATE, not baked config, so carry
+    # it across the refresh rather than wiping it with the config dir.
+    saved=""
+    if [ "$c" = fish ] && [ -f "$dest/fish_variables" ]; then
+        saved="$(mktemp)" && cp -a "$dest/fish_variables" "$saved"
+    fi
+    rm -rf "$dest"
+    cp -a "$src" "$dest"
+    if [ -n "$saved" ]; then
+        cp -a "$saved" "$dest/fish_variables"
+        rm -f "$saved"
+    fi
+done
+
 if [ $# -eq 0 ]; then
     exec nvim
 else

@@ -42,8 +42,10 @@ Linux desktop, a remote box, and macOS — no distrobox required.
 | `devc codex`      | OpenAI Codex CLI, run directly |
 | `devc agy`        | Antigravity CLI, run directly |
 
-All entry points share one home volume, so an AI login from any of them works in
-all of them.
+Within a project, all entry points share that project's home volume, so an AI
+login from any of them works in all of them. The home volume is **per-project**
+(derived from the launch path), so logins and state never leak between
+workspaces — you log in once per project.
 
 ### Parallel agents
 
@@ -88,17 +90,20 @@ only what's needed. The mounts:
 
 | Mounted in | Purpose |
 |---|---|
-| named volume `hypercube-devcube-home` → `/root` | plugin/mason updates, sessions, shada, **and AI-CLI auth** — seeded from the image on first run, persisted after |
+| per-project volume `hypercube-devcube-home-<proj>-<hash>` → `/root` | plugin/mason updates, sessions, shada, **and AI-CLI auth** — seeded from the image on first run, persisted after; one per project so creds never leak between workspaces |
 | current directory | the project you're editing |
 | per-project volume `devcube-wt-<proj>-<hash>` → `/worktrees` | worktrees + workmux state (orchestrators only) |
 | `~/.config/hypercube/nvim` | **your** plugin overrides, layered on top of the baked config |
 | `~/.gitconfig` (ro) | commit identity |
 | `$SSH_AUTH_SOCK` (Linux) | SSH agent for git/gh |
 
-Everything else (the LazyVim config, plugins, AI CLIs, zellij/workmux/fish/
-starship config) lives in the image. The container runs as `--user 0:0` so files
-you edit are owned by your host user under rootless podman. Multiple sessions run
-concurrently.
+The AI CLIs and nvim plugins live in the image and seed onto the home volume on
+first run. The **baked config** (LazyVim, zellij, workmux, fish, starship) is
+image-owned: it's stored at a pristine path and synced into `/root/.config` by
+the entrypoint on **every** start, so config updates ship with `podman pull` —
+no volume reset needed (plugin *version* bumps still want `:Lazy update`). The
+container runs as `--user 0:0` so files you edit are owned by your host user
+under rootless podman. Multiple sessions run concurrently.
 
 Clipboard uses **OSC 52** through the terminal, so yank/paste works locally
 (Ghostty) and over SSH without forwarding a Wayland/pbcopy socket.
@@ -114,8 +119,8 @@ devc nvim file.rs      # ...or just the editor
 | Command | Description |
 |---------|-------------|
 | `ujust devcube-setup`   | pull image + install the `devc` wrapper |
-| `ujust devcube-upgrade` | pull the latest image + refresh the wrapper |
-| `ujust devcube-reset`   | drop the home volume to re-seed (clears plugin state + AI logins); optionally prune per-project worktree volumes |
+| `ujust devcube-upgrade` | pull the latest image + refresh the wrapper (baked config refreshes itself on next launch) |
+| `ujust devcube-reset`   | drop all per-project home volumes to re-seed (clears plugin state + AI logins); optionally prune per-project worktree volumes |
 | `ujust devcube-shell`   | debug shell inside a throwaway container |
 
 ## Setup (macOS / any podman host)

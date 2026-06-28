@@ -6,6 +6,8 @@
 local_image := "localhost/devcube"
 remote_image := "ghcr.io/binarypie-dev/devcube:latest"
 # Throwaway volumes so local testing never touches the real per-project state.
+# Passing DEVCUBE_VOLUME explicitly forces this single fixed home volume instead
+# of the wrapper's per-project derivation, keeping local testing predictable.
 test_volume := "hypercube-devcube-test"
 test_wt_prefix := "devcube-wt-test"
 
@@ -80,6 +82,11 @@ test-build: build
     # The entrypoint must pin $SHELL to fish so workmux drops new worktrees into
     # fish (its default-shell fallback is /bin/sh otherwise).
     podman run --rm {{local_image}} sh -c '[ "$SHELL" = "$(command -v fish)" ]'
+    # Baked config lives at the pristine path, NOT under /root (the home volume),
+    # so config updates ship with the image instead of going stale on the volume.
+    podman run --rm --entrypoint sh {{local_image}} -c 'for c in nvim fish zellij workmux; do test -d /usr/share/hypercube/config/$c || exit 1; done && ! test -e /root/.config/nvim'
+    # ...and the entrypoint syncs it into /root/.config on every start.
+    podman run --rm {{local_image}} sh -c 'test -d /root/.config/nvim && test -f /root/.config/fish/config.fish && test -d /root/.config/zellij && test -d /root/.config/workmux'
     @echo ""
     @echo "All tests passed!"
 
