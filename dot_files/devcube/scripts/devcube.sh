@@ -20,10 +20,13 @@
 # zellij/workmux run the parallel-agent flow: each `workmux add <branch>`
 # creates a git worktree on a PER-PROJECT named volume mounted at /worktrees,
 # so worktrees (and workmux's state) persist across restarts and never collide
-# with another project's. The project mount is the git repo root (discovered from
-# the launch dir), or the launch dir itself when not in a repo; workmux requires
-# a repo, the other tools don't. Plus your personal overrides and a few host
-# facts (git identity, SSH agent, terminal). Portable across Linux and macOS.
+# with another project's. The project itself (the git repo root, discovered from
+# the launch dir, or the launch dir when not in a repo) is mounted at /workspace
+# -- a fixed, branch-independent path that's kept out of /worktrees so it can
+# never collide with a /worktrees/<branch> linked worktree. The direct tools
+# instead get the project at its host path. workmux requires a repo, the other
+# tools don't. Plus your personal overrides and a few host facts (git identity,
+# SSH agent, terminal). Portable across Linux and macOS.
 #
 # Env overrides:
 #   DEVCUBE_IMAGE      container image (default ghcr.io/binarypie-dev/devcube:latest)
@@ -67,6 +70,11 @@ if [ "$TOOL" = workmux ] && [ -z "$git_root" ]; then
 	exit 1
 fi
 
+# Where the project shows up inside the container. By default it's mounted at
+# its own host path (identity) so file paths line up on both sides. The
+# orchestrators override this below.
+mount_target="$project_dir"
+
 # Default: run the tool with only the project mounted. The orchestrators
 # (zellij/workmux) additionally get a per-project worktree volume + the zellij
 # backend, and run inside a zellij session.
@@ -87,6 +95,11 @@ zellij | workmux)
 	# project -> include phash. zellij session names can't contain '.', so the
 	# slug's dots are squashed to '-' (the volume name keeps them; it's separate).
 	session="devcube-$(printf '%s' "$slug" | tr '.' '-')-${phash}"
+	# Mount the project at a fixed /workspace -- a stable, branch-independent path
+	# regardless of which branch the host checkout is on -- kept separate from the
+	# /worktrees volume so it never collides with a workmux /worktrees/<branch>
+	# linked worktree.
+	mount_target="/workspace"
 	extra=(
 		# Worktrees live here (podman auto-creates the volume on first mount).
 		-v "${wt_volume}:/worktrees:rw"
@@ -122,12 +135,13 @@ args=(
 	# /root on first run (podman copy-up); never use a fixed container --name so
 	# multiple sessions can run concurrently.
 	-v "${VOLUME}:/root"
-	# The project -- the git repo root, or the launch dir when not in a repo --
-	# at the same path inside the container.
-	-v "${project_dir}:${project_dir}:rw"
+	# The project -- the git repo root, or the launch dir when not in a repo.
+	# Mounted at its host path for the direct tools, or at /workspace for the
+	# orchestrators (see mount_target above).
+	-v "${project_dir}:${mount_target}:rw"
 	# Personal plugin overrides (nested over the home volume).
 	-v "${OVERRIDE_DIR}:/root/.config/hypercube/nvim:rw"
-	-w "${project_dir}"
+	-w "${mount_target}"
 )
 
 # Read-only git identity (name/email/aliases) from the host.

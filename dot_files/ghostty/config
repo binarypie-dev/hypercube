@@ -1,8 +1,11 @@
 # Hypercube Ghostty configuration.
 #
-# Ghostty is a plain, chrome-less renderer. Multiplexing — tabs, splits, panes —
-# is owned by zellij (leader Ctrl+Space; see KEYBINDINGS.md and
-# dot_files/zellij/config.kdl, #198), so Ghostty defines no multiplexer leader.
+# Ghostty is a plain, chrome-less renderer. Splits and panes are owned by zellij
+# (leader Ctrl+Space; see KEYBINDINGS.md and dot_files/zellij/config.kdl, #198),
+# so Ghostty defines no multiplexer leader. Ghostty DOES keep native tabs, though:
+# each `devc` is its own container with its own in-container zellij, so to work
+# across several repos at once (microservices) you want OS-level tabs holding
+# separate containers — zellij tabs can't span them. See KEYBINDINGS below.
 
 # ----------------------------------------------------------------
 # APPLICATION - Behavior and Configuraiton
@@ -83,8 +86,8 @@ palette = 15=#c8d3f5
 # ----------------------------------------------------------------
 # KEYBINDINGS
 # ----------------------------------------------------------------
-# Tabs / splits / panes are owned by zellij (leader Ctrl+Space). Ghostty keeps
-# no multiplexer leader, so its keys never shadow what zellij or a focused agent
+# Splits / panes are owned by zellij (leader Ctrl+Space). Ghostty keeps no
+# multiplexer leader, so its keys never shadow what zellij or a focused agent
 # needs — notably, dropping the old Ctrl+a prefix frees Ctrl+a as readline
 # "beginning of line" when you run `devc claude` in a plain window.
 #
@@ -93,3 +96,16 @@ palette = 15=#c8d3f5
 # built-in copy/paste — Ctrl+Shift+C/V — and scrollback stay at their defaults.)
 keybind = ctrl+shift+n=new_window
 keybind = ctrl+shift+comma=reload_config
+
+# Native tabs: each tab is its own host shell, so you can run a separate `devc`
+# (separate container, separate repo) per tab and switch between microservices.
+# These are Ghostty defaults made explicit here so they survive any future
+# `keybind = clear`. Ctrl+Shift chords don't collide with zellij's Ctrl+Space
+# leader, readline, or the agent CLIs. Splits/panes stay with zellij — no
+# new_split binding by design. (Tabs render along the bottom; see
+# gtk-tabs-location above.)
+keybind = ctrl+shift+t=new_tab
+keybind = ctrl+shift+right=next_tab
+keybind = ctrl+shift+left=previous_tab
+keybind = ctrl+shift+o=toggle_tab_overview
+keybind = ctrl+shift+w=close_surface
