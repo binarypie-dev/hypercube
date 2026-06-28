@@ -19,6 +19,7 @@ REQUIRED_PACKAGES=(
   "quickshell"
   # Terminals
   "ghostty"
+  "zellij"
   # Dev tools
   "neovim"
   "lazygit"
@@ -48,8 +49,6 @@ REQUIRED_FILES=(
   # Config files
   "/etc/fish/config.fish"
   "/etc/zellij/config.kdl"
-  # zellij ships as a static binary (not an rpm), so check the file directly
-  "/usr/bin/zellij"
   "/usr/share/hypercube/config/starship/starship.toml"
   # Theming
   "/usr/share/themes/Tokyonight-Dark/gtk-3.0/gtk.css"
