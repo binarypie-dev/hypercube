@@ -14,21 +14,29 @@
 #   devc agy        -> Antigravity CLI, run directly
 #
 # Extra args after the tool are passed through (e.g. `devc nvim file.rs`,
-# `devc claude --resume`). All entry points share the same home volume, so
-# AI-CLI logins persist across them -- log in once and every tool is authed.
+# `devc claude --resume`). Within one project all entry points share that
+# project's home volume, so an AI-CLI login from any of them works in all of
+# them -- but the home volume is PER-PROJECT (derived from the launch path like
+# the worktree volume below), so creds/state never leak between workspaces.
 #
 # zellij/workmux run the parallel-agent flow: each `workmux add <branch>`
 # creates a git worktree on a PER-PROJECT named volume mounted at /worktrees,
 # so worktrees (and workmux's state) persist across restarts and never collide
-# with another project's. The project mount is the git repo root (discovered from
-# the launch dir), or the launch dir itself when not in a repo; workmux requires
-# a repo, the other tools don't. Plus your personal overrides and a few host
-# facts (git identity, SSH agent, terminal). Portable across Linux and macOS.
+# with another project's. The project itself (the git repo root, discovered from
+# the launch dir, or the launch dir when not in a repo) is mounted at /workspace
+# -- a fixed, branch-independent path that's kept out of /worktrees so it can
+# never collide with a /worktrees/<branch> linked worktree. The direct tools
+# instead get the project at its host path. workmux requires a repo, the other
+# tools don't. Plus your personal overrides and a few host facts (git identity,
+# SSH agent, terminal). Portable across Linux and macOS.
 #
 # Env overrides:
-#   DEVCUBE_IMAGE      container image (default ghcr.io/binarypie-dev/devcube:latest)
-#   DEVCUBE_VOLUME     named volume holding state + AI auth (default hypercube-devcube-home)
-#   DEVCUBE_WT_PREFIX  prefix for the per-project worktree volume (default devcube-wt)
+#   DEVCUBE_IMAGE        container image (default ghcr.io/binarypie-dev/devcube:latest)
+#   DEVCUBE_VOLUME       exact home-volume name (default: a per-project name derived
+#                        from DEVCUBE_HOME_PREFIX + the launch path). Set this to
+#                        force a single fixed volume (the test harness does this).
+#   DEVCUBE_HOME_PREFIX  prefix for the per-project home volume (default hypercube-devcube-home)
+#   DEVCUBE_WT_PREFIX    prefix for the per-project worktree volume (default devcube-wt)
 set -euo pipefail
 
 # The tool to run is the first argument; default to the workmux workspace.
@@ -45,7 +53,6 @@ nvim | claude | codex | agy | zellij | workmux)
 esac
 
 IMAGE="${DEVCUBE_IMAGE:-ghcr.io/binarypie-dev/devcube:latest}"
-VOLUME="${DEVCUBE_VOLUME:-hypercube-devcube-home}"
 OVERRIDE_DIR="$HOME/.config/hypercube/nvim"
 
 # Personal overrides are layered on top of the baked config. Ensure the dir
@@ -67,6 +74,26 @@ if [ "$TOOL" = workmux ] && [ -z "$git_root" ]; then
 	exit 1
 fi
 
+# Stable, repo-root-derived names so a project's state persists across restarts,
+# is shared no matter which subdir you launch from, and never collides with
+# another project's. cksum is available on both Linux and macOS (the wrapper
+# stays portable). Used for the per-project home volume here and the per-project
+# worktree volume + zellij session name in the orchestrator case below.
+slug="$(basename "$project_dir" | tr -c 'a-zA-Z0-9_.-' '-')"
+phash="$(printf '%s' "$project_dir" | cksum | cut -d' ' -f1)"
+
+# Home volume: PER-PROJECT by default so AI auth + state stay isolated between
+# workspaces. DEVCUBE_VOLUME forces an exact name (the test harness relies on
+# this); otherwise the name is derived from DEVCUBE_HOME_PREFIX + project, just
+# like the worktree volume.
+HOME_PREFIX="${DEVCUBE_HOME_PREFIX:-hypercube-devcube-home}"
+VOLUME="${DEVCUBE_VOLUME:-${HOME_PREFIX}-${slug}-${phash}}"
+
+# Where the project shows up inside the container. By default it's mounted at
+# its own host path (identity) so file paths line up on both sides. The
+# orchestrators override this below.
+mount_target="$project_dir"
+
 # Default: run the tool with only the project mounted. The orchestrators
 # (zellij/workmux) additionally get a per-project worktree volume + the zellij
 # backend, and run inside a zellij session.
@@ -74,19 +101,20 @@ container_cmd=("$TOOL")
 extra=()
 case "$TOOL" in
 zellij | workmux)
-	# Stable, repo-root-derived names so a project's worktrees + workmux state
-	# persist across restarts, are shared no matter which subdir you launch from,
-	# and never collide with another project's. cksum is available on both Linux
-	# and macOS (the wrapper stays portable).
-	slug="$(basename "$project_dir" | tr -c 'a-zA-Z0-9_.-' '-')"
-	phash="$(printf '%s' "$project_dir" | cksum | cut -d' ' -f1)"
+	# Per-project worktree volume + zellij session name, from the same slug/phash
+	# computed above so a project's worktrees + workmux state persist across
+	# restarts and never collide with another project's.
 	wt_volume="${DEVCUBE_WT_PREFIX:-devcube-wt}-${slug}-${phash}"
 	# Stable, per-project zellij session name so closing the devcube (Ctrl+Space
-	# q -> Save) and reopening it resumes the SAME session. The home volume
-	# (/root) is shared across every project, so the name must be unique per
-	# project -> include phash. zellij session names can't contain '.', so the
-	# slug's dots are squashed to '-' (the volume name keeps them; it's separate).
+	# q -> Save) and reopening it resumes the SAME session. zellij session names
+	# can't contain '.', so the slug's dots are squashed to '-' (the volume names
+	# keep them; they're separate).
 	session="devcube-$(printf '%s' "$slug" | tr '.' '-')-${phash}"
+	# Mount the project at a fixed /workspace -- a stable, branch-independent path
+	# regardless of which branch the host checkout is on -- kept separate from the
+	# /worktrees volume so it never collides with a workmux /worktrees/<branch>
+	# linked worktree.
+	mount_target="/workspace"
 	extra=(
 		# Worktrees live here (podman auto-creates the volume on first mount).
 		-v "${wt_volume}:/worktrees:rw"
@@ -118,16 +146,19 @@ args=(
 	-e TERM
 	-e COLORTERM
 	"${extra[@]}"
-	# State + plugin updates + AI auth. Empty volume is seeded from the image's
-	# /root on first run (podman copy-up); never use a fixed container --name so
-	# multiple sessions can run concurrently.
+	# Per-project home volume: AI auth + plugin/state updates + shell history.
+	# Empty volume is seeded from the image's /root on first run (podman copy-up);
+	# baked config (nvim/fish/zellij/workmux) is NOT here -- the entrypoint syncs
+	# it from the image on every start so config updates ship without a wipe.
+	# Never use a fixed container --name so multiple sessions run concurrently.
 	-v "${VOLUME}:/root"
-	# The project -- the git repo root, or the launch dir when not in a repo --
-	# at the same path inside the container.
-	-v "${project_dir}:${project_dir}:rw"
+	# The project -- the git repo root, or the launch dir when not in a repo.
+	# Mounted at its host path for the direct tools, or at /workspace for the
+	# orchestrators (see mount_target above).
+	-v "${project_dir}:${mount_target}:rw"
 	# Personal plugin overrides (nested over the home volume).
 	-v "${OVERRIDE_DIR}:/root/.config/hypercube/nvim:rw"
-	-w "${project_dir}"
+	-w "${mount_target}"
 )
 
 # Read-only git identity (name/email/aliases) from the host.
