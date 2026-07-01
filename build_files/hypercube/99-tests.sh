@@ -50,6 +50,12 @@ REQUIRED_FILES=(
   "/etc/fish/config.fish"
   "/etc/zellij/config.kdl"
   "/usr/share/hypercube/config/starship/starship.toml"
+  # Local nvim/zellij: skel configs + the baked source they point at
+  "/etc/skel/.config/nvim/init.lua"
+  "/etc/skel/.config/zellij/config.kdl"
+  "/etc/skel/.config/zellij/layouts/workmux.kdl"
+  "/usr/share/hypercube/config/nvim/config/init.lua"
+  "/usr/share/hypercube/config/zellij/config.kdl"
   # Theming
   "/usr/share/themes/Tokyonight-Dark/gtk-3.0/gtk.css"
   "/usr/share/icons/Tokyonight-Dark/index.theme"
@@ -69,6 +75,13 @@ for file in "${REQUIRED_FILES[@]}"; do
   fi
   echo "  OK: $file exists"
 done
+
+### Check the nvim skel stub points at the baked config
+if ! grep -q "/usr/share/hypercube/config/nvim/config" /etc/skel/.config/nvim/init.lua; then
+  echo "ERROR: nvim skel stub does not reference the baked config path!"
+  exit 1
+fi
+echo "  OK: nvim skel stub references the baked config"
 
 ### Check os-release branding
 if ! grep -q "ID=hypercube" /usr/lib/os-release; then

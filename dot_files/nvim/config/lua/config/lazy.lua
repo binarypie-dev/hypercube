@@ -16,9 +16,10 @@ if not (vim.uv or vim.loop).fs_stat(lazypath) then
 end
 vim.opt.rtp:prepend(lazypath)
 
--- Personal overrides are bind-mounted from the host at ~/.config/hypercube/nvim.
--- Append it to the runtimepath so `{ import = "plugins" }` below also picks up
--- the user's lua/plugins/*.lua and layers them on top of the baked config.
+-- Personal overrides live at ~/.config/hypercube/nvim (a real host dir locally,
+-- bind-mounted into the devcube container). Append it to the runtimepath so
+-- `{ import = "plugins" }` below also picks up the user's lua/plugins/*.lua and
+-- layers them on top of the baked config.
 local override = vim.fn.expand("~/.config/hypercube/nvim")
 if (vim.uv or vim.loop).fs_stat(override) then
   vim.opt.rtp:append(override)
