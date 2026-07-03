@@ -1,7 +1,7 @@
 %global debug_package %{nil}
 
 Name:           glaze
-Version:        7.8.3
+Version:        7.8.4
 Release:        1%{?dist}
 Summary:        Extremely fast, in memory, JSON and interface library for modern C++
 
@@ -46,6 +46,8 @@ Development files for %{name}. Glaze is a header-only library.
 %{_includedir}/%{name}/
 
 %changelog
+* Fri Jul 03 2026 Hypercube <hypercube@binarypie.dev> - 7.8.4-1
+- Update to 7.8.4
 * Wed Jun 24 2026 Hypercube <hypercube@binarypie.dev> - 7.8.3-1
 - Update to 7.8.3
 * Wed Jun 17 2026 Hypercube <hypercube@binarypie.dev> - 7.8.2-1
