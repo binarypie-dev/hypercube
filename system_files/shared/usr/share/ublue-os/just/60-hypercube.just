@@ -14,6 +14,7 @@ config-reset APP="all":
     CONFIG_MAP[hypr]="hypr"
     CONFIG_MAP[fish]="fish"
     CONFIG_MAP[ghostty]="ghostty"
+    CONFIG_MAP[alacritty]="alacritty"
     CONFIG_MAP[starship]="starship/starship.toml"
     CONFIG_MAP[quickshell]="quickshell"
 
@@ -78,6 +79,7 @@ config-diff APP="all":
     CONFIG_MAP[hypr]="hypr"
     CONFIG_MAP[fish]="fish"
     CONFIG_MAP[ghostty]="ghostty"
+    CONFIG_MAP[alacritty]="alacritty"
     CONFIG_MAP[starship]="starship/starship.toml"
     CONFIG_MAP[quickshell]="quickshell"
 
@@ -127,6 +129,7 @@ config-list:
     echo "  hypr        - Hyprland window manager"
     echo "  fish        - Fish shell"
     echo "  ghostty     - Ghostty terminal"
+    echo "  alacritty   - Alacritty terminal"
     echo "  starship    - Starship prompt"
     echo "  quickshell  - Quickshell bar/launcher"
     echo ""

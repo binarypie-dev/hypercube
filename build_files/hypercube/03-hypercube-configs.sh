@@ -45,6 +45,21 @@ config-file = /usr/share/hypercube/config/ghostty/config
 # Your customizations below:
 EOF
 
+### Alacritty terminal - stub that imports system config
+# Alacritty coexists with Ghostty (Ghostty stays the default terminal).
+# Users can customize by adding settings after the import line.
+mkdir -p /etc/skel/.config/alacritty
+cat > /etc/skel/.config/alacritty/alacritty.toml << 'EOF'
+# Hypercube Alacritty Configuration
+# System defaults are imported below. Add your customizations after this line.
+# To replace defaults entirely, remove or comment out the import.
+
+[general]
+import = ["/usr/share/hypercube/config/alacritty/alacritty.toml"]
+
+# Your customizations below:
+EOF
+
 ### Hyprland - stub that sources system config
 # Users can customize by adding settings after the source line
 # Hyprland parses linearly: system config first, then user customizations

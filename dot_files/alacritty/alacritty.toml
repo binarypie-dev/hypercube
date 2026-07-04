@@ -1,0 +1,76 @@
+# Hypercube Alacritty configuration.
+#
+# Alacritty coexists with Ghostty (which stays the default terminal); this config
+# mirrors the Ghostty look and philosophy. Like our Ghostty setup, Alacritty is a
+# plain, chrome-less renderer: panes, splits, and tabs are owned by zellij (leader
+# Ctrl+Space; see dot_files/zellij/config.kdl, #198), so we define no multiplexer
+# leader here.
+#
+# Note vs. Ghostty: Alacritty has NO native tabs or splits at all, so there are no
+# tab keybindings to mirror. Alacritty's defaults already leave Ctrl+Space (zellij
+# leader) and Alt+hjkl (zellij/nvim navigation) unbound, so they pass straight
+# through to the multiplexer and editor. Alacritty also live-reloads this file on
+# save, so no reload keybinding is needed.
+
+# ----------------------------------------------------------------
+# APPEARANCE - Hide all chrome
+# ----------------------------------------------------------------
+[window]
+decorations = "none"
+
+# ----------------------------------------------------------------
+# FONT CONFIGURATION
+# ----------------------------------------------------------------
+[font]
+size = 13.0
+
+[font.normal]
+family = "JetBrains Mono"
+
+# ----------------------------------------------------------------
+# TOKYO NIGHT MOON COLOR SCHEME
+# Matching Ghostty / Neovim's Tokyo Night Moon theme with darker backgrounds
+# ----------------------------------------------------------------
+[colors.primary]
+background = "#222436"
+foreground = "#c8d3f5"
+
+[colors.cursor]
+text   = "#222436"
+cursor = "#c8d3f5"
+
+[colors.selection]
+text       = "#c8d3f5"
+background = "#2f334d"
+
+[colors.normal]
+black   = "#1e2030"
+red     = "#ff757f"
+green   = "#c3e88d"
+yellow  = "#ffc777"
+blue    = "#82aaff"
+magenta = "#c099ff"
+cyan    = "#86e1fc"
+white   = "#c8d3f5"
+
+[colors.bright]
+black   = "#444a73"
+red     = "#ff757f"
+green   = "#c3e88d"
+yellow  = "#ffc777"
+blue    = "#65bcff"
+magenta = "#fca7ea"
+cyan    = "#86e1fc"
+white   = "#c8d3f5"
+
+# ----------------------------------------------------------------
+# KEYBINDINGS
+# ----------------------------------------------------------------
+# Splits/panes/tabs are owned by zellij (leader Ctrl+Space). We keep Alacritty's
+# built-in defaults for copy/paste (Ctrl+Shift+C/V) and font size, and add just a
+# "new window" binding for plain local console work outside the multiplexer
+# (parallels Ghostty's ctrl+shift+n=new_window).
+[[keyboard.bindings]]
+key = "N"
+mods = "Control|Shift"
+action = "CreateNewWindow"
