@@ -350,9 +350,9 @@ jobs:
             # Rust projects
             [eza]="Cargo.toml"
             [starship]="Cargo.toml"
-            [wifitui]="Cargo.toml"
             # Go projects
             [lazygit]="go.mod"
+            [wifitui]="go.mod"
             # Python projects
             [uwsm]="pyproject.toml"
             # Default for Hyprland ecosystem is CMakeLists.txt
