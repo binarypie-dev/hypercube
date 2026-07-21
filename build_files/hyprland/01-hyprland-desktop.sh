@@ -65,6 +65,11 @@ dnf5 -y install zellij
 dnf5 -y copr enable scottames/ghostty
 dnf5 -y install ghostty
 
+### Terminal - Alacritty (from Hypercube COPR)
+# Ghostty stays the default terminal; Alacritty is available alongside it.
+# Terminfo (alacritty + alacritty-direct) ships inside the RPM.
+dnf5 -y install alacritty
+
 ### Editor - Neovim nightly (from agriffis COPR)
 dnf5 -y copr enable agriffis/neovim-nightly
 dnf5 -y install neovim python3-neovim

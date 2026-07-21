@@ -235,6 +235,12 @@ RUN curl -fsSL https://antigravity.google/cli/install.sh | bash
 RUN curl -fsSL https://raw.githubusercontent.com/ghostty-org/ghostty/main/src/terminfo/ghostty.terminfo \
     | tic -x -o /etc/terminfo -
 
+# Install Alacritty's terminfo (alacritty + alacritty-direct) so those TERM
+# values resolve inside the container too. Alacritty coexists with Ghostty on
+# the host; either terminal can drive a devc session.
+RUN curl -fsSL https://raw.githubusercontent.com/alacritty/alacritty/master/extra/alacritty.info \
+    | tic -xe alacritty,alacritty-direct -o /etc/terminfo -
+
 # =============================================================================
 # LAYER 13: TERM fallback safety net (interactive shells)
 # =============================================================================

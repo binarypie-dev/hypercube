@@ -449,6 +449,18 @@ These have no hyprland dependencies and can be built in parallel.
 
 ---
 
+### 36. alacritty
+
+| Setting | Value |
+|---------|-------|
+| Subdir | `packages/alacritty` |
+| Spec File | `alacritty.spec` |
+| Version | 0.17.0 |
+| Dependencies | None |
+| Notes | OpenGL terminal emulator (Rust). **Requires "Enable internet access during builds"** (cargo fetches crates). Builds with Fedora's rust/cargo. Packages terminfo (alacritty + alacritty-direct), desktop entry, man pages, and shell completions. |
+
+---
+
 ## Build Order Summary
 
 To ensure dependencies are satisfied, build in this order:
@@ -476,6 +488,7 @@ To ensure dependencies are satisfied, build in this order:
 20. lazysql
 21. resterm
 22. zellij
+23. alacritty
 
 **Batch 2** (depends on Batch 1):
 1. hyprlang (needs hyprutils)
@@ -540,3 +553,4 @@ To ensure dependencies are satisfied, build in this order:
 | 33 | lazysql | `packages/lazysql` | `lazysql.spec` | 0.4.6 |
 | 34 | resterm | `packages/resterm` | `resterm.spec` | 0.20.3 |
 | 35 | zellij | `packages/zellij` | `zellij.spec` | 0.44.3 |
+| 36 | alacritty | `packages/alacritty` | `alacritty.spec` | 0.17.0 |
