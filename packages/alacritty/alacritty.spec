@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           alacritty
-Version:        0.17.0
+Version:        0.17.0-2
 Release:        1%{?dist}
 Summary:        A cross-platform, OpenGL terminal emulator
 
