@@ -2,7 +2,7 @@
 
 Name:           xdg-desktop-portal-hyprland
 Epoch:          1
-Version:        1.3.12
+Version:        1.4.0
 Release:        1%{?dist}
 Summary:        xdg-desktop-portal backend for hyprland
 
@@ -24,6 +24,7 @@ BuildRequires:  pkgconfig(libpipewire-0.3)
 BuildRequires:  pkgconfig(libsystemd)
 BuildRequires:  pkgconfig(Qt6Widgets)
 BuildRequires:  pkgconfig(systemd)
+BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(wayland-client)
 BuildRequires:  pkgconfig(wayland-protocols)
 BuildRequires:  pkgconfig(wayland-scanner)
@@ -69,6 +70,9 @@ tar -xf %{SOURCE1} -C subprojects/sdbus-cpp --strip=1
 %{_userunitdir}/%{name}.service
 
 %changelog
+* Tue Jul 21 2026 Hypercube <hypercube@binarypie.dev> - 1.4.0-1
+- Update to 1.4.0
+- Add pkgconfig(uuid) build dependency
 * Mon May 11 2026 Hypercube <hypercube@binarypie.dev> - 1.3.12-1
 - Update to 1.3.12
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 1.3.11-1
