@@ -4,8 +4,8 @@
 %global debug_package %{nil}
 
 Name:           alacritty
-Version:        0.17.0-2
-Release:        1%{?dist}
+Version:        0.17.0
+Release:        2%{?dist}
 Summary:        A cross-platform, OpenGL terminal emulator
 
 License:        Apache-2.0
@@ -82,6 +82,11 @@ install -Dpm0644 extra/completions/alacritty.fish %{buildroot}%{_datadir}/fish/v
 %{_datadir}/fish/vendor_completions.d/%{name}.fish
 
 %changelog
+* Tue Jul 21 2026 Hypercube <hypercube@binarypie.dev> - 0.17.0-2
+- Stop packaging terminfo; ncurses-base/ncurses-term already own the alacritty
+  and alacritty-direct entries (fixes the tic install-phase failure and the
+  image-build file conflict with ncurses)
+
 * Sat Jul 04 2026 Hypercube <hypercube@binarypie.dev> - 0.17.0-1
 - Initial package for Hypercube
 - Build with Fedora's rust/cargo (Alacritty MSRV is below Fedora's Rust)
