@@ -1,6 +1,6 @@
 Name:           hyprwire
 Version:        0.3.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A fast and consistent wire protocol for IPC
 
 License:        BSD-3-Clause
@@ -63,6 +63,8 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Tue Jul 21 2026 Hypercube <hypercube@binarypie.dev> - 0.3.1-2
+- Rebuild against hyprutils 0.14.0 (SONAME 12 -> 13)
 * Mon May 11 2026 Hypercube <hypercube@binarypie.dev> - 0.3.1-1
 - Update to 0.3.1
 * Thu Feb 06 2026 Hypercube <hypercube@binarypie.dev> - 0.3.0-2

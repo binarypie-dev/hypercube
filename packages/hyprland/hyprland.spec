@@ -1,11 +1,16 @@
 Name:           hyprland
-Version:        0.55.4
+Version:        0.56.0
 Release:        1%{?dist}
 Summary:        Dynamic tiling Wayland compositor that doesn't sacrifice on its looks
 
 License:        BSD-3-Clause AND BSD-2-Clause AND HPND-sell-variant AND LGPL-2.1-or-later
 URL:            https://github.com/hyprwm/Hyprland
 Source0:        %{url}/releases/download/v%{version}/source-v%{version}.tar.gz
+
+# Fedora 43 only (GCC 15): std::ranges::starts_with in truthy() fails to
+# compile there but builds fine on GCC 16 (Fedora 44+). Applied conditionally
+# in %prep. Remove this patch and its %if block when Fedora 43 is EOL.
+Patch0:         0001-truthy-avoid-ranges-starts_with-gcc15.patch
 
 ExcludeArch:    %{ix86}
 
@@ -30,6 +35,7 @@ BuildRequires:  pkgconfig(hyprwayland-scanner)
 BuildRequires:  pkgconfig(hyprwire)
 BuildRequires:  pkgconfig(libdisplay-info)
 BuildRequires:  pkgconfig(libdrm)
+BuildRequires:  pkgconfig(libeis-1.0)
 BuildRequires:  pkgconfig(libinput) >= 1.28
 BuildRequires:  pkgconfig(lcms2)
 BuildRequires:  pkgconfig(lua55)
@@ -41,6 +47,7 @@ BuildRequires:  pkgconfig(pango)
 BuildRequires:  pkgconfig(pangocairo)
 BuildRequires:  pkgconfig(pixman-1)
 BuildRequires:  pkgconfig(re2)
+BuildRequires:  pkgconfig(readline)
 BuildRequires:  pkgconfig(systemd)
 BuildRequires:  pkgconfig(tomlplusplus)
 BuildRequires:  pkgconfig(uuid)
@@ -109,6 +116,11 @@ Requires:       pkgconfig(xkbcommon)
 %prep
 %autosetup -n hyprland-source -N
 
+# Fedora 43 (GCC 15) only; drop when F43 is EOL. See Patch0 comment above.
+%if 0%{?fedora} && 0%{?fedora} <= 43
+%patch -P0 -p1
+%endif
+
 cp -p subprojects/hyprland-protocols/LICENSE LICENSE-hyprland-protocols
 cp -p subprojects/udis86/LICENSE LICENSE-udis86
 
@@ -146,6 +158,8 @@ cp -p subprojects/udis86/LICENSE LICENSE-udis86
 %{_includedir}/hyprland/
 
 %changelog
+* Tue Jul 21 2026 Hypercube <hypercube@binarypie.dev> - 0.56.0-1
+- Update to 0.56.0
 * Fri Jun 12 2026 Hypercube <hypercube@binarypie.dev> - 0.55.4-1
 - Update to 0.55.4
 * Sun May 17 2026 Hypercube <hypercube@binarypie.dev> - 0.55.2-1

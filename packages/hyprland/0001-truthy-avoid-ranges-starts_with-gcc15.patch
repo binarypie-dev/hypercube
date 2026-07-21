@@ -1,0 +1,33 @@
+Avoid std::ranges::starts_with in truthy() for GCC 15 (Fedora 43).
+
+Hyprland 0.56.0 uses std::ranges::starts_with over a lazy
+std::views::transform range in truthy(). This compiles with GCC 16
+(Fedora 44) but fails on GCC 15 (Fedora 43):
+
+    error: 'starts_with' is not a member of 'std::ranges'
+
+Materialize a lowercased std::string and use the C++20 member
+std::string::starts_with instead, which is available on both compilers.
+Behavior is unchanged.
+
+--- a/src/helpers/MiscFunctions.cpp
++++ b/src/helpers/MiscFunctions.cpp
+@@ -832,13 +832,10 @@
+     if (str == "1"sv)
+         return true;
+
+-    // clang-format off
+-    auto str_view = str | std::views::transform([](unsigned char ch) -> char {
+-        return sc<char>(std::tolower(ch));
+-    });
++    std::string lower;
++    lower.reserve(str.size());
++    for (unsigned char ch : str)
++        lower.push_back(sc<char>(std::tolower(ch)));
+
+-    return [&](auto&&... prefixes) -> bool {
+-        return (... || std::ranges::starts_with(str_view, prefixes));
+-    }("true"sv, "yes"sv, "on"sv);
+-    // clang-format on
++    return lower.starts_with("true"sv) || lower.starts_with("yes"sv) || lower.starts_with("on"sv);
+ }
