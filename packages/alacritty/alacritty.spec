@@ -28,7 +28,6 @@ BuildRequires:  scdoc
 BuildRequires:  gzip
 BuildRequires:  desktop-file-utils
 BuildRequires:  git
-BuildRequires:  ncurses
 
 %description
 Alacritty is a modern terminal emulator that comes with sensible defaults, but
@@ -46,10 +45,9 @@ RUSTFLAGS='-C strip=symbols' cargo build --release --locked
 # Main binary
 install -Dpm0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
 
-# Terminfo (alacritty + alacritty-direct), compiled into the package's terminfo db.
-# tic won't create the top-level -o directory itself, so make it first.
-mkdir -p %{buildroot}%{_datadir}/terminfo
-tic -xe alacritty,alacritty-direct -o %{buildroot}%{_datadir}/terminfo extra/%{name}.info
+# Terminfo is intentionally NOT packaged: Fedora's ncurses-base/ncurses-term
+# already ship the alacritty and alacritty-direct entries, so shipping our own
+# copies would conflict (file /usr/share/terminfo/a/alacritty already owned).
 
 # Desktop entry + icon
 desktop-file-install --dir=%{buildroot}%{_datadir}/applications extra/linux/Alacritty.desktop
@@ -72,8 +70,6 @@ install -Dpm0644 extra/completions/alacritty.fish %{buildroot}%{_datadir}/fish/v
 %license LICENSE-APACHE LICENSE-MIT
 %doc README.md CHANGELOG.md
 %{_bindir}/%{name}
-%{_datadir}/terminfo/a/alacritty
-%{_datadir}/terminfo/a/alacritty-direct
 %{_datadir}/applications/Alacritty.desktop
 %{_datadir}/pixmaps/Alacritty.svg
 %{_mandir}/man1/alacritty.1.gz
@@ -89,4 +85,5 @@ install -Dpm0644 extra/completions/alacritty.fish %{buildroot}%{_datadir}/fish/v
 * Sat Jul 04 2026 Hypercube <hypercube@binarypie.dev> - 0.17.0-1
 - Initial package for Hypercube
 - Build with Fedora's rust/cargo (Alacritty MSRV is below Fedora's Rust)
-- Package terminfo, desktop entry, man pages, and shell completions
+- Package desktop entry, man pages, and shell completions
+- Terminfo comes from Fedora's ncurses-base/ncurses-term, not this package
