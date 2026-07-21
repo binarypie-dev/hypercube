@@ -46,7 +46,9 @@ RUSTFLAGS='-C strip=symbols' cargo build --release --locked
 # Main binary
 install -Dpm0755 target/release/%{name} %{buildroot}%{_bindir}/%{name}
 
-# Terminfo (alacritty + alacritty-direct), compiled into the package's terminfo db
+# Terminfo (alacritty + alacritty-direct), compiled into the package's terminfo db.
+# tic won't create the top-level -o directory itself, so make it first.
+mkdir -p %{buildroot}%{_datadir}/terminfo
 tic -xe alacritty,alacritty-direct -o %{buildroot}%{_datadir}/terminfo extra/%{name}.info
 
 # Desktop entry + icon
@@ -84,7 +86,7 @@ install -Dpm0644 extra/completions/alacritty.fish %{buildroot}%{_datadir}/fish/v
 %{_datadir}/fish/vendor_completions.d/%{name}.fish
 
 %changelog
-* Fri Jul 04 2026 Hypercube <hypercube@binarypie.dev> - 0.17.0-1
+* Sat Jul 04 2026 Hypercube <hypercube@binarypie.dev> - 0.17.0-1
 - Initial package for Hypercube
 - Build with Fedora's rust/cargo (Alacritty MSRV is below Fedora's Rust)
 - Package terminfo, desktop entry, man pages, and shell completions
