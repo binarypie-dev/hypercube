@@ -1,6 +1,6 @@
 Name:           hyprlang
 Version:        0.6.8
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        The official implementation library for the hypr config language
 
 License:        LGPL-3.0-only
@@ -49,6 +49,8 @@ sed 's/.*/%{version}/' -i VERSION
 %{_libdir}/pkgconfig/hyprlang.pc
 
 %changelog
+* Tue Jul 21 2026 Hypercube <hypercube@binarypie.dev> - 0.6.8-2
+- Rebuild against hyprutils 0.14.0 (SONAME 12 -> 13)
 * Sat Jan 10 2026 Hypercube <hypercube@binarypie.dev> - 0.6.8-1
 - Update to 0.6.8
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.6.7-1
