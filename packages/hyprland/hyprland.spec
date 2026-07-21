@@ -7,8 +7,9 @@ License:        BSD-3-Clause AND BSD-2-Clause AND HPND-sell-variant AND LGPL-2.1
 URL:            https://github.com/hyprwm/Hyprland
 Source0:        %{url}/releases/download/v%{version}/source-v%{version}.tar.gz
 
-# Avoid std::ranges::starts_with in truthy(): fails on GCC 15 (Fedora 43),
-# builds fine on GCC 16 (Fedora 44). See patch for details.
+# Fedora 43 only (GCC 15): std::ranges::starts_with in truthy() fails to
+# compile there but builds fine on GCC 16 (Fedora 44+). Applied conditionally
+# in %prep. Remove this patch and its %if block when Fedora 43 is EOL.
 Patch0:         0001-truthy-avoid-ranges-starts_with-gcc15.patch
 
 ExcludeArch:    %{ix86}
@@ -113,7 +114,12 @@ Requires:       pkgconfig(xkbcommon)
 %{summary}.
 
 %prep
-%autosetup -n hyprland-source -p1
+%autosetup -n hyprland-source -N
+
+# Fedora 43 (GCC 15) only; drop when F43 is EOL. See Patch0 comment above.
+%if 0%{?fedora} && 0%{?fedora} <= 43
+%patch -P0 -p1
+%endif
 
 cp -p subprojects/hyprland-protocols/LICENSE LICENSE-hyprland-protocols
 cp -p subprojects/udis86/LICENSE LICENSE-udis86
