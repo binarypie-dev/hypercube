@@ -40,7 +40,7 @@ Development files for %{name}.
 %license LICENSE
 %doc README.md
 %{_libdir}/lib%{name}.so.%{version}
-%{_libdir}/lib%{name}.so.12
+%{_libdir}/lib%{name}.so.13
 
 %files devel
 %{_includedir}/%{name}/
@@ -48,8 +48,9 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
-* Sun Jul 19 2026 Hypercube <hypercube@binarypie.dev> - 0.14.0-1
+* Tue Jul 21 2026 Hypercube <hypercube@binarypie.dev> - 0.14.0-1
 - Update to 0.14.0
+- Bump SONAME from 12 to 13 to match 0.14.0
 * Sat Jun 06 2026 Hypercube <hypercube@binarypie.dev> - 0.13.1-2
 - Bump SONAME from 10 to 12 to match 0.13.1
 * Mon May 11 2026 Hypercube <hypercube@binarypie.dev> - 0.13.1-1
