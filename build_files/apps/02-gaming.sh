@@ -18,6 +18,15 @@ sed -i 's@enabled=1@enabled=0@g' /etc/yum.repos.d/fedora-steam.repo
 ### Install Lutris (open gaming platform / game manager) from Fedora repos
 ### Keep weak deps: Lutris relies on its recommends (wine, gamemode, mangohud,
 ### vulkan tooling, etc.) for the runtimes it manages
-dnf5 -y install lutris
+###
+### Lutris shells out to `xrandr` unconditionally at startup to enumerate
+### display resolutions; without the binary it crashes (xrandr -> None ->
+### TypeError). It also probes `vulkaninfo` for GPU/Vulkan detection. Neither
+### is pulled in on this Wayland-first image, so install them explicitly.
+### xrandr works under the XWayland already provided by Hyprland.
+dnf5 -y install \
+    lutris \
+    vulkan-tools \
+    xrandr
 
 echo "Gaming packages installed successfully"
