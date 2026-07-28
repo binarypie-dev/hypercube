@@ -29,6 +29,9 @@ REQUIRED_PACKAGES=(
   # DX tooling
   "distrobox"
   "podman"
+  # Gaming
+  "steam"
+  "lutris"
 )
 
 for pkg in "${REQUIRED_PACKAGES[@]}"; do

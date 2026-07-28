@@ -15,4 +15,9 @@ dnf5 -y --setopt=install_weak_deps=False install steam
 ### Disable negativo17 repo after install (prevent user from layering packages)
 sed -i 's@enabled=1@enabled=0@g' /etc/yum.repos.d/fedora-steam.repo
 
+### Install Lutris (open gaming platform / game manager) from Fedora repos
+### Keep weak deps: Lutris relies on its recommends (wine, gamemode, mangohud,
+### vulkan tooling, etc.) for the runtimes it manages
+dnf5 -y install lutris
+
 echo "Gaming packages installed successfully"
