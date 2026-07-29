@@ -32,6 +32,8 @@ REQUIRED_PACKAGES=(
   # Gaming
   "steam"
   "lutris"
+  "vulkan-tools" # vulkaninfo, used by Lutris for GPU detection
+  "xrandr"       # required by Lutris at startup to enumerate resolutions
 )
 
 for pkg in "${REQUIRED_PACKAGES[@]}"; do
