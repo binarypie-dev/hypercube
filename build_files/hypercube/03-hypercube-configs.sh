@@ -60,19 +60,21 @@ import = ["/usr/share/hypercube/config/alacritty/alacritty.toml"]
 # Your customizations below:
 EOF
 
-### Hyprland - stub that sources system config
-# Users can customize by adding settings after the source line
-# Hyprland parses linearly: system config first, then user customizations
+### Hyprland - stub that requires system config
+# Since Hyprland 0.55 the config is Lua (~/.config/hypr/hyprland.lua).
+# Users can customize by adding settings after the require line.
+# Hyprland evaluates linearly: system config first, then user customizations
+# (later hl.config() calls override earlier values).
 mkdir -p /etc/skel/.config/hypr
-cat > /etc/skel/.config/hypr/hyprland.conf << 'EOF'
-# Hypercube Hyprland Configuration
-# System defaults are sourced below. Add your customizations after this line.
-# Settings defined after source will override the defaults.
-# To replace defaults entirely, remove or comment out the source line.
+cat > /etc/skel/.config/hypr/hyprland.lua << 'EOF'
+-- Hypercube Hyprland Configuration
+-- System defaults are required below. Add your customizations after this line.
+-- Settings defined after the require will override the defaults.
+-- To replace defaults entirely, remove or comment out the require line.
 
-source = /usr/share/hypercube/config/hypr/hyprland.conf
+require("/usr/share/hypercube/config/hypr/hyprland.lua")
 
-# Your customizations below:
+-- Your customizations below:
 
 EOF
 
