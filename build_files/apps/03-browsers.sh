@@ -12,33 +12,18 @@ set -ouex pipefail
 echo "Installing browsers..."
 
 ### Brave Origin ###############################################################
+# Follows Brave's Fedora Atomic instructions: add the official RPM repo, then
+# install with rpm-ostree. Brave installs into /opt, which on ostree/bootc
+# systems is a symlink to /var/opt (not shipped in the image). rpm-ostree's
+# "optfix" relocates those files into /usr/lib/opt and symlinks them back at
+# boot, so this must NOT use dnf5 (which fails to unpack into /opt at build).
 
 ### Add Brave's official RPM repository and import its package signing key
-dnf5 -y config-manager addrepo --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
+curl -fsSLo /etc/yum.repos.d/brave-browser.repo https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
 rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
 
-### Brave installs into /opt, which on ostree/bootc systems is a symlink to
-### /var/opt. /var is not shipped in the image, so a plain dnf5 install fails to
-### unpack the RPM ("cpio: mkdir failed"). rpm-ostree solves this at runtime with
-### "optfix"; replicate it at build time: point /opt at /usr/lib/opt (which IS
-### shipped) for the install, restore the original symlink, then recreate the
-### /opt/brave.com path at boot via tmpfiles.
-mkdir -p /usr/lib/opt
-orig_opt="$(readlink /opt || true)"
-rm -f /opt
-ln -s usr/lib/opt /opt
-
-dnf5 -y install brave-origin
-
-### Restore the ostree-standard /opt -> var/opt symlink for runtime
-rm -f /opt
-ln -s "${orig_opt:-var/opt}" /opt
-
-### Recreate /opt/brave.com (via /var/opt) -> /usr/lib/opt/brave.com at boot
-cat >/usr/lib/tmpfiles.d/brave-origin-opt.conf <<'EOF'
-d /var/opt 0755 root root - -
-L /var/opt/brave.com - - - - /usr/lib/opt/brave.com
-EOF
+### Install Brave Origin (rpm-ostree handles the /opt relocation)
+rpm-ostree install brave-origin
 
 ### Disable the Brave repo after install (prevent user from layering packages;
 ### browser updates arrive with image rebuilds)
