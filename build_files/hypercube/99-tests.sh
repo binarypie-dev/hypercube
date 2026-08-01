@@ -30,7 +30,7 @@ REQUIRED_PACKAGES=(
   "distrobox"
   "podman"
   # Browser
-  "brave-browser"
+  "brave-origin"
   # Gaming
   "steam"
   "lutris"
