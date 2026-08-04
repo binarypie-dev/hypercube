@@ -2,7 +2,7 @@
 
 Name:           xdg-desktop-portal-hyprland
 Epoch:          1
-Version:        1.4.0
+Version:        1.4.1
 Release:        1%{?dist}
 Summary:        xdg-desktop-portal backend for hyprland
 
@@ -70,6 +70,8 @@ tar -xf %{SOURCE1} -C subprojects/sdbus-cpp --strip=1
 %{_userunitdir}/%{name}.service
 
 %changelog
+* Thu Jul 30 2026 Hypercube <hypercube@binarypie.dev> - 1.4.1-1
+- Update to 1.4.1
 * Tue Jul 21 2026 Hypercube <hypercube@binarypie.dev> - 1.4.0-1
 - Update to 1.4.0
 - Add pkgconfig(uuid) build dependency

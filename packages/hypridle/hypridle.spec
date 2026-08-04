@@ -1,7 +1,7 @@
 %global sdbus_version 2.1.0
 
 Name:           hypridle
-Version:        0.1.7
+Version:        0.1.8
 Release:        1%{?dist}
 Summary:        Hyprland's idle daemon
 
@@ -64,5 +64,7 @@ rm %{buildroot}%{_datadir}/hypr/hypridle.conf
 %systemd_user_postun %{name}.service
 
 %changelog
+* Mon Jul 27 2026 Hypercube <hypercube@binarypie.dev> - 0.1.8-1
+- Update to 0.1.8
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.1.7-1
 - Initial package for Hypercube (based on sdegler/hyprland COPR)
