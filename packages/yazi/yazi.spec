@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           yazi
-Version:        26.5.6
+Version:        26.8.15
 Release:        1%{?dist}
 Summary:        Blazing fast terminal file manager written in Rust
 
@@ -73,6 +73,8 @@ rm -f %{buildroot}%{_prefix}/.crates2.json
 %{_datadir}/zsh/site-functions/_ya
 
 %changelog
+* Sun Aug 16 2026 Hypercube <hypercube@binarypie.dev> - 26.8.15-1
+- Update to 26.8.15
 * Wed May 06 2026 Hypercube <hypercube@binarypie.dev> - 26.5.6-1
 - Update to 26.5.6
 * Thu Jan 30 2026 Hypercube <hypercube@binarypie.dev> - 26.1.22-1
