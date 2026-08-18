@@ -1,5 +1,5 @@
 Name:           hyprutils
-Version:        0.14.0
+Version:        0.14.1
 Release:        1%{?dist}
 Summary:        Hyprland utilities library used across the ecosystem
 
@@ -48,6 +48,8 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Tue Aug 18 2026 Hypercube <hypercube@binarypie.dev> - 0.14.1-1
+- Update to 0.14.1
 * Tue Jul 21 2026 Hypercube <hypercube@binarypie.dev> - 0.14.0-1
 - Update to 0.14.0
 - Bump SONAME from 12 to 13 to match 0.14.0
