@@ -1,6 +1,6 @@
 Name:           quickshell
-Version:        0.3.0
-Release:        2%{?dist}
+Version:        0.3.1
+Release:        1%{?dist}
 Summary:        Flexible QtQuick based desktop shell toolkit
 
 License:        LGPL-3.0-or-later
@@ -78,6 +78,8 @@ managers. It supports Hyprland, Sway, and other Wayland compositors.
 %{_datadir}/icons/hicolor/scalable/apps/org.quickshell.svg
 
 %changelog
+* Fri Aug 21 2026 Hypercube <hypercube@binarypie.dev> - 0.3.1-1
+- Update to 0.3.1
 * Sat Jun 06 2026 Hypercube <hypercube@binarypie.dev> - 0.3.0-2
 - Rename CRASH_REPORTER cmake option to CRASH_HANDLER for 0.3.0
 * Wed May 06 2026 Hypercube <hypercube@binarypie.dev> - 0.3.0-1
