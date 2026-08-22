@@ -59,16 +59,14 @@ dnf5 config-manager setopt excludepkgs=golang-github-nvidia-container-toolkit ||
 # Update mesa packages first to avoid RPM Fusion version conflicts
 dnf5 -y update mesa* || true
 
-# Fetch and run Universal Blue's nvidia-install script
-curl -sSL "https://raw.githubusercontent.com/ublue-os/main/main/build_files/nvidia-install.sh" -o /tmp/nvidia-install.sh
-# Workaround for negativo17 fedora-nvidia repo: in 610.x the i686 libnvidia-ml
-# subpackage was rolled into nvidia-driver-common.i686, but the stale 595.x
-# libnvidia-ml.i686 RPMs are still in the repo. Explicitly requesting the
-# obsoleted name pulls the stale 595.x and creates an unresolvable conflict
-# with the new nvidia-driver-common.i686 that nvidia-driver-libs.i686 needs.
-sed -i '/^[[:space:]]*libnvidia-ml\.i686[[:space:]]*\\$/d' /tmp/nvidia-install.sh
-chmod +x /tmp/nvidia-install.sh
-IMAGE_NAME="base-main" RPMFUSION_MIRROR="" /tmp/nvidia-install.sh
+# Run Universal Blue's nvidia-install script. Upstream removed the standalone
+# build_files/nvidia-install.sh from ublue-os/main (PR #2723) and now ships it
+# bundled inside the akmods-nvidia container, extracted above to
+# /tmp/akmods-rpms/ublue-os/. AKMODNV_PATH points the script at its RPMs.
+# (The old libnvidia-ml.i686 workaround is no longer needed: the bundled
+# script was fixed upstream to stop requesting that retired package.)
+AKMODNV_PATH=/tmp/akmods-rpms IMAGE_NAME="base-main" \
+  bash /tmp/akmods-rpms/ublue-os/nvidia-install.sh
 
 # Post-install nvidia configuration
 rm -f /usr/share/vulkan/icd.d/nouveau_icd.*.json
@@ -81,6 +79,6 @@ kargs = ["rd.driver.blacklist=nouveau", "modprobe.blacklist=nouveau", "nvidia-dr
 EOF
 
 # Cleanup
-rm -rf /tmp/akmods /tmp/akmods-nvidia /tmp/akmods-rpms /tmp/rpms /tmp/nvidia-install.sh
+rm -rf /tmp/akmods /tmp/akmods-nvidia /tmp/akmods-rpms /tmp/rpms
 
 echo "NVIDIA drivers installed successfully for kernel ${KERNEL_VERSION}"
