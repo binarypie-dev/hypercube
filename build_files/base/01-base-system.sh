@@ -105,13 +105,6 @@ dnf5 -y install selinux-policy-devel
 SELINUX_DIR="/usr/share/hypercube/selinux"
 pushd "$SELINUX_DIR"
 make -f /usr/share/selinux/devel/Makefile hypercube-greeter.pp
-# Clear any half-committed SELinux transaction state left behind by earlier
-# package %post scriptlets (e.g. nvidia-driver-selinux, greetd-selinux).
-# Under overlayfs semodule's rename(active, previous) fails with EXDEV and
-# falls back to a non-atomic copy; a stale populated tmp/previous dir from a
-# prior failed transaction then makes our commit abort with
-# "Directory not empty". See SELinuxProject/selinux#343.
-rm -rf /etc/selinux/targeted/tmp /etc/selinux/targeted/previous
 semodule -i hypercube-greeter.pp
 popd
 
