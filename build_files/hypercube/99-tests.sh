@@ -29,6 +29,8 @@ REQUIRED_PACKAGES=(
   # DX tooling
   "distrobox"
   "podman"
+  # Browser
+  "brave-origin"
   # Gaming
   "steam"
   "lutris"

@@ -170,6 +170,7 @@ Built on ublue-os/base-main, Hypercube includes:
 | Category | Packages |
 |----------|----------|
 | Compositor | Hyprland, Hyprlock, Hypridle, Hyprpaper, Hyprshot |
+| Browsers | Firefox, Brave Origin |
 | Shell | Quickshell (notifications, launcher, system controls) |
 | Terminals | Ghostty |
 | Editor | Neovim (nightly) |
