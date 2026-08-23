@@ -1,6 +1,6 @@
 Name:           hyprtoolkit
 Version:        0.5.4
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A modern C++ Wayland-native GUI toolkit
 
 License:        BSD-3-Clause
@@ -61,6 +61,8 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Sun Aug 23 2026 Hypercube <hypercube@binarypie.dev> - 0.5.4-2
+- Rebuild against hyprutils 0.14.1 (SONAME 12 -> 13) and aquamarine 0.14.0
 * Mon May 11 2026 Hypercube <hypercube@binarypie.dev> - 0.5.4-1
 - Update to 0.5.4
 * Mon Jan 26 2026 Hypercube <hypercube@binarypie.dev> - 0.5.3-1

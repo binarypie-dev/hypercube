@@ -1,6 +1,6 @@
 Name:           hyprland-guiutils
 Version:        0.2.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Hyprland GUI utilities (successor to hyprland-qtutils)
 
 License:        BSD-3-Clause
@@ -55,6 +55,8 @@ and welcome.
 %{_bindir}/hyprland-welcome
 
 %changelog
+* Sun Aug 23 2026 Hypercube <hypercube@binarypie.dev> - 0.2.2-2
+- Rebuild against hyprtoolkit 0.5.4-2 / hyprutils 0.14.1 / aquamarine 0.14.0
 * Tue Jul 21 2026 Hypercube <hypercube@binarypie.dev> - 0.2.2-1
 - Update to 0.2.2
 * Thu Jan 15 2026 Hypercube <hypercube@binarypie.dev> - 0.2.1-1
