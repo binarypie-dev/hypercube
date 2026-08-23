@@ -101,22 +101,25 @@ fi
 # Install policy development tools (will be removed by cleanup)
 dnf5 -y install selinux-policy-devel
 
-# Compile and install the greeter policy module
+# Compile the greeter policy module. Loading it (semodule -i) is deferred to
+# first boot via migration 002-load-greeter-selinux.sh, NOT done here: during
+# the container build semodule's policy-store commit is unreliable, because
+# under overlayfs its rename(active, previous) fails with EXDEV and the
+# non-atomic copy fallback leaves a lower-layer `active` dir in place, so the
+# follow-up rename(tmp, active) aborts with "Directory not empty". Earlier
+# package %post scriptlets that ship SELinux policy (nvidia-driver-selinux,
+# greetd-selinux) already trip this and corrupt the store. At first boot the
+# store is on a normal filesystem and the load succeeds. See
+# SELinuxProject/selinux#343.
 SELINUX_DIR="/usr/share/hypercube/selinux"
 pushd "$SELINUX_DIR"
 make -f /usr/share/selinux/devel/Makefile hypercube-greeter.pp
-# Clear any half-committed SELinux transaction state left behind by earlier
-# package %post scriptlets (e.g. nvidia-driver-selinux, greetd-selinux).
-# Under overlayfs semodule's rename(active, previous) fails with EXDEV and
-# falls back to a non-atomic copy; a stale populated tmp/previous dir from a
-# prior failed transaction then makes our commit abort with
-# "Directory not empty". See SELinuxProject/selinux#343.
-rm -rf /etc/selinux/targeted/tmp /etc/selinux/targeted/previous
-semodule -i hypercube-greeter.pp
 popd
 
-# Clean up build artifacts (keep .te for reference)
-rm -f "$SELINUX_DIR"/*.pp "$SELINUX_DIR"/*.if "$SELINUX_DIR"/*.fc
+# Clean up intermediate build artifacts, but keep the compiled .pp (and .te
+# source) so the first-boot migration can load the module.
+rm -f "$SELINUX_DIR"/*.if "$SELINUX_DIR"/*.fc
+rm -rf "$SELINUX_DIR"/tmp
 
 ### Enable services
 systemctl enable devpts-ptmxmode.service
