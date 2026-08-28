@@ -13,7 +13,7 @@
 
 
 Name:           lua55
-Version:        %{major_version}.0
+Version:        5.5.1
 Release:        1%{?dist}
 Summary:        Powerful light-weight programming language (version %{major_version})
 License:        MIT
@@ -253,6 +253,8 @@ LD_LIBRARY_PATH=$RPM_BUILD_ROOT/%{_libdir} $RPM_BUILD_ROOT/%{_bindir}/lua%{major
 %{_libdir}/liblua-%{major_version}.a
 
 %changelog
+* Fri Aug 28 2026 Hypercube <hypercube@binarypie.dev> - 5.5.1-1
+- Update to 5.5.1
 * Fri Jun 06 2026 Hypercube <hypercube@binarypie.dev> - 5.5.0-1
 - Rename to lua55 for parallel installation alongside system lua 5.4
 - Version all installed paths: headers, pkg-config, binaries, man pages
