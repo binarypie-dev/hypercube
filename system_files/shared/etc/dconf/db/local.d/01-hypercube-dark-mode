@@ -7,4 +7,4 @@ gtk-theme='Tokyonight-Dark'
 icon-theme='Tokyonight-Dark'
 cursor-theme='Adwaita'
 
-# Note: XKB options are now configured in Hyprland (hyprland.conf)
+# Note: XKB options are now configured in Hyprland (hyprland.lua)
