@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           bluetui
-Version:        0.8.1
+Version:        0.8.2
 Release:        1%{?dist}
 Summary:        TUI for managing Bluetooth devices
 
@@ -39,5 +39,7 @@ install -Dpm 0755 target/release/bluetui %{buildroot}%{_bindir}/bluetui
 %{_bindir}/bluetui
 
 %changelog
+* Thu Oct 08 2026 Hypercube <hypercube@binarypie.dev> - 0.8.2-1
+- Update to 0.8.2
 * Thu Jan 30 2026 Hypercube <hypercube@binarypie.dev> - 0.8.1-1
 - Initial package for Hypercube
