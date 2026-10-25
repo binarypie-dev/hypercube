@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           resvg
-Version:        0.47.0
+Version:        0.49.0
 Release:        1%{?dist}
 Summary:        SVG rendering library and CLI tool
 
@@ -35,6 +35,8 @@ install -Dpm 0755 target/release/resvg %{buildroot}%{_bindir}/resvg
 %{_bindir}/resvg
 
 %changelog
+* Sun Oct 25 2026 Hypercube <hypercube@binarypie.dev> - 0.49.0-1
+- Update to 0.49.0
 * Wed Feb 11 2026 Hypercube <hypercube@binarypie.dev> - 0.47.0-1
 - Update to 0.47.0
 * Thu Jan 30 2026 Hypercube <hypercube@binarypie.dev> - 0.46.0-1
