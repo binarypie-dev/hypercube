@@ -33,9 +33,20 @@ fi
 REPO="${PACKAGE_REPOS[$PACKAGE]}"
 VERSION_SOURCE="${VERSION_SOURCES[$PACKAGE]:-release}"
 
+VERSION_PIN="${VERSION_PINS[$PACKAGE]:-}"
+
 # Get upstream version from GitHub
 # Try gh first (if authenticated), fall back to curl
-if command -v gh &> /dev/null && gh auth status &> /dev/null; then
+if [[ -n "$VERSION_PIN" ]]; then
+    # Pinned: newest tag within the pinned series
+    PIN_RE="^v?${VERSION_PIN//./\\.}"
+    if command -v gh &> /dev/null && gh auth status &> /dev/null; then
+        TAGS=$(gh api "repos/$REPO/tags?per_page=100" --jq '.[].name' 2>/dev/null || echo "")
+    else
+        TAGS=$(curl -sf "https://api.github.com/repos/$REPO/tags?per_page=100" 2>/dev/null | jq -r '.[].name' 2>/dev/null || echo "")
+    fi
+    UPSTREAM=$(echo "$TAGS" | grep -E "$PIN_RE" | grep -E '^v?[0-9]+(\.[0-9]+)*$' | sed 's/^v//' | sort -V | tail -1 || true)
+elif command -v gh &> /dev/null && gh auth status &> /dev/null; then
     # Use gh CLI (faster and more reliable if authenticated)
     if [[ "$VERSION_SOURCE" == "tag" ]]; then
         UPSTREAM=$(gh api "repos/$REPO/tags" --jq '.[0].name' 2>/dev/null || echo "")

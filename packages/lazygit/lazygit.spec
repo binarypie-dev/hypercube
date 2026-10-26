@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           lazygit
-Version:        0.63.1
+Version:        0.66.2
 Release:        1%{?dist}
 Summary:        Simple terminal UI for git commands
 
@@ -35,6 +35,8 @@ install -Dpm 0755 %{name} %{buildroot}%{_bindir}/%{name}
 %{_bindir}/%{name}
 
 %changelog
+* Sat Oct 17 2026 Hypercube <hypercube@binarypie.dev> - 0.66.2-1
+- Update to 0.66.2
 * Thu Jul 16 2026 Hypercube <hypercube@binarypie.dev> - 0.63.1-1
 - Update to 0.63.1
 * Sun Jul 05 2026 Hypercube <hypercube@binarypie.dev> - 0.63.0-1

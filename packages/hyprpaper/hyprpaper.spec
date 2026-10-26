@@ -1,6 +1,6 @@
 Name:           hyprpaper
 Version:        0.8.4
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Blazing fast wayland wallpaper utility with IPC controls
 
 License:        BSD-3-Clause AND HPND-sell-variant
@@ -56,6 +56,8 @@ wlroots-based compositors, though.
 %{_userunitdir}/%{name}.service
 
 %changelog
+* Mon Oct 26 2026 Hypercube <hypercube@binarypie.dev> - 0.8.4-4
+- Rebuild against aquamarine 0.15.1 (SONAME 13 -> 14) and hyprtoolkit 0.6.0 (SONAME 5 -> 6)
 * Sun Aug 23 2026 Hypercube <hypercube@binarypie.dev> - 0.8.4-3
 - Rebuild against hyprtoolkit 0.5.4-2 / hyprutils 0.14.1 / aquamarine 0.14.0
 * Tue Jul 21 2026 Hypercube <hypercube@binarypie.dev> - 0.8.4-2

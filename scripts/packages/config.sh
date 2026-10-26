@@ -52,6 +52,13 @@ declare -gA VERSION_SOURCES=(
     [lua55]="tag"
 )
 
+# Version pins: only consider upstream versions starting with this prefix.
+# Use when a dependent can't build against a newer major series yet.
+declare -gA VERSION_PINS=(
+    # Hyprland 0.56 does find_package(glaze 7...<8); glaze 8+ breaks the build
+    [glaze]="7."
+)
+
 # Package dependencies (for determining build order)
 declare -gA PACKAGE_DEPS=(
     # Base packages with no dependencies
@@ -90,7 +97,7 @@ declare -gA PACKAGE_DEPS=(
     [hypridle]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
     [hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner hyprwire hyprtoolkit"
     [xdg-desktop-portal-hyprland]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
-    [hyprpolkitagent]="hyprutils hyprland-qt-support"
+    [hyprpolkitagent]="hyprgraphics hyprlang hyprutils hyprtoolkit"
     [hyprtoolkit]="aquamarine hyprgraphics hyprlang hyprutils hyprwayland-scanner"
     [hyprland-guiutils]="aquamarine hyprtoolkit hyprlang hyprutils"
 )
@@ -100,12 +107,13 @@ declare -gA BUILD_BATCHES=(
     [1]="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui resvg yazi bluetui iamb meli lazyjournal lazysql resterm zellij alacritty lua55"
     [2]="hyprlang hyprgraphics aquamarine"
     [3]="hyprcursor hyprland-qt-support"
-    [4]="hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprpolkitagent hyprtoolkit"
-    [5]="hyprpaper hyprland-guiutils"
+    [4]="hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprtoolkit"
+    [5]="hyprpaper hyprland-guiutils hyprpolkitagent"
 )
 
 # Export for use in other scripts
 export PACKAGE_REPOS
 export VERSION_SOURCES
+export VERSION_PINS
 export PACKAGE_DEPS
 export BUILD_BATCHES

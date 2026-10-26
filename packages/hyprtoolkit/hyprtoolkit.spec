@@ -1,6 +1,6 @@
 Name:           hyprtoolkit
-Version:        0.5.4
-Release:        2%{?dist}
+Version:        0.6.0
+Release:        1%{?dist}
 Summary:        A modern C++ Wayland-native GUI toolkit
 
 License:        BSD-3-Clause
@@ -12,13 +12,14 @@ ExcludeArch:    %{ix86}
 BuildRequires:  cmake
 BuildRequires:  gcc-c++
 BuildRequires:  mesa-libGLES-devel
+BuildRequires:  pkgconfig(absl_flat_hash_map)
 BuildRequires:  pkgconfig(aquamarine)
 BuildRequires:  pkgconfig(cairo)
 BuildRequires:  pkgconfig(egl)
 BuildRequires:  pkgconfig(gbm)
 BuildRequires:  pkgconfig(hyprgraphics)
 BuildRequires:  pkgconfig(hyprlang)
-BuildRequires:  pkgconfig(hyprutils)
+BuildRequires:  pkgconfig(hyprutils) >= 0.14.2
 BuildRequires:  pkgconfig(hyprwayland-scanner)
 BuildRequires:  pkgconfig(iniparser)
 BuildRequires:  pkgconfig(libdrm)
@@ -52,7 +53,7 @@ Development files for %{name}.
 %files
 %license LICENSE
 %doc README.md
-%{_libdir}/lib%{name}.so.5
+%{_libdir}/lib%{name}.so.6
 %{_libdir}/lib%{name}.so.%{version}
 
 %files devel
@@ -61,6 +62,9 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Fri Oct 23 2026 Hypercube <hypercube@binarypie.dev> - 0.6.0-1
+- Update to 0.6.0
+- libhyprtoolkit SONAME 5 -> 6; new BuildRequires on abseil (absl_flat_hash_map)
 * Sun Aug 23 2026 Hypercube <hypercube@binarypie.dev> - 0.5.4-2
 - Rebuild against hyprutils 0.14.1 (SONAME 12 -> 13) and aquamarine 0.14.0
 * Mon May 11 2026 Hypercube <hypercube@binarypie.dev> - 0.5.4-1

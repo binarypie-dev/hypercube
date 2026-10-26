@@ -13,7 +13,7 @@
 
 
 Name:           lua55
-Version:        %{major_version}.0
+Version:        5.5.1
 Release:        1%{?dist}
 Summary:        Powerful light-weight programming language (version %{major_version})
 License:        MIT
@@ -40,9 +40,6 @@ Patch7:		lua-5.4.8-bug1.patch
 Patch8:		lua-5.4.8-bug2.patch
 Patch9:		lua-5.4.8-bug3.patch
 %endif
-# https://www.lua.org/bugs.html
-Patch10:	lua-5.5.0-bug1.patch
-Patch11:	lua-5.5.0-bug2.patch
 
 BuildRequires:  automake autoconf libtool readline-devel ncurses-devel
 BuildRequires:  make
@@ -104,10 +101,6 @@ mv src/luaconf.h src/luaconf.h.template.in
 %patch -P1 -p1 -z .idsize
 #%% patch -P2 -p1 -z .luac-shared
 %patch -P3 -p1 -z .configure-linux
-
-# Bug patches here
-%patch -P10 -p1 -b .bug1
-%patch -P11 -p1 -b .bug2
 
 # Put proper version in configure.ac, patch0 hardcodes 5.5.0
 sed -i 's|5.5.0|%{version}|g' configure.ac
@@ -253,6 +246,9 @@ LD_LIBRARY_PATH=$RPM_BUILD_ROOT/%{_libdir} $RPM_BUILD_ROOT/%{_bindir}/lua%{major
 %{_libdir}/liblua-%{major_version}.a
 
 %changelog
+* Thu Sep 10 2026 Hypercube <hypercube@binarypie.dev> - 5.5.1-1
+- Update to 5.5.1
+- Drop lua-5.5.0-bug1/bug2 patches (fixed upstream in 5.5.1)
 * Fri Jun 06 2026 Hypercube <hypercube@binarypie.dev> - 5.5.0-1
 - Rename to lua55 for parallel installation alongside system lua 5.4
 - Version all installed paths: headers, pkg-config, binaries, man pages
