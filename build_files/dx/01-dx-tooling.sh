@@ -39,10 +39,10 @@ dnf5 -y install \
     virt-manager \
     virt-viewer
 
-### Linting and formatting
-dnf5 -y install \
-    ShellCheck \
-    shfmt
+### Linting
+# (shfmt was dropped: it's orphaned in Fedora 45 and nothing in the image uses
+# it. Contributors running `just format` can install it themselves.)
+dnf5 -y install ShellCheck
 
 ### Container signing
 dnf5 -y install cosign
