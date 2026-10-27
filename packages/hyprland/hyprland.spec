@@ -1,6 +1,6 @@
 Name:           hyprland
 Version:        0.56.2
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Dynamic tiling Wayland compositor that doesn't sacrifice on its looks
 
 License:        BSD-3-Clause AND BSD-2-Clause AND HPND-sell-variant AND LGPL-2.1-or-later
@@ -38,7 +38,14 @@ BuildRequires:  pkgconfig(libdrm)
 BuildRequires:  pkgconfig(libeis-1.0)
 BuildRequires:  pkgconfig(libinput) >= 1.28
 BuildRequires:  pkgconfig(lcms2)
+# Fedora 45+ ships Lua 5.5 as the system Lua; our parallel-install lua55
+# package is only needed before that (its liblua-5.5.so conflicts with
+# lua-libs on 45). Hyprland's CMake falls back from lua55 to lua>=5.5.
+%if 0%{?fedora} >= 45
+BuildRequires:  pkgconfig(lua) >= 5.5
+%else
 BuildRequires:  pkgconfig(lua55)
+%endif
 BuildRequires:  pkgconfig(libliftoff)
 BuildRequires:  pkgconfig(libseat)
 BuildRequires:  pkgconfig(libudev)
@@ -158,6 +165,8 @@ cp -p subprojects/udis86/LICENSE LICENSE-udis86
 %{_includedir}/hyprland/
 
 %changelog
+* Tue Oct 27 2026 Hypercube <hypercube@binarypie.dev> - 0.56.2-2
+- Use the system Lua 5.5 on Fedora 45+ (lua55-libs conflicts with lua-libs there)
 * Fri Oct 23 2026 Hypercube <hypercube@binarypie.dev> - 0.56.2-1
 - Update to 0.56.2
 * Tue Jul 28 2026 Hypercube <hypercube@binarypie.dev> - 0.56.1-1
