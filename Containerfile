@@ -1,11 +1,11 @@
 # Hypercube Container Build
-# Built from ublue-os/base-main with NVIDIA support included
+# Built from ublue-os/base-nvidia (base-main + NVIDIA open kernel modules)
 # Single unified image for all hardware configurations
 
 # ============================================
 # Build Arguments
 # ============================================
-ARG FEDORA_VERSION="44"
+ARG FEDORA_VERSION="45"
 ARG IMAGE_NAME=hypercube
 ARG IMAGE_VENDOR=binarypie-dev
 ARG SHA_HEAD_SHORT=""
@@ -22,7 +22,7 @@ COPY build_files /build_files
 # ============================================
 # Stage 2: Main Build
 # ============================================
-FROM ghcr.io/ublue-os/base-main:${FEDORA_VERSION}
+FROM ghcr.io/ublue-os/base-nvidia:${FEDORA_VERSION}
 
 # Re-declare ARGs after FROM (they don't persist across stages)
 ARG IMAGE_NAME
