@@ -72,6 +72,13 @@ AKMODNV_PATH=/tmp/akmods-rpms IMAGE_NAME="base-main" \
 rm -f /usr/share/vulkan/icd.d/nouveau_icd.*.json
 ln -sf libnvidia-ml.so.1 /usr/lib64/libnvidia-ml.so
 
+# nvidia-settings ships an XDG autostart entry that runs
+# `nvidia-settings --load-config-only`. That needs an X server driven by the
+# NVIDIA driver, so under Hyprland (Wayland) it always fails. uwsm turns XDG
+# autostart entries into systemd user units, which then show up as failed
+# (app-nvidia\x2dsettings\x2dload@autostart.service). Drop the entry.
+rm -f /etc/xdg/autostart/nvidia-settings-load.desktop
+
 # Configure kernel arguments for NVIDIA
 mkdir -p /usr/lib/bootc/kargs.d/
 cat >/usr/lib/bootc/kargs.d/00-nvidia.toml <<'EOF'
