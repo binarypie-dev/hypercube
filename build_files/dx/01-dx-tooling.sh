@@ -40,9 +40,18 @@ dnf5 -y install \
     virt-viewer
 
 ### Linting and formatting
-dnf5 -y install \
-    ShellCheck \
-    shfmt
+dnf5 -y install ShellCheck
+
+# shfmt isn't packaged in Fedora 45, so install the upstream static binary.
+# Upstream publishes no checksum file; the hash below was taken from the
+# v3.14.1 release asset when it was pinned.
+SHFMT_VERSION="v3.14.1"
+SHFMT_SHA256="76e77641faa025814b77f153b29796b8e6fa2fca03e0c76a691608b86c7ea7bf"
+curl -fsSL --retry 3 -o /tmp/shfmt \
+    "https://github.com/mvdan/sh/releases/download/${SHFMT_VERSION}/shfmt_${SHFMT_VERSION}_linux_amd64"
+echo "${SHFMT_SHA256}  /tmp/shfmt" | sha256sum -c -
+install -m 0755 /tmp/shfmt /usr/bin/shfmt
+rm -f /tmp/shfmt
 
 ### Container signing
 dnf5 -y install cosign
