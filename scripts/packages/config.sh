@@ -65,7 +65,6 @@ declare -gA PACKAGE_DEPS=(
     [hyprutils]=""
     [hyprwayland-scanner]=""
     [hyprland-protocols]=""
-    [hyprwire]=""
     [glaze]=""
     [uwsm]=""
     [eza]=""
@@ -88,6 +87,7 @@ declare -gA PACKAGE_DEPS=(
 
     # Packages with dependencies
     [hyprlang]="hyprutils"
+    [hyprwire]="hyprutils"
     [hyprgraphics]="hyprutils"
     [aquamarine]="hyprutils hyprwayland-scanner"
     [hyprcursor]="hyprlang"
@@ -104,8 +104,8 @@ declare -gA PACKAGE_DEPS=(
 
 # Build batches (packages in same batch can build in parallel)
 declare -gA BUILD_BATCHES=(
-    [1]="hyprutils hyprwayland-scanner hyprland-protocols hyprwire glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui resvg yazi bluetui iamb meli lazyjournal lazysql resterm zellij alacritty lua55"
-    [2]="hyprlang hyprgraphics aquamarine"
+    [1]="hyprutils hyprwayland-scanner hyprland-protocols glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui resvg yazi bluetui iamb meli lazyjournal lazysql resterm zellij alacritty lua55"
+    [2]="hyprlang hyprgraphics aquamarine hyprwire"
     [3]="hyprcursor hyprland-qt-support"
     [4]="hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprtoolkit"
     [5]="hyprpaper hyprland-guiutils hyprpolkitagent"

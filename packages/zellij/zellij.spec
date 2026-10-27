@@ -5,7 +5,7 @@
 
 Name:           zellij
 Version:        0.45.1
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A terminal workspace and multiplexer
 
 License:        MIT
@@ -58,6 +58,11 @@ rustup-init -y --no-modify-path --profile minimal --default-toolchain none
 rustup toolchain install "${toolchain}" --profile minimal
 rustup default "${toolchain}"
 
+# The lockfile pins openssl-sys 0.9.111, which rejects OpenSSL 4 (Fedora 45+).
+# openssl-sys gained OpenSSL 4 support in 0.9.114; bump it to the latest
+# semver-compatible release before the --locked build.
+cargo update -p openssl-sys
+
 # Build only the zellij binary crate; the default plugins are embedded from the
 # prebuilt .wasm under zellij-utils/assets, so the wasm32 target is never built.
 RUSTFLAGS='-C strip=symbols' cargo install --locked --root=%{buildroot}%{_prefix} --path .
@@ -83,6 +88,8 @@ mkdir -p %{buildroot}%{_datadir}/fish/vendor_completions.d
 %{_datadir}/fish/vendor_completions.d/%{name}.fish
 
 %changelog
+* Tue Oct 27 2026 Hypercube <hypercube@binarypie.dev> - 0.45.1-2
+- Update openssl-sys for OpenSSL 4 (Fedora 45)
 * Sat Aug 29 2026 Hypercube <hypercube@binarypie.dev> - 0.45.1-1
 - Update to 0.45.1
 * Sun Jun 28 2026 Hypercube <hypercube@binarypie.dev> - 0.44.3-2
