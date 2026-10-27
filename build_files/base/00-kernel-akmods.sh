@@ -28,17 +28,23 @@ mv /tmp/rpms/* /tmp/akmods/
 # Enable ublue-os akmods COPR
 sed -i 's@enabled=0@enabled=1@g' /etc/yum.repos.d/_copr_ublue-os-akmods.repo
 
-# Install hardware support akmods
-dnf5 -y install \
-  /tmp/akmods/kmods/*xone*.rpm \
-  /tmp/akmods/kmods/*openrazer*.rpm \
-  /tmp/akmods/kmods/*framework-laptop*.rpm ||
-  true
-
-# Install pre-built v4l2loopback kmod from ublue akmods (userspace tools not needed)
-echo "Installing v4l2loopback kmod..."
-ls -la /tmp/akmods/kmods/*v4l2loopback*.rpm || echo "WARNING: v4l2loopback kmod not found"
-dnf5 -y install /tmp/akmods/kmods/*v4l2loopback*.rpm || echo "WARNING: Failed to install v4l2loopback kmod"
+# Install hardware support kmods (xone, openrazer, framework-laptop,
+# v4l2loopback) together with their -kmod-common packages from common/.
+# Not every kmod exists for every Fedora release (framework-laptop is gone
+# from the 45 akmods image), so each one is installed on its own: a missing
+# kmod must not take the others down with it.
+shopt -s nullglob
+for kmod in xone openrazer framework-laptop v4l2loopback; do
+  kmod_rpms=(/tmp/akmods/kmods/kmod-"${kmod}"-*.rpm)
+  if [[ ${#kmod_rpms[@]} -eq 0 ]]; then
+    echo "WARNING: no ${kmod} kmod in akmods:${AKMODS_FLAVOR}-${FEDORA_VERSION}, skipping"
+    continue
+  fi
+  rpms=("${kmod_rpms[@]}" /tmp/akmods/common/"${kmod}"*.rpm)
+  echo "Installing ${kmod} kmod..."
+  dnf5 -y install "${rpms[@]}" || echo "WARNING: Failed to install ${kmod} kmod"
+done
+shopt -u nullglob
 
 ### NVIDIA Configuration ###
 # Fail early if the base image ever stops shipping the driver
