@@ -93,7 +93,7 @@ Singleton {
 
     Process {
         id: logoutProcess
-        command: ["sh", "-c", "hyprctl dispatch exit || loginctl terminate-session $XDG_SESSION_ID"]
+        command: ["sh", "-c", "hyprctl dispatch 'hl.dsp.exit()' || loginctl terminate-session $XDG_SESSION_ID"]
     }
 
     function lock() {

@@ -86,24 +86,27 @@ if [[ -d /usr/share/hypercube/config/hypr ]]; then
     cp /usr/share/hypercube/config/hypr/* /usr/share/hypr/config.live.d/
 
     # Add live environment configuration
-    cat >> /usr/share/hypr/config.live.d/hyprland.conf << 'EOF'
+    # Since Hyprland 0.55 the config is Lua, so append Lua to hyprland.lua.
+    cat >> /usr/share/hypr/config.live.d/hyprland.lua << 'EOF'
 
-# Live ISO - Environment variables for XDG config discovery
-# These are normally set by systemd user session but greetd skips that
-env = XDG_CONFIG_DIRS,/etc/xdg:/usr/share/hypercube/config
-env = XDG_DATA_DIRS,/usr/local/share:/usr/share:/usr/share/hypercube/data
-env = GTK_THEME,Tokyonight-Dark
-env = QT_QPA_PLATFORMTHEME,qt6ct
+-- Live ISO - Environment variables for XDG config discovery
+-- These are normally set by systemd user session but greetd skips that
+hl.env("XDG_CONFIG_DIRS", "/etc/xdg:/usr/share/hypercube/config")
+hl.env("XDG_DATA_DIRS", "/usr/local/share:/usr/share:/usr/share/hypercube/data")
+hl.env("GTK_THEME", "Tokyonight-Dark")
+hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 
-# Live ISO - Window rules for Anaconda installer
-# Prevent fullscreen, keep as tiled window so user can access terminal
-windowrule = tile, class:^(anaconda)$
-windowrule = tile, class:^(liveinst)$
-windowrule = noinitialfocus, class:^(anaconda)$
-windowrule = noinitialfocus, class:^(liveinst)$
+-- Live ISO - Window rules for Anaconda installer
+-- Prevent fullscreen, keep as tiled window so user can access terminal
+hl.window_rule({ match = { class = "^(anaconda)$" },  tile = true })
+hl.window_rule({ match = { class = "^(liveinst)$" },  tile = true })
+hl.window_rule({ match = { class = "^(anaconda)$" },  no_initial_focus = true })
+hl.window_rule({ match = { class = "^(liveinst)$" },  no_initial_focus = true })
 
-# Live ISO - Auto-launch installer
-exec-once = liveinst
+-- Live ISO - Auto-launch installer
+hl.on("hyprland.start", function()
+    hl.exec_cmd("liveinst")
+end)
 EOF
 fi
 

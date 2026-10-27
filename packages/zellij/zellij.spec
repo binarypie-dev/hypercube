@@ -4,8 +4,8 @@
 %global debug_package %{nil}
 
 Name:           zellij
-Version:        0.44.3
-Release:        2%{?dist}
+Version:        0.45.1
+Release:        1%{?dist}
 Summary:        A terminal workspace and multiplexer
 
 License:        MIT
@@ -83,6 +83,8 @@ mkdir -p %{buildroot}%{_datadir}/fish/vendor_completions.d
 %{_datadir}/fish/vendor_completions.d/%{name}.fish
 
 %changelog
+* Sat Aug 29 2026 Hypercube <hypercube@binarypie.dev> - 0.45.1-1
+- Update to 0.45.1
 * Sun Jun 28 2026 Hypercube <hypercube@binarypie.dev> - 0.44.3-2
 - Set OPENSSL_NO_VENDOR=1 so openssl-sys links the chroot's system OpenSSL
   instead of vendoring its own copy, which failed to configure (missing

@@ -29,7 +29,9 @@ hypercube/
 │   ├── gtk-3.0/                 # GTK3 settings
 │   ├── gtk-4.0/                 # GTK4 settings
 │   ├── hypr/                    # Hyprland configs
-│   │   ├── hyprland.conf        # Main compositor config
+│   │   ├── hyprland.lua         # Main compositor config (Lua, 0.55+)
+│   │   ├── hyprland-kiosk.lua   # Kiosk-mode compositor config
+│   │   ├── .luarc.json          # Lua LSP config for editing hyprland.lua
 │   │   ├── hyprlock.conf        # Lock screen
 │   │   ├── hypridle.conf        # Idle management
 │   │   └── hyprpaper.conf       # Wallpaper
