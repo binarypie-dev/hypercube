@@ -52,7 +52,7 @@ Singleton {
 
     Process {
         id: focusProcess
-        command: ["hyprctl", "dispatch", "focuswindow", "address:0x0"]
+        command: ["hyprctl", "dispatch", "hl.dsp.focus({ window = \"address:0x0\" })"]
     }
 
     function refresh() {
@@ -82,7 +82,7 @@ Singleton {
         }
 
         const window = windows[currentIndex]
-        focusProcess.command = ["hyprctl", "dispatch", "focuswindow", "address:" + window.address]
+        focusProcess.command = ["hyprctl", "dispatch", "hl.dsp.focus({ window = \"address:" + window.address + "\" })"]
         focusProcess.running = true
         switcherActive = false
     }

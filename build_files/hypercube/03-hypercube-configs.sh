@@ -77,6 +77,8 @@ require("/usr/share/hypercube/config/hypr/hyprland.lua")
 -- Your customizations below:
 
 EOF
+# LuaLS config so editors pick up the hl API stubs in ~/.config/hypr
+install -Dm644 "${CONFIG_DIR}/hypr/.luarc.json" /etc/skel/.config/hypr/.luarc.json
 
 ### Neovim - devcube sandbox overrides
 # The editor config + AI agents ship baked into the devcube podman image
