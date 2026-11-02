@@ -1,6 +1,6 @@
 Name:           hyprgraphics
-Version:        0.5.1
-Release:        2%{?dist}
+Version:        0.6.0
+Release:        1%{?dist}
 Summary:        Hyprland graphics / resource utilities
 
 License:        BSD-3-Clause
@@ -63,6 +63,8 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Mon Nov 02 2026 Hypercube <hypercube@binarypie.dev> - 0.6.0-1
+- Update to 0.6.0
 * Tue Jul 21 2026 Hypercube <hypercube@binarypie.dev> - 0.5.1-2
 - Rebuild against hyprutils 0.14.0 (SONAME 12 -> 13)
 * Mon May 11 2026 Hypercube <hypercube@binarypie.dev> - 0.5.1-1
