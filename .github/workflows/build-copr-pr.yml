@@ -62,6 +62,26 @@ jobs:
           CHANGED=$(echo "$CHANGED" | tr -s ' ' '\n' | grep -v '^$' | sort -u | tr '\n' ' ' | xargs)
           echo "Changed packages: $CHANGED"
 
+          # The diff is against the PR base, so every push re-lists packages an
+          # earlier push already built. Rebuilding the same NVR republishes it
+          # in the live Copr repo mid-flight, which races image builds into
+          # checksum mismatches. Skip packages whose spec version-release
+          # already built successfully in every enabled chroot (so changing a
+          # spec needs a Release bump to rebuild, as usual). If the Copr query
+          # fails, build everything that changed.
+          if [[ -n "$CHANGED" ]]; then
+            # shellcheck disable=SC2086
+            if CHECK_OUTPUT=$(./scripts/packages/check-copr-versions.sh $CHANGED); then
+              echo "$CHECK_OUTPUT"
+              NEEDS=$(echo "$CHECK_OUTPUT" | sed -n 's/^NEEDS_BUILD_JSON=//p' | jq -r '.[]' | xargs)
+              SKIPPED=$(comm -23 <(echo "$CHANGED" | tr ' ' '\n' | sort) <(echo "$NEEDS" | tr ' ' '\n' | sort) | xargs)
+              [[ -n "$SKIPPED" ]] && echo "Already built at this version, skipping: $SKIPPED"
+              CHANGED="$NEEDS"
+            else
+              echo "::warning::Copr version check failed; building all changed packages"
+            fi
+          fi
+
           if [[ -z "$CHANGED" ]]; then
             echo "packages=[]" >> $GITHUB_OUTPUT
           else

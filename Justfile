@@ -4,7 +4,7 @@
 # Configuration
 export repo_organization := env("REPO_ORGANIZATION", "binarypie-dev")
 export image_name := env("IMAGE_NAME", "hypercube")
-export fedora_version := env("FEDORA_VERSION", "44")
+export fedora_version := env("FEDORA_VERSION", "45")
 export akmods_flavor := env("AKMODS_FLAVOR", "main")
 
 # Runtime detection
@@ -659,7 +659,7 @@ format:
     #!/usr/bin/env bash
     set -eoux pipefail
     if ! command -v shfmt &> /dev/null; then
-        echo "shfmt not found. Please install it."
+        echo "shfmt not found. Install it with: go install mvdan.cc/sh/v3/cmd/shfmt@latest (or brew install shfmt)"
         exit 1
     fi
     find . -type f -name "*.sh" -exec shfmt --write {} \;
