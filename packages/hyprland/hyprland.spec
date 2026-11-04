@@ -1,16 +1,24 @@
+%global sdbus_version 2.1.0
+
 Name:           hyprland
-Version:        0.56.2
-Release:        2%{?dist}
+Version:        0.57.1
+Release:        1%{?dist}
 Summary:        Dynamic tiling Wayland compositor that doesn't sacrifice on its looks
 
 License:        BSD-3-Clause AND BSD-2-Clause AND HPND-sell-variant AND LGPL-2.1-or-later
 URL:            https://github.com/hyprwm/Hyprland
 Source0:        %{url}/releases/download/v%{version}/source-v%{version}.tar.gz
+# Hyprland 0.57+ links sdbus-c++ (>= 2.0) to request realtime scheduling from
+# rtkit. Bundle a static copy, same as hyprlock/hypridle.
+Source1:        https://github.com/Kistler-Group/sdbus-cpp/archive/v%{sdbus_version}/sdbus-%{sdbus_version}.tar.gz
 
 # Fedora 43 only (GCC 15): std::ranges::starts_with in truthy() fails to
 # compile there but builds fine on GCC 16 (Fedora 44+). Applied conditionally
 # in %prep. Remove this patch and its %if block when Fedora 43 is EOL.
 Patch0:         0001-truthy-avoid-ranges-starts_with-gcc15.patch
+# Fedora 43 only (GCC 15): 0.57 uses the C++26 std::string::subview, which
+# libstdc++ 15 lacks. Same conditional handling as Patch0.
+Patch1:         0002-s1-avoid-string-subview-gcc15.patch
 
 ExcludeArch:    %{ix86}
 
@@ -18,6 +26,7 @@ BuildRequires:  cmake
 BuildRequires:  gcc-c++
 BuildRequires:  git-core
 BuildRequires:  meson
+BuildRequires:  systemd-rpm-macros
 BuildRequires:  glaze-devel
 BuildRequires:  glslang-devel
 BuildRequires:  pkgconfig(aquamarine)
@@ -29,12 +38,14 @@ BuildRequires:  pkgconfig(glesv2)
 BuildRequires:  pkgconfig(hwdata)
 BuildRequires:  pkgconfig(hyprcursor)
 BuildRequires:  pkgconfig(hyprgraphics)
+BuildRequires:  pkgconfig(hyprland-protocols) >= 0.8.0
 BuildRequires:  pkgconfig(hyprlang)
 BuildRequires:  pkgconfig(hyprutils)
 BuildRequires:  pkgconfig(hyprwayland-scanner)
 BuildRequires:  pkgconfig(hyprwire)
 BuildRequires:  pkgconfig(libdisplay-info)
 BuildRequires:  pkgconfig(libdrm)
+BuildRequires:  pkgconfig(libcanberra)
 BuildRequires:  pkgconfig(libeis-1.0)
 BuildRequires:  pkgconfig(libinput) >= 1.28
 BuildRequires:  pkgconfig(lcms2)
@@ -54,6 +65,7 @@ BuildRequires:  pkgconfig(pango)
 BuildRequires:  pkgconfig(pangocairo)
 BuildRequires:  pkgconfig(pixman-1)
 BuildRequires:  pkgconfig(re2)
+BuildRequires:  pkgconfig(libsystemd)
 BuildRequires:  pkgconfig(readline)
 BuildRequires:  pkgconfig(systemd)
 BuildRequires:  pkgconfig(tomlplusplus)
@@ -81,11 +93,13 @@ BuildRequires:  pkgconfig(xkbcommon)
 BuildRequires:  pkgconfig(xwayland)
 
 Requires:       xorg-x11-server-Xwayland%{?_isa}
-Requires:       aquamarine%{?_isa} >= 0.9.2
+Requires:       aquamarine%{?_isa} >= 0.15.0
 Requires:       hyprcursor%{?_isa} >= 0.1.13
-Requires:       hyprgraphics%{?_isa} >= 0.1.6
-Requires:       hyprlang%{?_isa} >= 0.6.3
-Requires:       hyprutils%{?_isa} >= 0.8.4
+Requires:       hyprgraphics%{?_isa} >= 0.5.1
+Requires:       hyprlang%{?_isa} >= 0.6.7
+Requires:       hyprutils%{?_isa} >= 0.14.3
+# rtkit grants the realtime scheduling Hyprland now asks for over D-Bus
+Recommends:     rtkit
 
 Recommends:     ghostty
 Recommends:     playerctl
@@ -123,15 +137,29 @@ Requires:       pkgconfig(xkbcommon)
 %prep
 %autosetup -n hyprland-source -N
 
-# Fedora 43 (GCC 15) only; drop when F43 is EOL. See Patch0 comment above.
+# Fedora 43 (GCC 15) only; drop when F43 is EOL. See Patch0/Patch1 comments above.
 %if 0%{?fedora} && 0%{?fedora} <= 43
 %patch -P0 -p1
+%patch -P1 -p1
 %endif
 
-cp -p subprojects/hyprland-protocols/LICENSE LICENSE-hyprland-protocols
+mkdir -p subprojects/sdbus-cpp
+tar -xf %{SOURCE1} -C subprojects/sdbus-cpp --strip=1
+
 cp -p subprojects/udis86/LICENSE LICENSE-udis86
 
 %build
+pushd subprojects/sdbus-cpp
+%cmake \
+    -DCMAKE_INSTALL_PREFIX=%{_builddir}/sdbus \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DSDBUSCPP_BUILD_DOCS=OFF \
+    -DBUILD_SHARED_LIBS=OFF
+%cmake_build
+cmake --install %{_vpath_builddir}
+popd
+export PKG_CONFIG_PATH=%{_builddir}/sdbus/%{_lib}/pkgconfig
+
 %cmake \
     -GNinja \
     -DCMAKE_BUILD_TYPE=Release \
@@ -141,9 +169,16 @@ cp -p subprojects/udis86/LICENSE LICENSE-udis86
 
 %install
 %cmake_install
+# CMake installs the session target under CMAKE_INSTALL_LIBDIR (lib64 here);
+# systemd only looks for user units in %{_userunitdir}.
+if [ -f %{buildroot}%{_libdir}/systemd/user/hyprland-session.target ]; then
+    install -Dpm 0644 %{buildroot}%{_libdir}/systemd/user/hyprland-session.target \
+        %{buildroot}%{_userunitdir}/hyprland-session.target
+    rm -rf %{buildroot}%{_libdir}/systemd
+fi
 
 %files
-%license LICENSE LICENSE-udis86 LICENSE-hyprland-protocols
+%license LICENSE LICENSE-udis86
 %{_bindir}/[Hh]yprland
 %{_bindir}/hyprctl
 %{_bindir}/hyprpm
@@ -151,6 +186,7 @@ cp -p subprojects/udis86/LICENSE LICENSE-udis86
 %{_datadir}/hypr/
 %{_datadir}/wayland-sessions/hyprland.desktop
 %{_datadir}/xdg-desktop-portal/hyprland-portals.conf
+%{_userunitdir}/hyprland-session.target
 %{_mandir}/man1/hyprctl.1*
 %{_mandir}/man1/Hyprland.1*
 %{_datadir}/bash-completion/completions/hypr*
@@ -165,6 +201,13 @@ cp -p subprojects/udis86/LICENSE LICENSE-udis86
 %{_includedir}/hyprland/
 
 %changelog
+* Wed Nov 04 2026 Hypercube <hypercube@binarypie.dev> - 0.57.1-1
+- Update to 0.57.1
+- hyprland-protocols is no longer bundled in the source tarball; BuildRequires >= 0.8.0
+- New BuildRequires: libcanberra, sdbus-c++ (bundled static 2.1.0, for rtkit)
+- Package hyprland-session.target in %%{_userunitdir}
+- Raise runtime Requires to the minimum versions upstream checks for
+- Fedora 43: add Patch1 to avoid C++26 std::string::subview (GCC 15)
 * Tue Oct 27 2026 Hypercube <hypercube@binarypie.dev> - 0.56.2-2
 - Use the system Lua 5.5 on Fedora 45+ (lua55-libs conflicts with lua-libs there)
 * Fri Oct 23 2026 Hypercube <hypercube@binarypie.dev> - 0.56.2-1

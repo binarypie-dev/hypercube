@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           resterm
-Version:        1.16.1
+Version:        1.17.2
 Release:        1%{?dist}
 Summary:        TUI REST, gRPC, and WebSocket API client
 
@@ -12,7 +12,7 @@ License:        Apache-2.0
 URL:            https://github.com/unkn0wn-root/resterm
 Source0:        %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
 
-BuildRequires:  golang >= 1.21
+BuildRequires:  golang >= 1.25
 BuildRequires:  git
 
 %description
@@ -35,6 +35,9 @@ install -Dpm 0755 %{name} %{buildroot}%{_bindir}/%{name}
 %{_bindir}/%{name}
 
 %changelog
+* Wed Nov 04 2026 Hypercube <hypercube@binarypie.dev> - 1.17.2-1
+- Update to 1.17.2
+- Upstream go.mod requires Go 1.25
 * Fri Oct 23 2026 Hypercube <hypercube@binarypie.dev> - 1.16.1-1
 - Update to 1.16.1
 * Sat Aug 01 2026 Hypercube <hypercube@binarypie.dev> - 0.49.3-1

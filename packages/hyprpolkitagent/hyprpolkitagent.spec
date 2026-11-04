@@ -2,7 +2,7 @@
 
 Name:           hyprpolkitagent
 Version:        0.2.0
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        A simple polkit authentication agent for Hyprland
 
 License:        BSD-3-Clause
@@ -69,6 +69,8 @@ export PKG_CONFIG_PATH=%{_builddir}/sdbus/%{_lib}/pkgconfig
 %{_userunitdir}/%{name}.service
 
 %changelog
+* Wed Nov 04 2026 Hypercube <hypercube@binarypie.dev> - 0.2.0-2
+- Rebuild against hyprgraphics 0.6.0 (SONAME 4 -> 5)
 * Mon Oct 26 2026 Hypercube <hypercube@binarypie.dev> - 0.2.0-1
 - Update to 0.2.0 (rewritten on hyprtoolkit; drops Qt/hyprland-qt-support)
 - Talks to polkit over D-Bus via a bundled static sdbus-cpp, like hypridle

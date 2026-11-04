@@ -501,16 +501,16 @@ To ensure dependencies are satisfied, build in this order:
 2. hyprland-qt-support (needs hyprlang)
 
 **Batch 4** (depends on Batch 3):
-1. hyprland (needs aquamarine, hyprcursor, hyprgraphics, hyprlang, hyprutils, glaze, lua55)
+1. hyprland (needs aquamarine, hyprcursor, hyprgraphics, hyprland-protocols, hyprlang, hyprutils, hyprwire, glaze, lua55)
 2. hyprlock (needs hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner)
 3. hypridle (needs hyprland-protocols, hyprlang, hyprutils, hyprwayland-scanner)
-4. hyprpaper (needs hyprgraphics, hyprlang, hyprtoolkit, hyprutils, hyprwayland-scanner, hyprwire)
-5. xdg-desktop-portal-hyprland (needs hyprland-protocols, hyprlang, hyprutils, hyprwayland-scanner)
-6. hyprpolkitagent (needs hyprutils, hyprland-qt-support)
-7. hyprtoolkit (needs aquamarine, hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner)
+4. hyprtoolkit (needs aquamarine, hyprgraphics, hyprlang, hyprutils, hyprwayland-scanner)
 
 **Batch 5** (depends on Batch 4):
-1. hyprland-guiutils (needs aquamarine, hyprtoolkit, hyprlang, hyprutils)
+1. hyprpaper (needs hyprgraphics, hyprlang, hyprtoolkit, hyprutils, hyprwayland-scanner, hyprwire)
+2. hyprland-guiutils (needs aquamarine, hyprtoolkit, hyprlang, hyprutils)
+3. hyprpolkitagent (needs hyprgraphics, hyprlang, hyprutils, hyprtoolkit)
+4. xdg-desktop-portal-hyprland (needs hyprland-protocols, hyprlang, hyprtoolkit, hyprutils, hyprwayland-scanner)
 
 ---
 
