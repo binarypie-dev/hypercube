@@ -256,7 +256,8 @@ PanelWindow {
                         // Workspace indicator
                         Text {
                             Layout.fillWidth: true
-                            text: "ws:" + (modelData.workspace ? modelData.workspace.id : "?")
+                            // Hyprland 0.57+ omits workspace.id for special workspaces; fall back to the name
+                            text: "ws:" + (modelData.workspace ? (modelData.workspace.id ?? modelData.workspace.name) : "?")
                             font.family: Common.Appearance.fonts.mono
                             font.pixelSize: Common.Appearance.fontSize.tiny - 2
                             color: Common.Appearance.colors.comment
