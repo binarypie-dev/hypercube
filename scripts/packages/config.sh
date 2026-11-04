@@ -55,7 +55,9 @@ declare -gA VERSION_SOURCES=(
 # Version pins: only consider upstream versions starting with this prefix.
 # Use when a dependent can't build against a newer major series yet.
 declare -gA VERSION_PINS=(
-    # Hyprland 0.56 does find_package(glaze 7...<8); glaze 8+ breaks the build
+    # Hyprland 0.57 dropped the glaze 7...<8 range from find_package, but its
+    # FetchContent fallback is still glaze 7.2.0, so 7.x is what it targets.
+    # Keep 7.x until an upstream Hyprland release moves to glaze 8+.
     [glaze]="7."
 )
 
@@ -92,11 +94,11 @@ declare -gA PACKAGE_DEPS=(
     [aquamarine]="hyprutils hyprwayland-scanner"
     [hyprcursor]="hyprlang"
     [hyprland-qt-support]="hyprlang"
-    [hyprland]="aquamarine hyprcursor hyprgraphics hyprlang hyprutils hyprwire glaze lua55"
+    [hyprland]="aquamarine hyprcursor hyprgraphics hyprland-protocols hyprlang hyprutils hyprwire glaze lua55"
     [hyprlock]="hyprgraphics hyprlang hyprutils hyprwayland-scanner"
     [hypridle]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
     [hyprpaper]="hyprgraphics hyprlang hyprutils hyprwayland-scanner hyprwire hyprtoolkit"
-    [xdg-desktop-portal-hyprland]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner"
+    [xdg-desktop-portal-hyprland]="hyprland-protocols hyprlang hyprutils hyprwayland-scanner hyprtoolkit"
     [hyprpolkitagent]="hyprgraphics hyprlang hyprutils hyprtoolkit"
     [hyprtoolkit]="aquamarine hyprgraphics hyprlang hyprutils hyprwayland-scanner"
     [hyprland-guiutils]="aquamarine hyprtoolkit hyprlang hyprutils"
@@ -107,8 +109,8 @@ declare -gA BUILD_BATCHES=(
     [1]="hyprutils hyprwayland-scanner hyprland-protocols glaze uwsm eza starship lazygit quickshell livesys-scripts wifitui resvg yazi bluetui iamb meli lazyjournal lazysql resterm zellij alacritty lua55"
     [2]="hyprlang hyprgraphics aquamarine hyprwire"
     [3]="hyprcursor hyprland-qt-support"
-    [4]="hyprland hyprlock hypridle xdg-desktop-portal-hyprland hyprtoolkit"
-    [5]="hyprpaper hyprland-guiutils hyprpolkitagent"
+    [4]="hyprland hyprlock hypridle hyprtoolkit"
+    [5]="hyprpaper hyprland-guiutils hyprpolkitagent xdg-desktop-portal-hyprland"
 )
 
 # Export for use in other scripts

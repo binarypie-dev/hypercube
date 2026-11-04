@@ -1,5 +1,5 @@
 Name:           aquamarine
-Version:        0.15.1
+Version:        0.16.0
 Release:        1%{?dist}
 Summary:        A very light linux rendering backend library
 
@@ -13,6 +13,7 @@ BuildRequires:  cmake
 BuildRequires:  gcc-c++
 BuildRequires:  mesa-libEGL-devel
 BuildRequires:  pkgconfig(gbm)
+BuildRequires:  pkgconfig(glesv2)
 BuildRequires:  pkgconfig(hwdata)
 BuildRequires:  pkgconfig(hyprutils)
 BuildRequires:  pkgconfig(hyprwayland-scanner)
@@ -49,7 +50,7 @@ Development files for %{name}.
 %license LICENSE
 %doc README.md
 %{_libdir}/lib%{name}.so.%{version}
-%{_libdir}/lib%{name}.so.14
+%{_libdir}/lib%{name}.so.15
 
 %files devel
 %{_includedir}/%{name}/
@@ -57,6 +58,10 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Wed Nov 04 2026 Hypercube <hypercube@binarypie.dev> - 0.16.0-1
+- Update to 0.16.0
+- libaquamarine SONAME 14 -> 15
+- Links OpenGL::GLES3 instead of OpenGL::OpenGL; BuildRequires pkgconfig(glesv2)
 * Fri Oct 23 2026 Hypercube <hypercube@binarypie.dev> - 0.15.1-1
 - Update to 0.15.1
 - libaquamarine SONAME 13 -> 14

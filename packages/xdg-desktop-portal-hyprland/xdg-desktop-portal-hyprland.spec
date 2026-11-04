@@ -2,7 +2,7 @@
 
 Name:           xdg-desktop-portal-hyprland
 Epoch:          1
-Version:        1.4.1
+Version:        1.5.0
 Release:        1%{?dist}
 Summary:        xdg-desktop-portal backend for hyprland
 
@@ -15,25 +15,24 @@ BuildRequires:  cmake
 BuildRequires:  gcc-c++
 BuildRequires:  systemd-rpm-macros
 BuildRequires:  pkgconfig(gbm)
-BuildRequires:  pkgconfig(hyprland-protocols)
+BuildRequires:  pkgconfig(hyprland-protocols) >= 0.8.0
 BuildRequires:  pkgconfig(hyprlang)
+BuildRequires:  pkgconfig(hyprtoolkit) >= 0.6.0
 BuildRequires:  pkgconfig(hyprutils)
 BuildRequires:  pkgconfig(hyprwayland-scanner)
 BuildRequires:  pkgconfig(libdrm)
 BuildRequires:  pkgconfig(libpipewire-0.3)
 BuildRequires:  pkgconfig(libsystemd)
-BuildRequires:  pkgconfig(Qt6Widgets)
 BuildRequires:  pkgconfig(systemd)
 BuildRequires:  pkgconfig(uuid)
 BuildRequires:  pkgconfig(wayland-client)
-BuildRequires:  pkgconfig(wayland-protocols)
+BuildRequires:  pkgconfig(wayland-protocols) >= 1.39
 BuildRequires:  pkgconfig(wayland-scanner)
 
 Requires:       dbus
 Requires:       grim
 Requires:       xdg-desktop-portal
 Requires:       slurp
-Requires:       qt6-qtwayland
 
 Enhances:       hyprland
 Supplements:    hyprland
@@ -70,6 +69,10 @@ tar -xf %{SOURCE1} -C subprojects/sdbus-cpp --strip=1
 %{_userunitdir}/%{name}.service
 
 %changelog
+* Wed Nov 04 2026 Hypercube <hypercube@binarypie.dev> - 1.5.0-1
+- Update to 1.5.0
+- hyprland-share-picker is rewritten on hyprtoolkit: drop Qt6, BuildRequires hyprtoolkit >= 0.6.0
+- BuildRequires hyprland-protocols >= 0.8.0 (workspace capture protocol)
 * Thu Jul 30 2026 Hypercube <hypercube@binarypie.dev> - 1.4.1-1
 - Update to 1.4.1
 * Tue Jul 21 2026 Hypercube <hypercube@binarypie.dev> - 1.4.0-1
