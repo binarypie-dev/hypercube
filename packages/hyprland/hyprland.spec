@@ -16,6 +16,9 @@ Source1:        https://github.com/Kistler-Group/sdbus-cpp/archive/v%{sdbus_vers
 # compile there but builds fine on GCC 16 (Fedora 44+). Applied conditionally
 # in %prep. Remove this patch and its %if block when Fedora 43 is EOL.
 Patch0:         0001-truthy-avoid-ranges-starts_with-gcc15.patch
+# Fedora 43 only (GCC 15): 0.57 uses the C++26 std::string::subview, which
+# libstdc++ 15 lacks. Same conditional handling as Patch0.
+Patch1:         0002-s1-avoid-string-subview-gcc15.patch
 
 ExcludeArch:    %{ix86}
 
@@ -134,9 +137,10 @@ Requires:       pkgconfig(xkbcommon)
 %prep
 %autosetup -n hyprland-source -N
 
-# Fedora 43 (GCC 15) only; drop when F43 is EOL. See Patch0 comment above.
+# Fedora 43 (GCC 15) only; drop when F43 is EOL. See Patch0/Patch1 comments above.
 %if 0%{?fedora} && 0%{?fedora} <= 43
 %patch -P0 -p1
+%patch -P1 -p1
 %endif
 
 mkdir -p subprojects/sdbus-cpp
@@ -203,6 +207,7 @@ fi
 - New BuildRequires: libcanberra, sdbus-c++ (bundled static 2.1.0, for rtkit)
 - Package hyprland-session.target in %%{_userunitdir}
 - Raise runtime Requires to the minimum versions upstream checks for
+- Fedora 43: add Patch1 to avoid C++26 std::string::subview (GCC 15)
 * Tue Oct 27 2026 Hypercube <hypercube@binarypie.dev> - 0.56.2-2
 - Use the system Lua 5.5 on Fedora 45+ (lua55-libs conflicts with lua-libs there)
 * Fri Oct 23 2026 Hypercube <hypercube@binarypie.dev> - 0.56.2-1
