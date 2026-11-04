@@ -1,5 +1,5 @@
 Name:           aquamarine
-Version:        0.15.1
+Version:        0.16.0
 Release:        1%{?dist}
 Summary:        A very light linux rendering backend library
 
@@ -57,6 +57,8 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Wed Nov 04 2026 Hypercube <hypercube@binarypie.dev> - 0.16.0-1
+- Update to 0.16.0
 * Fri Oct 23 2026 Hypercube <hypercube@binarypie.dev> - 0.15.1-1
 - Update to 0.15.1
 - libaquamarine SONAME 13 -> 14
