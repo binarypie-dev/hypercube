@@ -4,6 +4,7 @@ singleton Audio 1.0 Audio.qml
 singleton Battery 1.0 Battery.qml
 singleton BluetoothStatus 1.0 BluetoothStatus.qml
 singleton Brightness 1.0 Brightness.qml
+singleton Compositor 1.0 Compositor.qml
 singleton Datacube 1.0 Datacube.qml
 singleton DateTime 1.0 DateTime.qml
 singleton IconResolver 1.0 IconResolver.qml
@@ -12,6 +13,6 @@ singleton Notifications 1.0 Notifications.qml
 singleton Power 1.0 Power.qml
 singleton Privacy 1.0 Privacy.qml
 singleton Updates 1.0 Updates.qml
-singleton Hyprland 1.0 Hyprland.qml
 singleton Weather 1.0 Weather.qml
 singleton Windows 1.0 Windows.qml
+singleton Workspaces 1.0 Workspaces.qml

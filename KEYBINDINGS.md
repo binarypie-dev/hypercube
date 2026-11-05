@@ -93,6 +93,44 @@ The **Super** key (Windows/Command key) is the main modifier.
 
 ---
 
+## niri Session (preview)
+
+niri is available as a second session in the greeter, alongside Hyprland
+(which stays the default). It runs the same Quickshell bar, launcher,
+notifications, OSD and app switcher, and keeps the Hyprland keys wherever niri
+has an equivalent: `Super + Q/C/E/R/N/V/F`, `Super + H/J/K/L` (and
+`Shift`/`Ctrl` variants), `Super + 0-9`, `Super + Tab`, `Super + Escape`,
+`Super + Ctrl + Escape` and the multimedia keys all work the same.
+
+niri lays windows out as a horizontally scrolling strip of columns, so a few
+keys differ:
+
+| Keybinding | Action |
+|------------|--------|
+| `Super + H / L` | Focus column left / right |
+| `Super + J / K` | Focus window down / up, continuing to the next / previous workspace |
+| `Super + Shift + H / L` | Move column left / right |
+| `Super + Shift + J / K` | Move window down / up, continuing to the next / previous workspace |
+| `Super + Ctrl + H / L` | Column width -10% / +10% |
+| `Super + Ctrl + J / K` | Window height +10% / -10% |
+| `Super + S` | Cycle column width (1/3, 1/2, 2/3) |
+| `Super + M` | Maximize column |
+| `Super + W` | Toggle tabbed column |
+| `Super + [` / `Super + ]` | Pull window into / push it out of the neighbouring column |
+| `Super + ,` / `Super + .` | Consume window into column / expel it |
+| `Super + O` | Overview |
+| `Super + Shift + /` | Show all niri keybindings |
+| `Super + Shift + E` | Quit niri |
+| `Ctrl + Print` | niri's built-in screenshot tool |
+
+There is no scratchpad workspace in niri, so `Super + T` / `Super + Shift + T`
+and the Hyprland-only `Super + P` (pseudotile) are not bound.
+
+Config: `/usr/share/hypercube/config/niri/config.kdl`. To customize it, create
+`~/.config/niri/config.kdl` starting with
+`include "/usr/share/hypercube/config/niri/config.kdl"` and add your settings
+after it.
+
 ## Ghostty Terminal
 
 Ghostty is a plain, chrome-less renderer. **Multiplexing — tabs, splits,

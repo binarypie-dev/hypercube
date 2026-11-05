@@ -69,6 +69,7 @@ Every tool is configured with vim keybindings out of the box:
 ### Desktop Environment
 
 - **Hyprland** - Dynamic tiling Wayland compositor for keyboard-driven efficiency
+- **niri** (preview) - Scrollable-tiling compositor, available as a second session in the greeter with the same Quickshell shell
 - **Quickshell** - Custom shell with notifications, app launcher, and system controls
 
 ### Development Tools
@@ -169,7 +170,7 @@ Built on ublue-os/base-main, Hypercube includes:
 
 | Category | Packages |
 |----------|----------|
-| Compositor | Hyprland, Hyprlock, Hypridle, Hyprpaper, Hyprshot |
+| Compositor | Hyprland, Hyprlock, Hypridle, Hyprpaper, Hyprshot; niri (preview session) |
 | Browsers | Firefox, Brave Origin |
 | Shell | Quickshell (notifications, launcher, system controls) |
 | Terminals | Ghostty |

@@ -4,7 +4,9 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// Hyprland workspace tracking service
+// Active workspace per monitor, for Hyprland and niri.
+// Workspace "id" is the number shown in the bar: Hyprland's workspace id, or
+// niri's per-monitor workspace index.
 Singleton {
     id: root
 
@@ -28,7 +30,7 @@ Singleton {
     }
 
     // Get workspace ID as string for a specific monitor
-    // Note: Include revision in bindings to ensure updates: Services.Hyprland.revision, Services.Hyprland.getWorkspace(...)
+    // Note: Include revision in bindings to ensure updates: Services.Workspaces.revision, Services.Workspaces.getWorkspace(...)
     function getWorkspace(monitorName: string): string {
         if (workspaces[monitorName]) {
             // Prefer numeric ID over name (names can be things like "DP-1" in some configs)
@@ -48,7 +50,7 @@ Singleton {
     // Query monitors to get active workspaces
     Process {
         id: monitorProcess
-        command: ["hyprctl", "monitors", "-j"]
+        command: Compositor.isNiri ? ["niri", "msg", "-j", "workspaces"] : ["hyprctl", "monitors", "-j"]
 
         property string output: ""
 
@@ -61,14 +63,26 @@ Singleton {
 
         onExited: {
             try {
-                const monitors = JSON.parse(monitorProcess.output)
+                const data = JSON.parse(monitorProcess.output)
                 let newWorkspaces = {}
 
-                for (const mon of monitors) {
-                    if (mon.activeWorkspace) {
-                        newWorkspaces[mon.name] = {
-                            id: mon.activeWorkspace.id,
-                            name: mon.activeWorkspace.name
+                if (Compositor.isNiri) {
+                    // niri: list of workspaces; one is_active per output
+                    for (const ws of data) {
+                        if (ws.is_active && ws.output) {
+                            newWorkspaces[ws.output] = {
+                                id: ws.idx,
+                                name: ws.name || String(ws.idx)
+                            }
+                        }
+                    }
+                } else {
+                    for (const mon of data) {
+                        if (mon.activeWorkspace) {
+                            newWorkspaces[mon.name] = {
+                                id: mon.activeWorkspace.id,
+                                name: mon.activeWorkspace.name
+                            }
                         }
                     }
                 }

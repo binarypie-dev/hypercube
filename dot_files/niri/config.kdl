@@ -1,0 +1,241 @@
+// #######################################################################################
+// NIRI CONFIG - Tokyo Night Theme with Vim-like Keybindings
+// #######################################################################################
+//
+// Hypercube's niri session runs the same Quickshell desktop shell as the
+// Hyprland session. Keybindings follow the Hyprland ones wherever niri has an
+// equivalent, so switching sessions keeps the same muscle memory.
+//
+// This file is the system default (/usr/share/hypercube/config/niri/config.kdl).
+// /etc/niri/config.kdl includes it. To customize, create
+// ~/.config/niri/config.kdl with:
+//
+//     include "/usr/share/hypercube/config/niri/config.kdl"
+//     // your overrides below
+//
+// Settings after the include override the defaults.
+// See https://niri-wm.github.io/niri/ (or `man niri`) for all options.
+// #######################################################################################
+
+
+// ---- INPUT ----
+input {
+    keyboard {
+        xkb {
+            layout "us"
+            // Caps Lock acts as Ctrl
+            options "caps:ctrl_modifier"
+        }
+    }
+
+    touchpad {
+        tap
+        dwt
+    }
+
+    // Matches Hyprland's follow_mouse = 1
+    focus-follows-mouse
+}
+
+
+// ---- OUTPUTS ----
+// Monitors use their preferred mode and auto scale by default.
+// Example:
+// output "eDP-1" {
+//     mode "1920x1080@60"
+//     scale 1.5
+//     position x=0 y=0
+// }
+
+
+// ---- LAYOUT AND LOOK ----
+// Tokyo Night palette: bg #1a1b26, blue #7aa2f7, purple #bb9af7, border #414868
+layout {
+    gaps 10
+    center-focused-column "never"
+
+    preset-column-widths {
+        proportion 0.33333
+        proportion 0.5
+        proportion 0.66667
+    }
+    default-column-width { proportion 0.5; }
+
+    focus-ring {
+        off
+    }
+
+    border {
+        width 2
+        active-gradient from="#7aa2f7ee" to="#bb9af7ee" angle=45
+        inactive-color "#414868aa"
+        urgent-color "#f7768e"
+    }
+
+    shadow {
+        on
+        softness 8
+        spread 2
+        color "#1a1b26ee"
+    }
+}
+
+cursor {
+    xcursor-size 24
+}
+
+hotkey-overlay {
+    skip-at-startup
+}
+
+// Quickshell provides the window switcher on Super+Tab (same as Hyprland), so
+// niri's built-in recent-windows switcher is turned off to free those keys.
+recent-windows {
+    off
+}
+
+
+// ---- AUTOSTART ----
+// niri-session imports the login environment (XDG_CONFIG_DIRS etc. from
+// /usr/lib/environment.d) into systemd and D-Bus, so no extra env export is
+// needed here.
+
+// Quickshell - bar, launcher, notifications, OSD, app switcher
+spawn-at-startup "quickshell"
+
+// Wallpaper (shown behind workspaces and in the overview, see layer-rule below)
+spawn-at-startup "swaybg" "-m" "fill" "-i" "/usr/share/backgrounds/hypercube/background.png"
+
+// Idle / Lock (niri variant: uses niri msg instead of hyprctl for DPMS)
+spawn-at-startup "hypridle" "-c" "/usr/share/hypercube/config/niri/hypridle.conf"
+
+// Polkit authentication agent (for privilege escalation)
+spawn-sh-at-startup "systemctl --user start hyprpolkitagent"
+
+// GNOME Keyring (for secrets management, SSH keys, and certificates)
+spawn-at-startup "gnome-keyring-daemon" "--start"
+
+
+// ---- KEYBINDINGS ----
+// Mod is Super. Run Super+Shift+/ to see every binding.
+binds {
+    Mod+Shift+Slash { show-hotkey-overlay; }
+
+    // Apps and shell
+    Mod+Q hotkey-overlay-title="Terminal: ghostty" { spawn "ghostty"; }
+    Mod+E hotkey-overlay-title="File manager" { spawn "files"; }
+    Mod+R hotkey-overlay-title="Launcher" { spawn "qs" "ipc" "call" "shell" "toggleSidebarLeft"; }
+    Mod+N hotkey-overlay-title="Notifications / quick settings" { spawn "qs" "ipc" "call" "shell" "toggleSidebarRight"; }
+    Mod+Escape hotkey-overlay-title="Close all panels" { spawn "qs" "ipc" "call" "shell" "closeAll"; }
+    Mod+Ctrl+Escape hotkey-overlay-title="Lock screen" { spawn-sh "pidof hyprlock || hyprlock"; }
+
+    // App switcher (Quickshell)
+    Mod+Tab hotkey-overlay-title="Next window" { spawn "qs" "ipc" "call" "shell" "nextWindow"; }
+    Mod+Shift+Tab hotkey-overlay-title="Previous window" { spawn "qs" "ipc" "call" "shell" "prevWindow"; }
+
+    // Windows
+    Mod+C repeat=false { close-window; }
+    Mod+V { toggle-window-floating; }
+    Mod+F { fullscreen-window; }
+    Mod+M { maximize-column; }
+    Mod+S { switch-preset-column-width; }
+    Mod+W { toggle-column-tabbed-display; }
+    Mod+O repeat=false { toggle-overview; }
+
+    // Focus with vim keys and arrows. j/k move between windows in a column and
+    // continue to the next/previous workspace at the ends.
+    Mod+H     { focus-column-left; }
+    Mod+L     { focus-column-right; }
+    Mod+K     { focus-window-or-workspace-up; }
+    Mod+J     { focus-window-or-workspace-down; }
+    Mod+Left  { focus-column-left; }
+    Mod+Right { focus-column-right; }
+    Mod+Up    { focus-window-or-workspace-up; }
+    Mod+Down  { focus-window-or-workspace-down; }
+    Mod+Home  { focus-column-first; }
+    Mod+End   { focus-column-last; }
+
+    // Move windows with vim keys
+    Mod+Shift+H { move-column-left; }
+    Mod+Shift+L { move-column-right; }
+    Mod+Shift+K { move-window-up-or-to-workspace-up; }
+    Mod+Shift+J { move-window-down-or-to-workspace-down; }
+
+    // Resize with vim keys
+    Mod+Ctrl+H { set-column-width "-10%"; }
+    Mod+Ctrl+L { set-column-width "+10%"; }
+    Mod+Ctrl+K { set-window-height "-10%"; }
+    Mod+Ctrl+J { set-window-height "+10%"; }
+
+    // Columns: pull a window into / push it out of the neighbouring column
+    Mod+BracketLeft  { consume-or-expel-window-left; }
+    Mod+BracketRight { consume-or-expel-window-right; }
+    Mod+Comma  { consume-window-into-column; }
+    Mod+Period { expel-window-from-column; }
+
+    // Workspaces: Super+[0-9] to switch, Super+Shift+[0-9] to move the window
+    Mod+1 { focus-workspace 1; }
+    Mod+2 { focus-workspace 2; }
+    Mod+3 { focus-workspace 3; }
+    Mod+4 { focus-workspace 4; }
+    Mod+5 { focus-workspace 5; }
+    Mod+6 { focus-workspace 6; }
+    Mod+7 { focus-workspace 7; }
+    Mod+8 { focus-workspace 8; }
+    Mod+9 { focus-workspace 9; }
+    Mod+0 { focus-workspace 10; }
+    Mod+Shift+1 { move-window-to-workspace 1; }
+    Mod+Shift+2 { move-window-to-workspace 2; }
+    Mod+Shift+3 { move-window-to-workspace 3; }
+    Mod+Shift+4 { move-window-to-workspace 4; }
+    Mod+Shift+5 { move-window-to-workspace 5; }
+    Mod+Shift+6 { move-window-to-workspace 6; }
+    Mod+Shift+7 { move-window-to-workspace 7; }
+    Mod+Shift+8 { move-window-to-workspace 8; }
+    Mod+Shift+9 { move-window-to-workspace 9; }
+    Mod+Shift+0 { move-window-to-workspace 10; }
+
+    // Scroll through workspaces with Super + mouse wheel
+    Mod+WheelScrollDown cooldown-ms=150 { focus-workspace-down; }
+    Mod+WheelScrollUp   cooldown-ms=150 { focus-workspace-up; }
+    Mod+WheelScrollRight { focus-column-right; }
+    Mod+WheelScrollLeft  { focus-column-left; }
+
+    // Volume with OSD
+    XF86AudioRaiseVolume allow-when-locked=true { spawn-sh r#"wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%+ && qs ipc call shell showOsdVolume "$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print $2}')""#; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn-sh r#"wpctl set-volume -l 1.0 @DEFAULT_AUDIO_SINK@ 5%- && qs ipc call shell showOsdVolume "$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print $2}')""#; }
+    XF86AudioMute        allow-when-locked=true { spawn-sh r#"wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle && qs ipc call shell showOsdVolume "$(wpctl get-volume @DEFAULT_AUDIO_SINK@ | awk '{print $2}')""#; }
+    XF86AudioMicMute     allow-when-locked=true { spawn-sh r#"wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle && qs ipc call shell showOsdMic "$(wpctl get-volume @DEFAULT_AUDIO_SOURCE@ | grep -q MUTED && echo true || echo false)""#; }
+
+    // Brightness with OSD
+    XF86MonBrightnessUp   allow-when-locked=true { spawn-sh r#"brightnessctl set 5%+ && qs ipc call shell showOsdBrightness "$(brightnessctl -m | cut -d, -f4 | tr -d '%' | awk '{print $1/100}')""#; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn-sh r#"brightnessctl set 5%- && qs ipc call shell showOsdBrightness "$(brightnessctl -m | cut -d, -f4 | tr -d '%' | awk '{print $1/100}')""#; }
+
+    // Media (requires playerctl)
+    XF86AudioNext  allow-when-locked=true { spawn "playerctl" "next"; }
+    XF86AudioPause allow-when-locked=true { spawn "playerctl" "play-pause"; }
+    XF86AudioPlay  allow-when-locked=true { spawn "playerctl" "play-pause"; }
+    XF86AudioPrev  allow-when-locked=true { spawn "playerctl" "previous"; }
+
+    // Screenshot with Gradia (same as Hyprland); niri's own tool on Ctrl+Print
+    Print { spawn "flatpak" "run" "be.alexandervanhee.gradia" "--screenshot=INTERACTIVE"; }
+    Ctrl+Print { screenshot; }
+
+    // Session
+    Mod+Shift+E { quit; }
+    Mod+Shift+P { power-off-monitors; }
+}
+
+
+// ---- WINDOW AND LAYER RULES ----
+// Put the wallpaper inside the overview backdrop and between workspaces.
+layer-rule {
+    match namespace="^wallpaper$"
+    place-within-backdrop true
+}
+
+// Open Firefox picture-in-picture as a floating window
+window-rule {
+    match app-id=r#"firefox$"# title="^Picture-in-Picture$"
+    open-floating true
+}
