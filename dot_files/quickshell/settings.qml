@@ -464,7 +464,7 @@ PanelWindow {
             Repeater {
                 model: [
                     { label: "Shell", value: "Quickshell" },
-                    { label: "Compositor", value: "Hyprland" },
+                    { label: "Compositor", value: Quickshell.env("NIRI_SOCKET") ? "niri" : "Hyprland" },
                     { label: "Theme", value: "Material Design 3 + Tokyonight" }
                 ]
 

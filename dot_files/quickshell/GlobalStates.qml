@@ -2,7 +2,6 @@ pragma Singleton
 
 import QtQuick
 import Quickshell
-import Quickshell.Io
 
 // Centralized state management singleton
 // All global UI states are managed here to prevent scattered state definitions
@@ -17,65 +16,22 @@ Singleton {
     property var leftmostScreen: null
     property var rightmostScreen: null
 
-    // Determine leftmost and rightmost screens using Hyprland monitor data
+    // Determine leftmost and rightmost screens from their positions in the
+    // compositor's global layout (works the same on Hyprland and niri)
     function updateScreenPositions() {
         let screens = Quickshell.screens
         if (!screens || screens.length === 0) return
 
-        // For single monitor, it's both left and right
-        if (screens.length === 1) {
-            leftmostScreen = screens[0]
-            rightmostScreen = screens[0]
-            return
+        let left = screens[0]
+        let right = screens[0]
+        for (let i = 1; i < screens.length; i++) {
+            const s = screens[i]
+            if (s.x < left.x) left = s
+            if (s.x > right.x) right = s
         }
 
-        // Query Hyprland for monitor positions
-        monitorQuery.running = true
-    }
-
-    // Process to get Hyprland monitor info
-    Process {
-        id: monitorQuery
-        command: ["hyprctl", "monitors", "-j"]
-
-        stdout: SplitParser {
-            splitMarker: ""
-            onRead: data => {
-                if (!data || data.trim() === "") return
-
-                try {
-                    const monitors = JSON.parse(data)
-                    let minX = 999999
-                    let maxX = -999999
-                    let leftName = ""
-                    let rightName = ""
-
-                    for (const mon of monitors) {
-                        if (mon.x < minX) {
-                            minX = mon.x
-                            leftName = mon.name
-                        }
-                        if (mon.x > maxX) {
-                            maxX = mon.x
-                            rightName = mon.name
-                        }
-                    }
-
-                    // Find matching Quickshell screens by name
-                    for (let i = 0; i < Quickshell.screens.length; i++) {
-                        const s = Quickshell.screens[i]
-                        if (s.name === leftName) {
-                            root.leftmostScreen = s
-                        }
-                        if (s.name === rightName) {
-                            root.rightmostScreen = s
-                        }
-                    }
-                } catch (e) {
-                    console.log("Failed to parse monitor data:", e)
-                }
-            }
-        }
+        leftmostScreen = left
+        rightmostScreen = right
     }
 
     // Check if a screen is the leftmost

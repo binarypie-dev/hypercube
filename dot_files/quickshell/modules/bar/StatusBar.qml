@@ -48,7 +48,7 @@ PanelWindow {
     }
 
     // Display text for mode indicator (shows all active workspaces when in NORMAL mode)
-    property string modeDisplayText: currentMode === "NORMAL" ? Services.Hyprland.allWorkspaces : currentMode
+    property string modeDisplayText: currentMode === "NORMAL" ? Services.Workspaces.allWorkspaces : currentMode
 
     property color modeColor: {
         if (currentMode === "NORMAL") return Common.Appearance.colors.modeNormal

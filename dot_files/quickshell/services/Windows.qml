@@ -12,8 +12,11 @@ Singleton {
     property int currentIndex: 0
     property bool switcherActive: false
 
-    // Query windows from Hyprland
-    readonly property string windowQueryScript: "hyprctl clients -j"
+    // Query windows from the compositor. On niri, windows and workspaces are
+    // fetched together so each window can be labelled with its workspace number.
+    readonly property string windowQueryScript: Compositor.isNiri
+        ? "printf '{\"windows\":%s,\"workspaces\":%s}' \"$(niri msg -j windows)\" \"$(niri msg -j workspaces)\""
+        : "hyprctl clients -j"
 
     Process {
         id: windowProcess
@@ -30,10 +33,8 @@ Singleton {
 
         onExited: {
             try {
-                const clients = JSON.parse(windowProcess.output)
-                // Filter out hidden windows and sort by focusHistoryID
-                const visible = clients.filter(w => w.mapped && !w.hidden)
-                visible.sort((a, b) => a.focusHistoryID - b.focusHistoryID)
+                const data = JSON.parse(windowProcess.output)
+                const visible = Compositor.isNiri ? root.fromNiri(data) : root.fromHyprland(data)
                 root.windows = visible
 
                 // Pre-fetch icons for all window classes via IconResolver
@@ -48,6 +49,40 @@ Singleton {
             }
             windowProcess.output = ""
         }
+    }
+
+    // Hyprland: filter out hidden windows and sort by focusHistoryID
+    // (0 = currently focused, then most recently focused)
+    function fromHyprland(clients) {
+        const visible = clients.filter(w => w.mapped && !w.hidden)
+        visible.sort((a, b) => a.focusHistoryID - b.focusHistoryID)
+        return visible
+    }
+
+    // niri: map windows to the fields the switcher uses (class, title,
+    // address, workspace.id) and sort most recently focused first.
+    function fromNiri(data) {
+        const wsById = {}
+        for (const ws of data.workspaces) {
+            wsById[ws.id] = ws
+        }
+
+        const focusTime = w => {
+            if (w.is_focused) return Number.MAX_VALUE
+            const t = w.focus_timestamp
+            return t ? t.secs * 1e9 + t.nanos : 0
+        }
+
+        const sorted = data.windows.slice().sort((a, b) => focusTime(b) - focusTime(a))
+        return sorted.map(w => {
+            const ws = w.workspace_id !== null && w.workspace_id !== undefined ? wsById[w.workspace_id] : null
+            return {
+                address: String(w.id),
+                class: w.app_id || "",
+                title: w.title || "",
+                workspace: ws ? { id: ws.idx, name: ws.name || String(ws.idx) } : null
+            }
+        })
     }
 
     Process {
@@ -82,7 +117,9 @@ Singleton {
         }
 
         const window = windows[currentIndex]
-        focusProcess.command = ["hyprctl", "dispatch", "hl.dsp.focus({ window = \"address:" + window.address + "\" })"]
+        focusProcess.command = Compositor.isNiri
+            ? ["niri", "msg", "action", "focus-window", "--id", window.address]
+            : ["hyprctl", "dispatch", "hl.dsp.focus({ window = \"address:" + window.address + "\" })"]
         focusProcess.running = true
         switcherActive = false
     }

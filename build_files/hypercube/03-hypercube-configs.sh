@@ -80,6 +80,21 @@ EOF
 # LuaLS config so editors pick up the hl API stubs in ~/.config/hypr
 install -Dm644 "${CONFIG_DIR}/hypr/.luarc.json" /etc/skel/.config/hypr/.luarc.json
 
+### niri - system config stub that includes the Hypercube defaults
+# niri doesn't honor XDG_CONFIG_DIRS. It reads ~/.config/niri/config.kdl and
+# falls back to /etc/niri/config.kdl, so install a stub there that includes
+# the always-current defaults from /usr/share/hypercube/config/niri.
+# Users customize by creating ~/.config/niri/config.kdl with the same include
+# line followed by their overrides (settings after an include override it).
+install -d /etc/niri
+cat > /etc/niri/config.kdl << 'EOF'
+// Hypercube niri configuration
+// System defaults are included below. To customize, copy this file to
+// ~/.config/niri/config.kdl and add your settings after the include line.
+
+include "/usr/share/hypercube/config/niri/config.kdl"
+EOF
+
 ### Neovim - devcube sandbox overrides
 # The editor config + AI agents ship baked into the devcube podman image
 # (ujust devcube-setup). Users keep ONLY personal plugin overrides here; this

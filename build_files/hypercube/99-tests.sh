@@ -17,6 +17,11 @@ REQUIRED_PACKAGES=(
   "hyprlock"
   "hypridle"
   "quickshell"
+  # niri session
+  "niri"
+  "xwayland-satellite"
+  "swaybg"
+  "xdg-desktop-portal-gnome"
   # Terminals
   "ghostty"
   "zellij"
@@ -57,6 +62,11 @@ REQUIRED_FILES=(
   "/etc/fish/config.fish"
   "/etc/zellij/config.kdl"
   "/usr/share/hypercube/config/starship/starship.toml"
+  "/etc/niri/config.kdl"
+  "/usr/share/hypercube/config/niri/config.kdl"
+  "/usr/share/hypercube/config/niri/hypridle.conf"
+  "/usr/share/hypercube/config/xdg-desktop-portal/niri-portals.conf"
+  "/usr/share/wayland-sessions/niri.desktop"
   # Theming
   "/usr/share/themes/Tokyonight-Dark/gtk-3.0/gtk.css"
   "/usr/share/icons/Tokyonight-Dark/index.theme"
@@ -76,6 +86,13 @@ for file in "${REQUIRED_FILES[@]}"; do
   fi
   echo "  OK: $file exists"
 done
+
+### Validate the niri config (follows the include into /usr/share/hypercube)
+if ! niri validate -c /etc/niri/config.kdl; then
+  echo "ERROR: niri config failed validation!"
+  exit 1
+fi
+echo "  OK: niri config is valid"
 
 ### Check os-release branding
 if ! grep -q "ID=hypercube" /usr/lib/os-release; then
