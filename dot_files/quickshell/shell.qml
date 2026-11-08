@@ -93,26 +93,24 @@ ShellRoot {
 
         function closeAll() {
             GlobalStates.closeAll()
+            // Mod+Escape is the only escape hatch while the switcher holds the
+            // keyboard: bare Escape can't be pressed without releasing Mod,
+            // which commits the selection.
+            Services.Windows.cancelSwitcher()
         }
 
         function startAppSwitcher() {
             Services.Windows.startSwitcher()
         }
 
+        // next/prevWindow open the switcher on first press (already stepping in
+        // the right direction) and cycle on every press after that.
         function nextWindow() {
-            if (Services.Windows.switcherActive) {
-                Services.Windows.nextWindow()
-            } else {
-                Services.Windows.startSwitcher()
-            }
+            Services.Windows.nextWindow()
         }
 
         function prevWindow() {
-            if (Services.Windows.switcherActive) {
-                Services.Windows.prevWindow()
-            } else {
-                Services.Windows.startSwitcher()
-            }
+            Services.Windows.prevWindow()
         }
 
         function selectWindow() {
@@ -182,10 +180,10 @@ ShellRoot {
                     }
                 }
 
-                // App switcher (on active screen only, or primary if none set)
+                // App switcher (on the output that has keyboard focus — niri
+                // only focuses layer surfaces on its active output)
                 Loader {
-                    active: GlobalStates.activeScreen === screenRoot.screen ||
-                            (GlobalStates.activeScreen === null && screenRoot.screen === Quickshell.screens[0])
+                    active: Services.Windows.switcherScreen === screenRoot.screen
                     sourceComponent: Switcher.AppSwitcher {
                         targetScreen: screenRoot.screen
                     }
