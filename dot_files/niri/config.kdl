@@ -54,6 +54,12 @@ layout {
     gaps 10
     center-focused-column "never"
 
+    // The wallpaper lives in the backdrop (see the layer-rule below), which
+    // niri draws *behind* the workspaces. Since niri 25.05 each workspace
+    // paints this color over the backdrop, so it has to be transparent or the
+    // wallpaper is only ever visible in the overview.
+    background-color "transparent"
+
     preset-column-widths {
         proportion 0.33333
         proportion 0.5
@@ -228,7 +234,11 @@ binds {
 
 
 // ---- WINDOW AND LAYER RULES ----
-// Put the wallpaper inside the overview backdrop and between workspaces.
+// Put the wallpaper in the backdrop so it stays stationary instead of
+// scrolling with the workspaces. Requires layout { background-color
+// "transparent" } above, otherwise the workspace paints over it and the
+// wallpaper only shows in the overview. swaybg's namespace is "wallpaper";
+// run `niri msg layers` to check other wallpaper tools.
 layer-rule {
     match namespace="^wallpaper$"
     place-within-backdrop true
