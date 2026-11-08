@@ -4,7 +4,7 @@
 %global debug_package %{nil}
 
 Name:           resterm
-Version:        1.17.2
+Version:        1.18.0
 Release:        1%{?dist}
 Summary:        TUI REST, gRPC, and WebSocket API client
 
@@ -35,6 +35,8 @@ install -Dpm 0755 %{name} %{buildroot}%{_bindir}/%{name}
 %{_bindir}/%{name}
 
 %changelog
+* Sun Nov 08 2026 Hypercube <hypercube@binarypie.dev> - 1.18.0-1
+- Update to 1.18.0
 * Wed Nov 04 2026 Hypercube <hypercube@binarypie.dev> - 1.17.2-1
 - Update to 1.17.2
 - Upstream go.mod requires Go 1.25
