@@ -12,8 +12,6 @@ import "../../services" as Services
 ColumnLayout {
     id: root
     spacing: 0
-    anchors.topMargin: 5
-    anchors.bottomMargin: 5
 
     property var searchResults: []
     property var allApps: []

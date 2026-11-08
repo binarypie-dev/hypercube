@@ -19,6 +19,7 @@ PanelWindow {
     }
 
     color: "transparent"
+    exclusionMode: ExclusionMode.Ignore
 
     // Must be below the actual panels in the layer stack
     WlrLayershell.layer: WlrLayer.Top

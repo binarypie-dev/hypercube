@@ -47,8 +47,8 @@ PanelWindow {
         return "NORMAL"
     }
 
-    // Display text for mode indicator (shows all active workspaces when in NORMAL mode)
-    property string modeDisplayText: currentMode === "NORMAL" ? Services.Workspaces.allWorkspaces : currentMode
+    // Nothing shown in NORMAL mode; only panel modes (APPS, AUDIO, ...) get a label
+    property string modeDisplayText: currentMode === "NORMAL" ? "" : currentMode
 
     property color modeColor: {
         if (currentMode === "NORMAL") return Common.Appearance.colors.modeNormal
@@ -159,6 +159,7 @@ PanelWindow {
 
             // Mode indicator
             Rectangle {
+                visible: root.modeDisplayText !== ""
                 Layout.fillHeight: true
                 Layout.preferredWidth: modeText.implicitWidth + Common.Appearance.spacing.medium * 2
                 color: "transparent"
@@ -215,10 +216,11 @@ PanelWindow {
                 Layout.preferredWidth: root.barHeight
                 color: "transparent"
 
-                property bool isRunning: Services.Updates.preinstallRunning ?? false
-                property bool needsAttention: Services.Updates.needsAttention ?? false
+                property bool isRunning: Services.Updates.checking
+                property bool needsAttention: Services.Updates.needsAttention
 
                 Common.Icon {
+                    id: updateIcon
                     anchors.centerIn: parent
                     name: parent.isRunning
                         ? Common.Icons.icons.refresh
@@ -231,11 +233,13 @@ PanelWindow {
                         : Common.Appearance.colors.fgDark
 
                     RotationAnimation on rotation {
-                        running: Services.Updates.preinstallRunning ?? false
+                        running: Services.Updates.checking
                         from: 0
                         to: 360
                         duration: 1000
                         loops: Animation.Infinite
+                        // Don't leave the idle icon tilted mid-spin
+                        onRunningChanged: if (!running) updateIcon.rotation = 0
                     }
                 }
 

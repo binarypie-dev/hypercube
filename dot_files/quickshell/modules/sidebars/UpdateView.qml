@@ -12,8 +12,6 @@ import "../../services" as Services
 ColumnLayout {
     id: root
     spacing: Common.Appearance.spacing.medium
-    anchors.topMargin: 5
-    anchors.bottomMargin: 5
 
     // Header
     Text {
@@ -48,13 +46,17 @@ ColumnLayout {
 
                 // Status icon
                 Common.Icon {
-                    name: Services.Updates.updateCount > 0
-                        ? Common.Icons.icons.download
-                        : Common.Icons.icons.checkCircle
+                    name: Services.Updates.error !== ""
+                        ? Common.Icons.icons.warning
+                        : (Services.Updates.needsAttention
+                            ? Common.Icons.icons.download
+                            : Common.Icons.icons.checkCircle)
                     size: 20
-                    color: Services.Updates.updateCount > 0
-                        ? Common.Appearance.colors.cyan
-                        : Common.Appearance.colors.green
+                    color: Services.Updates.error !== ""
+                        ? Common.Appearance.colors.yellow
+                        : (Services.Updates.needsAttention
+                            ? Common.Appearance.colors.cyan
+                            : Common.Appearance.colors.green)
                 }
 
                 ColumnLayout {
@@ -62,18 +64,22 @@ ColumnLayout {
                     spacing: 2
 
                     Text {
-                        text: Services.Updates.updateCount > 0
-                            ? "[" + Services.Updates.updateCount + " updates available]"
+                        text: Services.Updates.checking ? "[Checking]"
+                            : Services.Updates.error !== "" ? "[Check failed]"
+                            : Services.Updates.updateCount > 0 ? "[Update available]"
+                            : Services.Updates.rebootRequired ? "[Reboot required]"
                             : "[System up to date]"
                         font.family: Common.Appearance.fonts.mono
                         font.pixelSize: Common.Appearance.fontSize.normal
                         font.bold: true
-                        color: Services.Updates.updateCount > 0
+                        color: Services.Updates.needsAttention
                             ? Common.Appearance.colors.cyan
                             : Common.Appearance.colors.fg
                     }
 
                     Text {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
                         text: Services.Updates.summary()
                         font.family: Common.Appearance.fonts.mono
                         font.pixelSize: Common.Appearance.fontSize.small
@@ -87,6 +93,17 @@ ColumnLayout {
                     enabled: !Services.Updates.checking
                     onClicked: Services.Updates.checkUpdates()
                 }
+            }
+
+            // Image being tracked
+            Text {
+                Layout.fillWidth: true
+                visible: Services.Updates.imageRef !== ""
+                text: "Image: " + Services.Updates.imageRef
+                elide: Text.ElideMiddle
+                font.family: Common.Appearance.fonts.mono
+                font.pixelSize: Common.Appearance.fontSize.small
+                color: Common.Appearance.colors.comment
             }
 
             // Last checked

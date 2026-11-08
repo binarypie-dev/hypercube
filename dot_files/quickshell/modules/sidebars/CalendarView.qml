@@ -10,11 +10,9 @@ import "../../" as Root
 // Calendar view - TUI style
 Flickable {
     id: root
-    contentHeight: contentColumn.height + 10
+    contentHeight: contentColumn.height
     clip: true
     boundsBehavior: Flickable.StopAtBounds
-    topMargin: 5
-    bottomMargin: 5
 
     ScrollBar.vertical: ScrollBar {
         policy: ScrollBar.AsNeeded

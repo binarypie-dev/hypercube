@@ -10,8 +10,6 @@ import "../../" as Root
 ColumnLayout {
     id: root
     spacing: Common.Appearance.spacing.medium
-    anchors.topMargin: 5
-    anchors.bottomMargin: 5
 
     property bool editingLocation: false
     property string pendingLocation: Common.Config.weatherLocation

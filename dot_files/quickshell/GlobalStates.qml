@@ -109,7 +109,7 @@ Singleton {
         }
     }
 
-    // Super key tracking (for workspace numbers, etc.)
+    // Super key tracking
     property bool superDown: false
     property bool superReleaseMightTrigger: false
 

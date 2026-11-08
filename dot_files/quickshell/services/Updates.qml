@@ -4,117 +4,160 @@ import QtQuick
 import Quickshell
 import Quickshell.Io
 
-// System updates management
+// System image update checker for bootc / rpm-ostree systems.
+//
+// Flow (all unprivileged, no polkit prompts):
+//   1. `rpm-ostree status --json` -> booted image ref + digest, staged deployment
+//   2. `skopeo inspect` on that ref -> digest currently published in the registry
+//   3. Compare: same digest = up to date; staged digest matches = reboot to apply;
+//      otherwise an update is available.
 Singleton {
     id: root
 
-    // System update status
     property bool checking: false
     property int updateCount: 0
     property var updates: []
     property string lastChecked: ""
     property string error: ""
 
-    // Whether we need user attention
-    property bool needsAttention: updateCount > 0
+    // Image info
+    property string imageRef: ""        // e.g. ghcr.io/binarypie/hypercube:latest
+    property string bootedDigest: ""
+    property string remoteDigest: ""
+    property bool rebootRequired: false // a newer deployment is already staged
 
-    // Update query script
-    readonly property string updateQueryScript: "
-        if command -v rpm-ostree &>/dev/null; then
-            STATUS=$(rpm-ostree status --json 2>/dev/null)
-            if echo \"$STATUS\" | grep -q '\"pending\"'; then
-                echo \"updateCount=1\"
-                echo \"update:System update available\"
-            else
-                UPDATES=$(rpm-ostree upgrade --check 2>/dev/null | grep -c \"Diff\" || echo \"0\")
-                echo \"updateCount=$UPDATES\"
-            fi
+    property bool needsAttention: updateCount > 0 || rebootRequired
 
-        elif command -v dnf &>/dev/null; then
-            UPDATES=$(dnf check-update --quiet 2>/dev/null | grep -c \"^[a-zA-Z]\" || echo \"0\")
-            echo \"updateCount=$UPDATES\"
+    // Turn an ostree container ref into something skopeo understands.
+    //   ostree-image-signed:docker://ghcr.io/x/y:tag   -> ghcr.io/x/y:tag
+    //   ostree-unverified-registry:ghcr.io/x/y:tag     -> ghcr.io/x/y:tag
+    //   ostree-remote-image:remote:docker://ghcr.io/.. -> ghcr.io/..
+    function normalizeRef(ref: string): string {
+        if (!ref) return ""
+        const docker = ref.indexOf("docker://")
+        if (docker !== -1) return ref.substring(docker + 9)
+        const registry = ref.lastIndexOf("registry:")
+        if (registry !== -1) return ref.substring(registry + 9)
+        return ""
+    }
 
-        elif command -v apt &>/dev/null; then
-            apt update -qq 2>/dev/null
-            UPDATES=$(apt list --upgradable 2>/dev/null | grep -c \"upgradable\" || echo \"0\")
-            echo \"updateCount=$UPDATES\"
+    function finish(err: string) {
+        root.error = err
+        root.checking = false
+        root.lastChecked = Qt.formatDateTime(new Date(), "yyyy-MM-dd HH:mm")
 
-        elif command -v pacman &>/dev/null; then
-            UPDATES=$(checkupdates 2>/dev/null | wc -l || echo \"0\")
-            echo \"updateCount=$UPDATES\"
+        const list = []
+        if (root.updateCount > 0) list.push("New image available: " + root.imageRef)
+        if (root.rebootRequired) list.push("Update staged — reboot to apply")
+        root.updates = list
+    }
 
-        else
-            echo \"updateCount=0\"
-        fi
-
-        echo \"lastChecked=$(date '+%Y-%m-%d %H:%M')\"
-    "
+    property string stagedDigest: ""
 
     Process {
-        id: updateProcess
-        command: ["sh", "-c", root.updateQueryScript]
-        running: false
-        onExited: root.parseUpdateOutput()
-        onRunningChanged: {
-            if (running) checking = true
+        id: statusProcess
+        command: ["rpm-ostree", "status", "--json"]
+        stdout: StdioCollector {
+            id: statusOut
+        }
+        onExited: (exitCode) => {
+            if (exitCode !== 0) {
+                root.finish("rpm-ostree status failed (" + exitCode + ")")
+                return
+            }
+            try {
+                const data = JSON.parse(statusOut.text)
+                const deployments = data.deployments || []
+                const booted = deployments.find(d => d.booted)
+                const staged = deployments.find(d => d.staged)
+
+                if (!booted) {
+                    root.finish("No booted deployment found")
+                    return
+                }
+
+                root.imageRef = root.normalizeRef(booted["container-image-reference"] || "")
+                root.bootedDigest = booted["container-image-reference-digest"] || ""
+                root.stagedDigest = staged ? (staged["container-image-reference-digest"] || "") : ""
+                root.rebootRequired = !!staged
+
+                if (!root.imageRef) {
+                    root.updateCount = 0
+                    root.finish("Booted deployment is not a container image")
+                    return
+                }
+
+                inspectProcess.command = ["skopeo", "inspect", "--retry-times", "2",
+                                          "--format", "{{.Digest}}",
+                                          "docker://" + root.imageRef]
+                inspectProcess.running = true
+            } catch (e) {
+                root.finish("Failed to parse rpm-ostree status: " + e)
+            }
         }
     }
 
-    function parseUpdateOutput() {
-        checking = false
-        error = ""
-
-        const output = updateProcess.stdout || ""
-        const lines = output.split("\n")
-        const newUpdates = []
-
-        for (const line of lines) {
-            if (line.startsWith("update:")) {
-                newUpdates.push(line.substring(7))
-                continue
-            }
-
-            const idx = line.indexOf("=")
-            if (idx === -1) continue
-
-            const key = line.substring(0, idx).trim()
-            const value = line.substring(idx + 1).trim()
-
-            switch (key) {
-                case "updateCount":
-                    updateCount = parseInt(value) || 0
-                    break
-                case "lastChecked":
-                    lastChecked = value
-                    break
-            }
+    Process {
+        id: inspectProcess
+        stdout: StdioCollector {
+            id: inspectOut
         }
+        stderr: StdioCollector {
+            id: inspectErr
+        }
+        onExited: (exitCode) => {
+            if (exitCode !== 0) {
+                // Offline or registry error: still report a staged update if any
+                root.updateCount = 0
+                const msg = inspectErr.text.trim().split("\n").pop() || ("exit " + exitCode)
+                root.finish("Registry check failed: " + msg)
+                return
+            }
 
-        updates = newUpdates
+            root.remoteDigest = inspectOut.text.trim()
+
+            if (root.remoteDigest === root.bootedDigest) {
+                // Running the latest image; anything staged is stale/rollback
+                root.updateCount = 0
+                root.rebootRequired = false
+            } else if (root.remoteDigest === root.stagedDigest) {
+                // Latest image already downloaded and staged
+                root.updateCount = 0
+                root.rebootRequired = true
+            } else {
+                root.updateCount = 1
+            }
+            root.finish("")
+        }
     }
 
-    // Check for updates
     function checkUpdates() {
-        if (!checking) {
-            updateProcess.running = true
-        }
+        if (root.checking) return
+        root.checking = true
+        root.error = ""
+        statusProcess.running = true
     }
 
-    // Auto-check timer (every 6 hours)
+    // Auto-check: shortly after startup (network may not be up yet), then every 6 hours
     Timer {
         interval: 6 * 60 * 60 * 1000
         running: true
         repeat: true
-        triggeredOnStart: true
-        onTriggered: checkUpdates()
+        onTriggered: root.checkUpdates()
     }
 
-    // Summary string
+    Timer {
+        interval: 30 * 1000
+        running: true
+        repeat: false
+        onTriggered: root.checkUpdates()
+    }
+
     function summary(): string {
         if (checking) return "Checking for updates..."
-        if (error) return "Error checking updates"
-        if (updateCount === 0) return "System is up to date"
-        if (updateCount === 1) return "1 update available"
-        return updateCount + " updates available"
+        if (error) return error
+        if (rebootRequired) return "Update staged — reboot to apply"
+        if (updateCount > 0) return "New system image available"
+        return "System is up to date"
     }
 }

@@ -60,8 +60,15 @@ ShellRoot {
 
         function toggleSidebarRight() {
             // Right sidebar always opens on rightmost screen
+            // Right sidebar always opens on rightmost screen with notifications
+            // view (same as clicking the bell)
             GlobalStates.activeScreen = GlobalStates.rightmostScreen || Quickshell.screens[0]
-            GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen
+            if (GlobalStates.sidebarRightOpen && GlobalStates.sidebarRightView === "notifications") {
+                GlobalStates.sidebarRightOpen = false
+            } else {
+                GlobalStates.sidebarRightView = "notifications"
+                GlobalStates.sidebarRightOpen = true
+            }
         }
 
         function showOsdVolume(value: real) {

@@ -15,4 +15,3 @@ singleton Privacy 1.0 Privacy.qml
 singleton Updates 1.0 Updates.qml
 singleton Weather 1.0 Weather.qml
 singleton Windows 1.0 Windows.qml
-singleton Workspaces 1.0 Workspaces.qml

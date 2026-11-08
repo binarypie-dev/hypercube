@@ -21,8 +21,9 @@ PanelWindow {
         right: true
     }
 
-    // Flush to all edges (status bar is on overlay layer above)
-    margins.top: 0
+    // Start below the status bar. exclusionMode is Ignore, so margins are
+    // measured from the screen edge and the bar's zone isn't applied for us.
+    margins.top: Common.Appearance.sizes.barHeight
     margins.bottom: 5
     margins.right: 0
 
@@ -30,6 +31,10 @@ PanelWindow {
     color: "transparent"
 
     visible: Root.GlobalStates.sidebarRightOpen
+
+    // Float over windows: don't reserve an exclusive zone, otherwise niri
+    // (and Hyprland) shrink/re-tile every window each time the sidebar opens.
+    exclusionMode: ExclusionMode.Ignore
 
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.OnDemand
     WlrLayershell.layer: WlrLayer.Overlay
@@ -137,13 +142,14 @@ PanelWindow {
             }
         }
 
-        // Content area - positioned below status bar and above bottom border
+        // Content area - shared breathing room above/below every view so
+        // titles don't sit flush against the top edge
         Item {
             anchors.fill: parent
-            anchors.topMargin: 1
+            anchors.topMargin: Common.Appearance.spacing.medium
             anchors.leftMargin: Common.Appearance.spacing.medium
             anchors.rightMargin: 0
-            anchors.bottomMargin: 1
+            anchors.bottomMargin: Common.Appearance.spacing.medium
             clip: true
 
             // Network View
