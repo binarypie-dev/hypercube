@@ -18,6 +18,14 @@ Singleton {
     // stays on screen forever.
     property string focusedOutput: ""
 
+    // Screen object for focusedOutput (null until known)
+    readonly property var focusedScreen: {
+        for (const s of Quickshell.screens) {
+            if (s.name === root.focusedOutput) return s
+        }
+        return null
+    }
+
     // Latched when the switcher opens so a focus change mid-switch cannot pull
     // the overlay out from under the user.
     property string switcherOutput: ""

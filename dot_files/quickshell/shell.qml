@@ -8,12 +8,10 @@ import Quickshell.Io
 import Quickshell.Wayland
 import Quickshell.Services.Notifications
 
-import "modules/common" as Common
 import "modules/bar" as Bar
 import "modules/osd" as Osd
-import "modules/sidebars" as Sidebars
+import "modules/hub" as Hub
 import "modules/notifications" as NotificationsModule
-import "modules/switcher" as Switcher
 import "services" as Services
 
 ShellRoot {
@@ -21,6 +19,47 @@ ShellRoot {
 
     Component.onCompleted: {
         console.log("Hypercube Shell starting...")
+    }
+
+    // Hub always opens on the focused output on niri (it only gives
+    // keyboard focus to layer surfaces there); otherwise keep it where it
+    // last was, falling back to the first screen.
+    function hubTarget() {
+        return (Services.Compositor.isNiri && Services.Windows.focusedScreen)
+            || GlobalStates.hubScreen || Quickshell.screens[0]
+    }
+
+    // The window switcher is the hub's "windows" tab: Mod+Tab starts a
+    // switcher session (Services.Windows), which opens the hub there; ending
+    // the session (select/cancel) closes it, and closing the hub or leaving
+    // the tab cancels the session.
+    Connections {
+        target: Services.Windows
+        function onSwitcherActiveChanged() {
+            if (Services.Windows.switcherActive) {
+                if (GlobalStates.hubOpen) {
+                    GlobalStates.hubTab = "windows"
+                } else {
+                    GlobalStates.openHub(Services.Windows.switcherScreen, "windows")
+                }
+            } else if (GlobalStates.hubOpen && GlobalStates.hubTab === "windows") {
+                GlobalStates.closeAll()
+            }
+        }
+    }
+
+    Connections {
+        target: GlobalStates
+        function onHubOpenChanged() {
+            if (!GlobalStates.hubOpen && Services.Windows.switcherActive) {
+                Services.Windows.cancelSwitcher()
+            }
+        }
+        function onHubTabChanged() {
+            if (GlobalStates.hubTab !== "windows" && Services.Windows.switcherActive) {
+                Services.Windows.cancelSwitcher()
+            }
+        }
     }
 
     // Notification server
@@ -41,27 +80,32 @@ ShellRoot {
 
     // IPC Handler for external commands
     // Use: qs ipc call shell <function> [args]
-    // Example: qs ipc call shell toggleSidebarLeft
+    // Example: qs ipc call shell toggleHub
     IpcHandler {
         target: "shell"
 
-        function toggleSidebarLeft() {
-            // Left sidebar always opens on leftmost screen with apps view
-            GlobalStates.activeScreen = GlobalStates.leftmostScreen || Quickshell.screens[0]
-            if (GlobalStates.sidebarLeftOpen && GlobalStates.sidebarLeftView === "apps") {
-                // Already showing apps, close it
-                GlobalStates.sidebarLeftOpen = false
+        // Mod+Space: open the hub on the apps tab, or close it if open
+        function toggleHub() {
+            if (GlobalStates.hubOpen) {
+                GlobalStates.closeAll()
             } else {
-                // Open and switch to apps view
-                GlobalStates.sidebarLeftView = "apps"
-                GlobalStates.sidebarLeftOpen = true
+                GlobalStates.openHub(root.hubTarget(), "apps")
             }
         }
 
+        // Open the hub straight to a tab (apps, notifications, audio, network,
+        // bluetooth, calendar, weather, power, updates); toggles if already there
+        function toggleHubTab(tab: string) {
+            GlobalStates.toggleHub(root.hubTarget(), tab)
+        }
+
+        // Compatibility aliases for older keybindings
+        function toggleSidebarLeft() {
+            toggleHubTab("apps")
+        }
+
         function toggleSidebarRight() {
-            // Right sidebar always opens on rightmost screen
-            GlobalStates.activeScreen = GlobalStates.rightmostScreen || Quickshell.screens[0]
-            GlobalStates.sidebarRightOpen = !GlobalStates.sidebarRightOpen
+            toggleHubTab("notifications")
         }
 
         function showOsdVolume(value: real) {
@@ -146,27 +190,10 @@ ShellRoot {
                     }
                 }
 
-                // Click catcher for sidebars (on ALL screens when any sidebar is open)
+                // Centered hub (single instance, on the screen it was opened on)
                 Loader {
-                    active: GlobalStates.sidebarLeftOpen || GlobalStates.sidebarRightOpen
-                    sourceComponent: Common.ClickCatcher {
-                        targetScreen: screenRoot.screen
-                        onClicked: GlobalStates.closeAll()
-                    }
-                }
-
-                // Left sidebar (only on leftmost screen)
-                Loader {
-                    active: GlobalStates.isLeftmostScreen(screenRoot.screen)
-                    sourceComponent: Sidebars.SidebarLeft {
-                        targetScreen: screenRoot.screen
-                    }
-                }
-
-                // Right sidebar (only on rightmost screen)
-                Loader {
-                    active: GlobalStates.isRightmostScreen(screenRoot.screen)
-                    sourceComponent: Sidebars.SidebarRight {
+                    active: screenRoot.screen === (GlobalStates.hubScreen || Quickshell.screens[0])
+                    sourceComponent: Hub.Hub {
                         targetScreen: screenRoot.screen
                     }
                 }
@@ -176,15 +203,6 @@ ShellRoot {
                     active: GlobalStates.activeScreen === screenRoot.screen ||
                             (GlobalStates.activeScreen === null && screenRoot.screen === Quickshell.screens[0])
                     sourceComponent: NotificationsModule.NotificationPopup {
-                        targetScreen: screenRoot.screen
-                    }
-                }
-
-                // App switcher (on the output that has keyboard focus — niri
-                // only focuses layer surfaces on its active output)
-                Loader {
-                    active: Services.Windows.switcherScreen === screenRoot.screen
-                    sourceComponent: Switcher.AppSwitcher {
                         targetScreen: screenRoot.screen
                     }
                 }

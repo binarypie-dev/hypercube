@@ -4,7 +4,6 @@ singleton Appearance 1.0 Appearance.qml
 singleton Config 1.0 Config.qml
 singleton Directories 1.0 Directories.qml
 singleton Icons 1.0 Icons.qml
-ClickCatcher 1.0 ClickCatcher.qml
 Icon 1.0 Icon.qml
 TuiPanel 1.0 TuiPanel.qml
 TuiToggle 1.0 TuiToggle.qml
@@ -15,3 +14,4 @@ TuiList 1.0 TuiList.qml
 TuiListItem 1.0 TuiListItem.qml
 TuiCard 1.0 TuiCard.qml
 TuiProgress 1.0 TuiProgress.qml
+TrayBar 1.0 TrayBar.qml

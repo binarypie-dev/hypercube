@@ -81,4 +81,13 @@ Singleton {
     }
 
     Component.onCompleted: update()
+
+    // Self-updating clock (the status bar used to drive this)
+    Timer {
+        interval: 1000
+        running: true
+        repeat: true
+        triggeredOnStart: true
+        onTriggered: root.update()
+    }
 }

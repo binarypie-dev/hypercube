@@ -105,6 +105,7 @@ echo "  OK: os-release branding applied"
 REQUIRED_SERVICES=(
   "greetd.service"
   "NetworkManager.service"
+  "hypercube-wifi-resume.service"
 )
 
 for svc in "${REQUIRED_SERVICES[@]}"; do

@@ -12,8 +12,6 @@ import "../../services" as Services
 ColumnLayout {
     id: root
     spacing: 0
-    anchors.topMargin: 5
-    anchors.bottomMargin: 5
 
     property var searchResults: []
     property var allApps: []
@@ -75,14 +73,6 @@ ColumnLayout {
                     if (appListView.currentIndex >= 0 && appListView.currentIndex < appListView.count) {
                         const apps = root.isSearching ? searchResults : allApps
                         launchApp(apps[appListView.currentIndex])
-                    }
-                }
-
-                Keys.onEscapePressed: {
-                    if (text !== "") {
-                        text = ""
-                    } else {
-                        Root.GlobalStates.sidebarLeftOpen = false
                     }
                 }
 
@@ -309,7 +299,7 @@ ColumnLayout {
         }
         appLaunchProcess.startDetached()
 
-        Root.GlobalStates.sidebarLeftOpen = false
+        Root.GlobalStates.closeAll()
         searchInput.text = ""
     }
 
@@ -320,8 +310,8 @@ ColumnLayout {
 
     Connections {
         target: Root.GlobalStates
-        function onSidebarLeftOpenChanged() {
-            if (Root.GlobalStates.sidebarLeftOpen) {
+        function onHubOpenChanged() {
+            if (Root.GlobalStates.hubOpen) {
                 if (root.allApps.length === 0) {
                     root.retryCount = 0
                     root.loadAllApps()
@@ -331,6 +321,16 @@ ColumnLayout {
                 searchResults = []
             }
         }
+    }
+
+    // Called by the hub on Escape: clear the query first; returns true if
+    // it consumed the key, false to let the hub close
+    function handleEscape(): bool {
+        if (searchInput.text !== "") {
+            searchInput.text = ""
+            return true
+        }
+        return false
     }
 
     function focusSearch() {

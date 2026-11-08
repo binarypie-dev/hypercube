@@ -11,8 +11,6 @@ import "../../" as Root
 ColumnLayout {
     id: root
     spacing: Common.Appearance.spacing.medium
-    anchors.topMargin: 5
-    anchors.bottomMargin: 5
 
     Component.onCompleted: Services.BluetoothStatus.refresh()
 

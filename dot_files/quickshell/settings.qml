@@ -386,9 +386,11 @@ PanelWindow {
 
             Repeater {
                 model: [
-                    { key: "Super + Space", action: "Open launcher" },
-                    { key: "Super + N", action: "Toggle notifications sidebar" },
-                    { key: "Super + A", action: "Toggle app launcher sidebar" },
+                    { key: "Super + Space", action: "Open hub (apps & quick settings)" },
+                    { key: "Super + N", action: "Open hub on notifications" },
+                    { key: "Tab / Shift + Tab", action: "Next / previous hub tab" },
+                    { key: "Ctrl + 1-9", action: "Jump to hub tab" },
+                    { key: "Super + Tab", action: "Open hub on windows / next window" },
                     { key: "Super + Escape", action: "Close all panels" },
                     { key: "Volume Keys", action: "Adjust volume" },
                     { key: "Brightness Keys", action: "Adjust brightness" }
