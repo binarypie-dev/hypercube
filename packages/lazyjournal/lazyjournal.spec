@@ -24,6 +24,9 @@ browsing and filtering logs from multiple sources.
 %autosetup -n %{name}-%{version}
 
 %build
+# Upstream go.mod may require a newer Go than the chroot ships; let Go fetch
+# the required toolchain (internet access is already enabled for this package)
+export GOTOOLCHAIN=auto
 go build -ldflags "-X main.version=%{version}" -o %{name}
 
 %install
@@ -41,5 +44,5 @@ install -Dpm 0755 %{name} %{buildroot}%{_bindir}/%{name}
 - Update to 0.8.6
 * Fri Feb 06 2026 Hypercube <hypercube@binarypie.dev> - 0.8.5-1
 - Update to 0.8.5
-* Thu Jan 30 2026 Hypercube <hypercube@binarypie.dev> - 0.8.4-1
+* Fri Jan 30 2026 Hypercube <hypercube@binarypie.dev> - 0.8.4-1
 - Initial package for Hypercube
