@@ -37,6 +37,14 @@ input {
     focus-follows-mouse
 }
 
+// No top-left hot corner: the overview is keyboard-only (Mod+O).
+// Touchpad gestures stay enabled.
+gestures {
+    hot-corners {
+        off
+    }
+}
+
 
 // ---- OUTPUTS ----
 // Monitors use their preferred mode and auto scale by default.

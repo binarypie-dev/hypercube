@@ -38,6 +38,9 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     WlrLayershell.namespace: "hub"
 
+    // Very slight see-through on the panel and its title bar
+    readonly property real panelOpacity: 0.9
+
     readonly property var tabs: Root.GlobalStates.hubTabs
     readonly property string currentTab: Root.GlobalStates.hubTab
     readonly property color modeColor: Root.GlobalStates.currentHubTab.insert
@@ -132,7 +135,16 @@ PanelWindow {
     // the focused search box sees the key.
     Item {
         Shortcut { sequences: ["Tab", "Ctrl+L"]; onActivated: Root.GlobalStates.cycleHubTab(1) }
-        Shortcut { sequences: ["Backtab", "Shift+Tab", "Ctrl+H"]; onActivated: Root.GlobalStates.cycleHubTab(-1) }
+        // Qt delivers Shift+Tab as Key_Backtab+Shift and matches it against
+        // several equivalent forms; if more than one registered sequence
+        // matches, Qt only emits activatedAmbiguously (not activated), so
+        // handle both or Shift+Tab silently does nothing.
+        Shortcut {
+            sequences: ["Shift+Tab", "Backtab"]
+            onActivated: Root.GlobalStates.cycleHubTab(-1)
+            onActivatedAmbiguously: Root.GlobalStates.cycleHubTab(-1)
+        }
+        Shortcut { sequence: "Ctrl+H"; onActivated: Root.GlobalStates.cycleHubTab(-1) }
         Shortcut { sequence: "Escape"; onActivated: root.handleEscape() }
         Shortcut { sequence: "Ctrl+1"; onActivated: root.jumpTo(0) }
         Shortcut { sequence: "Ctrl+2"; onActivated: root.jumpTo(1) }
@@ -222,14 +234,19 @@ PanelWindow {
     Rectangle {
         id: panel
         anchors.centerIn: parent
-        width: Math.min(parent.width * 0.9, 760)
-        height: Math.min(parent.height * 0.8, 620)
+        // Size from the screen height and keep a fixed 16:10 shape, so the
+        // panel looks the same on any monitor (and doesn't balloon on
+        // ultrawides). Values are logical pixels, so HiDPI scaling is
+        // already accounted for. ~1080p: 594x950, 1440p+: 680x1088.
+        readonly property real aspect: 1.6
+        height: Math.min(Math.max(parent.height * 0.55, 520), 680, parent.height * 0.9)
+        width: Math.min(height * aspect, parent.width * 0.9)
         radius: Common.Appearance.rounding.tiny
         color: Qt.rgba(
             Common.Appearance.colors.bgDark.r,
             Common.Appearance.colors.bgDark.g,
             Common.Appearance.colors.bgDark.b,
-            0.96
+            root.panelOpacity
         )
         border.width: Common.Appearance.borderWidth.thin
         border.color: Common.Appearance.colors.border
@@ -248,7 +265,12 @@ PanelWindow {
             Rectangle {
                 Layout.fillWidth: true
                 Layout.preferredHeight: 32
-                color: Common.Appearance.colors.bgHighlight
+                color: Qt.rgba(
+                    Common.Appearance.colors.bgHighlight.r,
+                    Common.Appearance.colors.bgHighlight.g,
+                    Common.Appearance.colors.bgHighlight.b,
+                    root.panelOpacity
+                )
 
                 // Mode-colored underline across the title bar
                 Rectangle {
