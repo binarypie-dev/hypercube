@@ -1,0 +1,23 @@
+#!/usr/bin/bash
+# Kick a WiFi rescan after resume.
+#
+# NetworkManager's iwd backend doesn't reliably rescan after suspend, so saved
+# networks aren't "visible" and autoconnect never fires until something asks
+# for a scan (opening wifitui, hitting refresh in the shell, ...). Request
+# scans for a short while until a WiFi device comes back up.
+set -u
+
+command -v nmcli >/dev/null || exit 0
+[ "$(nmcli radio wifi 2>/dev/null)" = "enabled" ] || exit 0
+nmcli -t -f TYPE device 2>/dev/null | grep -qx wifi || exit 0
+
+for _ in 1 2 3 4 5 6; do
+    if nmcli -t -f TYPE,STATE device 2>/dev/null | grep -qx 'wifi:connected'; then
+        exit 0
+    fi
+    # Fails harmlessly if a scan is already running or the device isn't ready yet
+    nmcli device wifi rescan 2>/dev/null || true
+    sleep 5
+done
+
+exit 0

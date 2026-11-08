@@ -1,0 +1,12 @@
+[Unit]
+Description=Hypercube WiFi rescan after resume
+# Runs once the system is back from sleep (pulled in by the sleep targets below)
+After=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
+After=NetworkManager.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/hypercube-wifi-resume
+
+[Install]
+WantedBy=suspend.target hibernate.target hybrid-sleep.target suspend-then-hibernate.target
