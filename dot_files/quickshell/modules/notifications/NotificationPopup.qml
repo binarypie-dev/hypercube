@@ -77,7 +77,7 @@ PanelWindow {
             MouseArea {
                 anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: Root.GlobalStates.toggleSidebarRight(root.targetScreen, "notifications")
+                onClicked: Root.GlobalStates.openHub(root.targetScreen, "notifications")
             }
         }
     }

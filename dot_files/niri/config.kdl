@@ -130,8 +130,9 @@ binds {
     // Apps and shell
     Mod+Q hotkey-overlay-title="Terminal: ghostty" { spawn "ghostty"; }
     Mod+E hotkey-overlay-title="File manager" { spawn "files"; }
-    Mod+R hotkey-overlay-title="Launcher" { spawn "qs" "ipc" "call" "shell" "toggleSidebarLeft"; }
-    Mod+N hotkey-overlay-title="Notifications / quick settings" { spawn "qs" "ipc" "call" "shell" "toggleSidebarRight"; }
+    // Hub: launcher, quick settings and windows as tabs (Tab / Ctrl+1-9 inside)
+    Mod+Space hotkey-overlay-title="Hub: apps" { spawn "qs" "ipc" "call" "shell" "toggleHub"; }
+    Mod+N hotkey-overlay-title="Hub: notifications" { spawn "qs" "ipc" "call" "shell" "toggleHubTab" "notifications"; }
     Mod+Escape hotkey-overlay-title="Close all panels" { spawn "qs" "ipc" "call" "shell" "closeAll"; }
     Mod+Ctrl+Escape hotkey-overlay-title="Lock screen" { spawn-sh "pidof hyprlock || hyprlock"; }
 

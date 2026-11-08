@@ -16,8 +16,7 @@
 -- - Vim-like navigation: SUPER + h/j/k/l (left/down/up/right)
 -- - Move windows: SUPER + SHIFT + h/j/k/l
 -- - Resize windows: SUPER + CTRL + h/j/k/l
--- - App launcher: SUPER + R (opens left sidebar with search)
--- - Quick settings: SUPER + N (opens right sidebar)
+-- - Hub (apps + quick settings): SUPER + SPACE, notifications: SUPER + N, windows: SUPER + TAB
 --
 -- #######################################################################################
 
@@ -43,7 +42,7 @@ hl.monitor({ output = "", mode = "preferred", position = "auto", scale = "auto" 
 -- Set programs that you use
 local terminal    = "ghostty"
 local fileManager = "files"
-local menu        = "qs ipc call shell toggleSidebarLeft"
+local menu        = "qs ipc call shell toggleHub"
 
 
 -------------------
@@ -282,9 +281,8 @@ hl.bind(mainMod .. " + C", hl.dsp.window.close())
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd(fileManager))
 hl.bind(mainMod .. " + V", hl.dsp.window.float({ action = "toggle" }))
 hl.bind(mainMod .. " + F", hl.dsp.window.fullscreen({ mode = "fullscreen" })) -- Fullscreen
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(menu))
--- hl.bind(mainMod .. " + A", hl.dsp.exec_cmd("qs ipc call shell toggleSidebarLeft")) -- Removed - use SUPER+R instead
-hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs ipc call shell toggleSidebarRight")) -- Notifications/quick settings
+hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd(menu)) -- Hub: apps & quick settings (Tab / Ctrl+1-9 inside)
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("qs ipc call shell toggleHubTab notifications")) -- Hub: notifications
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("qs ipc call shell closeAll"))      -- Close all panels
 hl.bind(mainMod .. " + P", hl.dsp.window.pseudo())          -- dwindle
 hl.bind(mainMod .. " + S", hl.dsp.layout("togglesplit"))    -- dwindle
@@ -395,5 +393,5 @@ hl.layer_rule({ match = { namespace = "quickshell" }, blur = true })
 hl.layer_rule({ match = { namespace = "quickshell" }, ignore_alpha = 0 })
 hl.layer_rule({ match = { namespace = "quickshell" }, animation = "slide" })
 
--- App switcher layer rules
-hl.layer_rule({ match = { namespace = "appswitcher" }, animation = "fade" })
+-- Hub (launcher / quick settings / window switcher) layer rules
+hl.layer_rule({ match = { namespace = "hub" }, animation = "fade" })

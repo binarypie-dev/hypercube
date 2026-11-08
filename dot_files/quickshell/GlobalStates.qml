@@ -70,15 +70,36 @@ Singleton {
         updateScreenPositions()
     }
 
-    // Sidebar visibility
-    property bool sidebarLeftOpen: false
-    property bool sidebarRightOpen: false
+    // Centered hub (launcher, quick settings, window switcher), opened with
+    // Mod+Space (apps), Mod+N (notifications) or Mod+Tab (windows).
+    // Tabs in display order (left to right; Tab / Ctrl+1-9 follow it); `mode` is the label shown in the status bar and
+    // `insert` picks the insert-mode (green) accent over visual (purple).
+    readonly property var hubTabs: [
+        // `group` places the icon in the hub title bar:
+        //   left  -> after the left edge, before the tab name
+        //   clock -> just left of the date/time
+        //   end   -> right of the date/time
+        { id: "windows",       label: "windows", mode: "WINDOWS",   insert: false, group: "left" },
+        { id: "apps",          label: "apps",    mode: "APPS",      insert: true,  group: "left" },
+        { id: "notifications", label: "notify",  mode: "NOTIFY",    insert: false, group: "left" },
+        { id: "audio",         label: "audio",   mode: "AUDIO",     insert: false, group: "left" },
+        { id: "network",       label: "net",     mode: "NETWORK",   insert: false, group: "left" },
+        { id: "bluetooth",     label: "bt",      mode: "BLUETOOTH", insert: false, group: "left" },
+        { id: "weather",       label: "weather", mode: "WEATHER",   insert: false, group: "clock" },
+        { id: "calendar",      label: "cal",     mode: "CALENDAR",  insert: false, group: "clock" },
+        { id: "system",        label: "system",  mode: "SYSTEM",    insert: false, group: "end" }
+    ]
 
-    // Left sidebar view mode: "apps", "updates"
-    property string sidebarLeftView: "apps"
+    property bool hubOpen: false
+    property string hubTab: "apps"
+    // Screen the hub is shown on. On niri this must be the focused output:
+    // niri only gives keyboard focus to layer surfaces on its active output.
+    property var hubScreen: null
 
-    // Right sidebar view mode: "default", "bluetooth", "audio", "calendar", "notifications"
-    property string sidebarRightView: "default"
+    readonly property var currentHubTab: {
+        for (const t of hubTabs) if (t.id === hubTab) return t
+        return hubTabs[0]
+    }
 
     // OSD (On-Screen Display) state
     property bool osdVisible: false
@@ -113,20 +134,6 @@ Singleton {
     property bool superDown: false
     property bool superReleaseMightTrigger: false
 
-    // Close other panels when left sidebar opens
-    onSidebarLeftOpenChanged: {
-        if (sidebarLeftOpen) {
-            sidebarRightOpen = false
-        }
-    }
-
-    // Mutual exclusion for right sidebar
-    onSidebarRightOpenChanged: {
-        if (sidebarRightOpen) {
-            sidebarLeftOpen = false
-        }
-    }
-
     // OSD auto-hide timer
     Timer {
         id: osdHideTimer
@@ -141,36 +148,36 @@ Singleton {
         }
     }
 
-    // Function to toggle panels (accepts screen to show on)
-    function toggleSidebarLeft(screen, view) {
-        const targetView = view || "apps"
-        if (sidebarLeftOpen && activeScreen === screen && sidebarLeftView === targetView) {
-            sidebarLeftOpen = false
-            sidebarLeftView = "apps"
-        } else {
+    // Open the hub on `screen` at `tab`
+    function openHub(screen, tab) {
+        if (screen) {
             activeScreen = screen
-            sidebarLeftView = targetView
-            sidebarLeftOpen = true
+            hubScreen = screen
+        }
+        hubTab = tab || "apps"
+        hubOpen = true
+    }
+
+    // Toggle: same tab on the same screen closes; anything else opens/switches
+    function toggleHub(screen, tab) {
+        const targetTab = tab || "apps"
+        if (hubOpen && hubTab === targetTab && (!screen || hubScreen === screen)) {
+            closeAll()
+        } else {
+            openHub(screen, targetTab)
         }
     }
 
-    function toggleSidebarRight(screen, view) {
-        const targetView = view || "default"
-        if (sidebarRightOpen && activeScreen === screen && sidebarRightView === targetView) {
-            sidebarRightOpen = false
-            sidebarRightView = "default"
-        } else {
-            activeScreen = screen
-            sidebarRightView = targetView
-            sidebarRightOpen = true
-        }
+    // Move `step` tabs left (-1) or right (+1), wrapping
+    function cycleHubTab(step) {
+        let i = hubTabs.findIndex(t => t.id === hubTab)
+        const n = hubTabs.length
+        hubTab = hubTabs[(((i + step) % n) + n) % n].id
     }
 
     function closeAll() {
-        sidebarLeftOpen = false
-        sidebarRightOpen = false
-        sidebarLeftView = "apps"
-        sidebarRightView = "default"
+        hubOpen = false
+        hubTab = "apps"
         settingsOpen = false
     }
 }

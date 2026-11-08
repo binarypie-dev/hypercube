@@ -178,7 +178,7 @@ QtObject {
 
     // Component sizes
     readonly property var sizes: ({
-        barHeight: 28,
+        barHeight: 2,  // thin status line (modules/bar/StatusBar.qml)
         sidebarWidth: 400,
         osdWidth: 280,
         osdHeight: 40,

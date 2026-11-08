@@ -76,14 +76,6 @@ ColumnLayout {
                     }
                 }
 
-                Keys.onEscapePressed: {
-                    if (text !== "") {
-                        text = ""
-                    } else {
-                        Root.GlobalStates.sidebarLeftOpen = false
-                    }
-                }
-
                 Keys.onDownPressed: appListView.incrementCurrentIndex()
                 Keys.onUpPressed: appListView.decrementCurrentIndex()
 
@@ -307,7 +299,7 @@ ColumnLayout {
         }
         appLaunchProcess.startDetached()
 
-        Root.GlobalStates.sidebarLeftOpen = false
+        Root.GlobalStates.closeAll()
         searchInput.text = ""
     }
 
@@ -318,8 +310,8 @@ ColumnLayout {
 
     Connections {
         target: Root.GlobalStates
-        function onSidebarLeftOpenChanged() {
-            if (Root.GlobalStates.sidebarLeftOpen) {
+        function onHubOpenChanged() {
+            if (Root.GlobalStates.hubOpen) {
                 if (root.allApps.length === 0) {
                     root.retryCount = 0
                     root.loadAllApps()
@@ -329,6 +321,16 @@ ColumnLayout {
                 searchResults = []
             }
         }
+    }
+
+    // Called by the hub on Escape: clear the query first; returns true if
+    // it consumed the key, false to let the hub close
+    function handleEscape(): bool {
+        if (searchInput.text !== "") {
+            searchInput.text = ""
+            return true
+        }
+        return false
     }
 
     function focusSearch() {

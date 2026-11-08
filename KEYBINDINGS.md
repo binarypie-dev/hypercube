@@ -81,7 +81,9 @@ The **Super** key (Windows/Command key) is the main modifier.
 |------------|--------|
 | `Super + Q` | Open terminal (Ghostty) |
 | `Super + E` | Open file manager |
-| `Super + R` | Open app launcher (Quickshell) |
+| `Super + Space` | Open the hub on apps: launcher + quick settings (Quickshell) |
+| `Super + N` | Open the hub on notifications |
+| `Super + Tab` / `Super + Shift + Tab` | Open the hub on windows / step through them; release `Super` to focus |
 | `Super + Shift + L` | Lock screen |
 
 ### Mouse
@@ -91,6 +93,17 @@ The **Super** key (Windows/Command key) is the main modifier.
 | `Super + Left Click Drag` | Move window |
 | `Super + Right Click Drag` | Resize window |
 
+### Hub (inside `Super + Space`)
+
+| Keybinding | Action |
+|------------|--------|
+| `Tab` / `Shift + Tab` | Next / previous tab (also `Ctrl + L` / `Ctrl + H`) |
+| `Ctrl + 1-9` | Jump to tab, left to right: windows, apps, notify, audio, net, bt, weather, cal, system |
+| `Ctrl + J` / `Ctrl + K` | Move through app results |
+| `J` / `K` | Move through windows (windows tab) |
+| `Enter` | Launch selected app / focus selected window |
+| `Esc` | Clear search, then close |
+
 ---
 
 ## niri Session (preview)
@@ -98,7 +111,7 @@ The **Super** key (Windows/Command key) is the main modifier.
 niri is available as a second session in the greeter, alongside Hyprland
 (which stays the default). It runs the same Quickshell bar, launcher,
 notifications, OSD and app switcher, and keeps the Hyprland keys wherever niri
-has an equivalent: `Super + Q/C/E/R/N/V/F`, `Super + H/J/K/L` (and
+has an equivalent: `Super + Q/C/E/N/V/F`, `Super + Space`, `Super + H/J/K/L` (and
 `Shift`/`Ctrl` variants), `Super + 0-9`, `Super + Tab`, `Super + Escape`,
 `Super + Ctrl + Escape` and the multimedia keys all work the same.
 
