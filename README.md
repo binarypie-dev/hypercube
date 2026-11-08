@@ -53,7 +53,7 @@
 
 </details>
 
-Hypercube is an opinionated, ready-to-use development environment built on [Universal Blue's base-nvidia](https://github.com/ublue-os/main) image with Fedora 45. It provides a complete Hyprland-based workflow with consistent vim keybindings across all tools and Tokyo Night theming throughout.
+Hypercube is an opinionated, ready-to-use development environment built on [Universal Blue's base-nvidia](https://github.com/ublue-os/main) image with Fedora 44. It provides a complete Hyprland-based workflow with consistent vim keybindings across all tools and Tokyo Night theming throughout.
 
 ## Features
 
