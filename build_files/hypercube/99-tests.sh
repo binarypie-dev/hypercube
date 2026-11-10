@@ -79,6 +79,8 @@ REQUIRED_FILES=(
   "/etc/distrobox/distrobox.ini"
   "/usr/share/ublue-os/just/60-hypercube.just"
   "/usr/share/ublue-os/just/61-devcube.just"
+  # Flatpaks are installed on the machine, not baked into the image
+  "/usr/share/flatpak/preinstall.d/hypercube.preinstall"
 )
 
 for file in "${REQUIRED_FILES[@]}"; do
@@ -122,6 +124,13 @@ if ! niri validate -c /etc/niri/config.kdl; then
 fi
 echo "  OK: niri config is valid"
 
+### Flatpaks must not be baked into /var (they'd never update)
+if [ -n "$(flatpak list --system --app --columns=application 2>/dev/null)" ]; then
+  echo "ERROR: system flatpaks are installed in the image; list them in preinstall.d instead!"
+  exit 1
+fi
+echo "  OK: no flatpaks baked into the image"
+
 ### Check os-release branding
 if ! grep -q "ID=hypercube" /usr/lib/os-release; then
   echo "ERROR: os-release branding not applied!"
@@ -134,6 +143,7 @@ REQUIRED_SERVICES=(
   "greetd.service"
   "NetworkManager.service"
   "hypercube-wifi-resume.service"
+  "hypercube-flatpak-preinstall.service"
 )
 
 for svc in "${REQUIRED_SERVICES[@]}"; do

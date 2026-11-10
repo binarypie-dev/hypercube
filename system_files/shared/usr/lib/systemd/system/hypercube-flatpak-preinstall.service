@@ -1,0 +1,29 @@
+[Unit]
+Description=Install Hypercube's preinstalled flatpaks
+Documentation=man:flatpak-preinstall(1)
+# Flathub must be configured before preinstall can resolve the apps
+After=network-online.target flatpak-add-flathub.service
+Wants=network-online.target flatpak-add-flathub.service
+ConditionPathExists=/usr/bin/flatpak
+
+[Service]
+Type=oneshot
+# System-wide theme overrides so flatpak GTK apps follow Tokyo Night.
+# Idempotent; replaces the overrides file the image used to ship in /var.
+ExecStartPre=/usr/bin/flatpak override --system \
+    --filesystem=xdg-config/gtk-3.0:ro \
+    --filesystem=xdg-config/gtk-4.0:ro \
+    --filesystem=~/.themes:ro \
+    --filesystem=~/.icons:ro \
+    --filesystem=/usr/share/themes:ro \
+    --filesystem=/usr/share/icons:ro \
+    --env=GTK_THEME=Tokyonight-Dark \
+    --env=ICON_THEME=Tokyonight-Dark
+# Install anything listed in /usr/share/flatpak/preinstall.d that is missing.
+# New entries reach existing machines on their next boot after an update.
+ExecStart=/usr/bin/flatpak preinstall --system -y --noninteractive
+Restart=on-failure
+RestartSec=30
+
+[Install]
+WantedBy=multi-user.target
