@@ -13,7 +13,7 @@ import "../../services" as Services
 //
 // Keys (window-level shortcuts, so they work even while the search box has
 // focus):  Tab / Shift+Tab or Ctrl+L / Ctrl+H  next / previous tab
-//          Ctrl+1 .. Ctrl+9                    jump to tab
+//          Ctrl+1 .. Ctrl+9, Ctrl+0            jump to tab (0 = tenth)
 //          Esc                                 clear search (apps), else close
 PanelWindow {
     id: root
@@ -85,6 +85,7 @@ PanelWindow {
                 if (Services.Battery.pluggedIn && Services.Battery.percent >= 95) return I.icons.plug
                 if (Services.Battery.charging) return I.icons.batteryCharging
                 return I.batteryIcon(Services.Battery.percent, false)
+            case "thermals": return I.icons.thermometer
             case "windows": return I.icons.list
         }
         return I.icons.apps
@@ -100,6 +101,10 @@ PanelWindow {
                 if (Services.BluetoothStatus.connected) return C.blue
                 return Services.BluetoothStatus.powered ? C.fgDark : C.comment
             case "weather": return C.cyan
+            case "thermals":
+                return Services.Thermals.level >= 1
+                    ? Services.Thermals.levelColor(Services.Thermals.level, C)
+                    : C.fgDark
             case "system":
                 if (Services.Battery.present && Services.Battery.percent <= 20 && !Services.Battery.charging) return C.error
                 return C.fgDark
@@ -112,6 +117,7 @@ PanelWindow {
         if (id === "notifications")
             return Root.GlobalStates.unreadNotificationCount > 0 && !Root.GlobalStates.doNotDisturb
         if (id === "system") return Services.Updates.needsAttention
+        if (id === "thermals") return Services.Thermals.alert
         return false
     }
 
@@ -155,6 +161,7 @@ PanelWindow {
         Shortcut { sequence: "Ctrl+7"; onActivated: root.jumpTo(6) }
         Shortcut { sequence: "Ctrl+8"; onActivated: root.jumpTo(7) }
         Shortcut { sequence: "Ctrl+9"; onActivated: root.jumpTo(8) }
+        Shortcut { sequence: "Ctrl+0"; onActivated: root.jumpTo(9) }
     }
 
     // One icon tab in the title bar
@@ -191,7 +198,7 @@ PanelWindow {
                         : root.tabIconColor(tabItem.modelData.id))
             }
 
-            // Attention dot (unread notifications, pending update)
+            // Attention dot (unread notifications, pending update, overheating)
             Rectangle {
                 visible: tabItem.alert
                 width: 6
@@ -358,6 +365,7 @@ PanelWindow {
                             case "bluetooth": return "../panels/BluetoothView.qml"
                             case "calendar": return "../panels/CalendarView.qml"
                             case "weather": return "../panels/WeatherView.qml"
+                            case "thermals": return "../panels/ThermalsView.qml"
                             case "system": return "../panels/SystemView.qml"
                             case "windows": return "../panels/WindowsView.qml"
                         }
@@ -391,7 +399,7 @@ PanelWindow {
                         model: {
                             const hints = [
                                 { key: "Tab/S-Tab", action: "tabs" },
-                                { key: "^1-9", action: "jump" }
+                                { key: "^1-0", action: "jump" }
                             ]
                             if (root.currentTab === "apps") {
                                 hints.push({ key: "^j/^k", action: "move" })

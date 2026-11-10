@@ -19,6 +19,8 @@ ShellRoot {
 
     Component.onCompleted: {
         console.log("Hypercube Shell starting...")
+        // Background temperature watch (notifies when a sensor overheats)
+        Services.Thermals.start()
     }
 
     // Hub always opens on the focused output on niri (it only gives

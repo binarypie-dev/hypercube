@@ -15,3 +15,4 @@ TuiListItem 1.0 TuiListItem.qml
 TuiCard 1.0 TuiCard.qml
 TuiProgress 1.0 TuiProgress.qml
 TrayBar 1.0 TrayBar.qml
+Sparkline 1.0 Sparkline.qml
