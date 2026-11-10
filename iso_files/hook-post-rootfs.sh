@@ -39,18 +39,14 @@ if [[ -n "${CONTAINER_IMAGE}" ]]; then
 # Hypercube: Install from embedded container image using ostreecontainer
 ostreecontainer --url=${CONTAINER_IMAGE} --transport=containers-storage --no-signature-verification --stateroot=hypercube
 
-# Post-install: Update the origin to use remote registry for updates
-# The containers-storage transport only works with the embedded ISO image.
-# For rpm-ostree upgrades to work, we need to point to the remote registry.
-%post --nochroot
-SYSROOT=\${ANA_INSTALL_PATH:-/mnt/sysroot}
-ORIGIN_FILE=\$(ls \${SYSROOT}/ostree/deploy/hypercube/deploy/*.origin 2>/dev/null | head -1)
-if [[ -n "\${ORIGIN_FILE}" ]]; then
-    echo "Updating origin to use remote registry for updates..."
-    sed -i 's|containers-storage:|docker://|' "\${ORIGIN_FILE}"
-    echo "Origin updated:"
-    cat "\${ORIGIN_FILE}"
-fi
+# Post-install: point the installed system at the signed image on GHCR.
+# The embedded image is installed from containers-storage, which carries no
+# signature to check. Switch the deployment's origin to the registry with
+# signature enforcement so every update after install is verified against
+# /etc/pki/containers/hypercube.pub. --mutate-in-place rewrites the origin
+# without fetching anything, so this works offline.
+%post
+bootc switch --mutate-in-place --enforce-container-sigpolicy --transport registry ghcr.io/binarypie-dev/hypercube:latest
 %end
 EOF
 else
