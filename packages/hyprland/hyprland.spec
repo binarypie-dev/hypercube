@@ -1,7 +1,7 @@
 %global sdbus_version 2.1.0
 
 Name:           hyprland
-Version:        0.57.1
+Version:        0.57.2
 Release:        1%{?dist}
 Summary:        Dynamic tiling Wayland compositor that doesn't sacrifice on its looks
 
@@ -201,6 +201,8 @@ fi
 %{_includedir}/hyprland/
 
 %changelog
+* Tue Nov 10 2026 Hypercube <hypercube@binarypie.dev> - 0.57.2-1
+- Update to 0.57.2
 * Wed Nov 04 2026 Hypercube <hypercube@binarypie.dev> - 0.57.1-1
 - Update to 0.57.1
 - hyprland-protocols is no longer bundled in the source tarball; BuildRequires >= 0.8.0
