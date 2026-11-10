@@ -131,6 +131,21 @@ if [ -n "$(flatpak list --system --app --columns=application 2>/dev/null)" ]; th
 fi
 echo "  OK: no flatpaks baked into the image"
 
+### bootc only reads *.toml in kargs.d; anything else is silently ignored
+shopt -s nullglob
+for f in /usr/lib/bootc/kargs.d/*; do
+  if [[ "$f" != *.toml ]]; then
+    echo "ERROR: $f is not a .toml file, bootc will ignore it!"
+    exit 1
+  fi
+done
+shopt -u nullglob
+if [ ! -f /usr/lib/bootc/kargs.d/hypercube-kargs.toml ]; then
+  echo "ERROR: /usr/lib/bootc/kargs.d/hypercube-kargs.toml missing!"
+  exit 1
+fi
+echo "  OK: kargs.d contains only .toml files"
+
 ### Check os-release branding
 if ! grep -q "ID=hypercube" /usr/lib/os-release; then
   echo "ERROR: os-release branding not applied!"
