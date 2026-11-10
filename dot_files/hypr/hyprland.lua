@@ -87,7 +87,7 @@ hl.env("XDG_CURRENT_DESKTOP", "Hyprland")
 
 -- XDG directories - required for quickshell and other apps to find Hypercube configs
 hl.env("XDG_CONFIG_DIRS", "/etc/xdg:/usr/share/hypercube/config")
-hl.env("XDG_DATA_DIRS", "/usr/local/share:/usr/share:/usr/share/hypercube/data")
+hl.env("XDG_DATA_DIRS", "/usr/local/share:/usr/share/hypercube/data:/usr/share")
 
 hl.env("XCURSOR_SIZE", "24")
 hl.env("HYPRCURSOR_SIZE", "24")

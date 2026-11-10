@@ -146,6 +146,13 @@ if [ ! -f /usr/lib/bootc/kargs.d/hypercube-kargs.toml ]; then
 fi
 echo "  OK: kargs.d contains only .toml files"
 
+### /usr/local must stay the bootc symlink to /var/usrlocal (writable by admins)
+if [ ! -L /usr/local ] || [ "$(readlink /usr/local)" != "../var/usrlocal" ]; then
+  echo "ERROR: /usr/local is no longer a symlink to ../var/usrlocal (did system_files ship something under usr/local?)"
+  exit 1
+fi
+echo "  OK: /usr/local -> ../var/usrlocal"
+
 ### Check os-release branding
 if ! grep -q "ID=hypercube" /usr/lib/os-release; then
   echo "ERROR: os-release branding not applied!"

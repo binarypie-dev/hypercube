@@ -85,36 +85,30 @@ Singleton {
                 "$name" "$generic" "$icon" "$exec_cmd" "$comment" "$categories"
         }
 
-        # Process system applications
-        if [[ -d "/usr/share/applications" ]]; then
-            for file in /usr/share/applications/*.desktop; do
-                [[ -f "$file" ]] && parse_desktop "$file"
+        # Scan applications dirs in XDG priority order. The first .desktop file
+        # with a given name wins, so user files override Hypercube overrides
+        # (/usr/share/hypercube/data), which override the entries shipped by packages.
+        declare -A seen
+        scan_dir() {
+            local dir="$1" file id
+            [[ -d "$dir" ]] || return 0
+            for file in "$dir"/*.desktop; do
+                [[ -f "$file" ]] || continue
+                id="${file##*/}"
+                [[ -n "${seen[$id]:-}" ]] && continue
+                seen[$id]=1
+                parse_desktop "$file"
             done
-        fi
+        }
 
-        # Process user applications (XDG compliant path)
-        user_apps="${XDG_DATA_HOME:-$HOME/.local/share}/applications"
-        if [[ -d "$user_apps" ]]; then
-            for file in "$user_apps"/*.desktop; do
-                [[ -f "$file" ]] && parse_desktop "$file"
-            done
-        fi
-
-        # Process flatpak applications
-        flatpak_apps="/var/lib/flatpak/exports/share/applications"
-        if [[ -d "$flatpak_apps" ]]; then
-            for file in "$flatpak_apps"/*.desktop; do
-                [[ -f "$file" ]] && parse_desktop "$file"
-            done
-        fi
-
-        # Process user flatpak applications
-        user_flatpak="${XDG_DATA_HOME:-$HOME/.local/share}/flatpak/exports/share/applications"
-        if [[ -d "$user_flatpak" ]]; then
-            for file in "$user_flatpak"/*.desktop; do
-                [[ -f "$file" ]] && parse_desktop "$file"
-            done
-        fi
+        scan_dir "${XDG_DATA_HOME:-$HOME/.local/share}/applications"
+        IFS=: read -ra data_dirs <<< "${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+        for dir in "${data_dirs[@]}"; do
+            scan_dir "$dir/applications"
+        done
+        # Flatpak exports (no-ops when already listed in XDG_DATA_DIRS)
+        scan_dir "${XDG_DATA_HOME:-$HOME/.local/share}/flatpak/exports/share/applications"
+        scan_dir "/var/lib/flatpak/exports/share/applications"
     '
 
     Process {
