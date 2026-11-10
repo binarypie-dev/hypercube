@@ -97,6 +97,24 @@ if ! modinfo -k "$KERNEL_VERSION" v4l2loopback &>/dev/null; then
 fi
 echo "  OK: v4l2loopback module present for kernel $KERNEL_VERSION"
 
+### Check signature verification is configured for our images
+REGISTRY_PATH="ghcr.io/${IMAGE_VENDOR:-binarypie-dev}"
+REGISTRY_PATH="${REGISTRY_PATH,,}"
+if ! jq -e --arg repo "$REGISTRY_PATH" \
+    '.transports.docker[$repo][0].type == "sigstoreSigned"' /etc/containers/policy.json >/dev/null; then
+  echo "ERROR: policy.json has no sigstoreSigned rule for $REGISTRY_PATH!"
+  exit 1
+fi
+if ! cmp -s /etc/pki/containers/hypercube.pub /ctx/cosign.pub; then
+  echo "ERROR: /etc/pki/containers/hypercube.pub missing or different from cosign.pub!"
+  exit 1
+fi
+if ! grep -q "use-sigstore-attachments: true" /etc/containers/registries.d/hypercube.yaml; then
+  echo "ERROR: registries.d entry for $REGISTRY_PATH missing!"
+  exit 1
+fi
+echo "  OK: signature verification configured for $REGISTRY_PATH"
+
 ### Validate the niri config (follows the include into /usr/share/hypercube)
 if ! niri validate -c /etc/niri/config.kdl; then
   echo "ERROR: niri config failed validation!"

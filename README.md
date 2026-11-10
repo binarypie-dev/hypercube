@@ -119,12 +119,16 @@ rpm-ostree rebase ostree-unverified-registry:ghcr.io/binarypie-dev/hypercube:lat
 systemctl reboot
 ```
 
-After the first reboot, you can switch to signed images for additional security:
+The first rebase can't verify the signature, because your current system
+doesn't have Hypercube's signing key yet. After the first reboot, switch to the
+signed image so every update is verified against that key:
 
 ```bash
-rpm-ostree rebase ostree-image-signed:docker://ghcr.io/binarypie-dev/hypercube:latest
+sudo bootc switch --enforce-container-sigpolicy ghcr.io/binarypie-dev/hypercube:latest
 systemctl reboot
 ```
+
+Installs from the ISO are switched to the signed image automatically.
 
 NVIDIA drivers are included in the unified image.
 

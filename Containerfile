@@ -18,6 +18,7 @@ ARG AKMODS_FLAVOR="main"
 FROM scratch AS ctx
 COPY system_files /system_files
 COPY build_files /build_files
+COPY cosign.pub /cosign.pub
 
 # ============================================
 # Stage 2: Main Build
