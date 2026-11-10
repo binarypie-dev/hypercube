@@ -88,7 +88,7 @@ if [[ -d /usr/share/hypercube/config/hypr ]]; then
 -- Live ISO - Environment variables for XDG config discovery
 -- These are normally set by systemd user session but greetd skips that
 hl.env("XDG_CONFIG_DIRS", "/etc/xdg:/usr/share/hypercube/config")
-hl.env("XDG_DATA_DIRS", "/usr/local/share:/usr/share:/usr/share/hypercube/data")
+hl.env("XDG_DATA_DIRS", "/usr/local/share:/usr/share/hypercube/data:/usr/share")
 hl.env("GTK_THEME", "Tokyonight-Dark")
 hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
 
