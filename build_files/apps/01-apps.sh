@@ -14,18 +14,10 @@ dnf5 -y install \
     iamb \
     meli
 
-### Flatpak Applications (system-wide, baked into image)
-flatpak remote-add --if-not-exists --system flathub https://flathub.org/repo/flathub.flatpakrepo
-flatpak install --system --noninteractive flathub \
-    io.github.kolunmi.Bazaar \
-    com.usebottles.bottles \
-    io.github.dvlv.boxbuddyrs \
-    org.gnome.Boxes \
-    com.github.tchx84.Flatseal \
-    be.alexandervanhee.gradia \
-    io.github.seadve.Kooha \
-    io.podman_desktop.PodmanDesktop \
-    org.mozilla.Thunderbird \
-    io.github.flattool.Warehouse
+### Flatpak Applications
+# Not installed here: anything written to /var at build time is copied only on
+# first install and never updated. The list lives in
+# /usr/share/flatpak/preinstall.d/hypercube.preinstall and is installed on the
+# machine by hypercube-flatpak-preinstall.service.
 
 echo "Applications installed successfully"

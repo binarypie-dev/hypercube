@@ -1,0 +1,43 @@
+# Hypercube preinstalled flatpaks (from Flathub)
+# Installed and kept in sync by hypercube-flatpak-preinstall.service on every boot.
+# A user who uninstalls one of these won't get it reinstalled. See flatpak-preinstall(1).
+
+[Flatpak Preinstall io.github.kolunmi.Bazaar]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall com.usebottles.bottles]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall io.github.dvlv.boxbuddyrs]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.gnome.Boxes]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall com.github.tchx84.Flatseal]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall be.alexandervanhee.gradia]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall io.github.seadve.Kooha]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall io.podman_desktop.PodmanDesktop]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall org.mozilla.Thunderbird]
+Branch=stable
+IsRuntime=false
+
+[Flatpak Preinstall io.github.flattool.Warehouse]
+Branch=stable
+IsRuntime=false

@@ -128,6 +128,7 @@ systemctl enable NetworkManager.service
 systemctl enable bluetooth.service
 systemctl enable power-profiles-daemon.service
 systemctl enable flatpak-add-flathub.service
+systemctl enable hypercube-flatpak-preinstall.service
 systemctl enable iwd.service
 # NM's iwd backend doesn't rescan after resume; nudge it so autoconnect fires
 systemctl enable hypercube-wifi-resume.service
