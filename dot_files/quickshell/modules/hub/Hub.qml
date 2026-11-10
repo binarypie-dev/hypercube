@@ -243,12 +243,16 @@ PanelWindow {
         anchors.centerIn: parent
         // Scale with the screen in both directions: 65% of its width and
         // 65% of its height, so the panel takes the same share of any
-        // monitor. Minimums keep it usable on small screens (never past 90%
-        // of the screen). Values are logical pixels, so HiDPI scaling is
-        // already accounted for. 1080p: 1248x702, 1440p: 1664x936.
+        // monitor. Width is capped at 1.8x the height so it doesn't stretch
+        // across ultrawides (16:9 and 16:10 screens stay under the cap).
+        // Minimums keep it usable on small screens (never past 90% of the
+        // screen). Values are logical pixels, so HiDPI scaling is already
+        // accounted for. 1080p: 1248x702, 1440p: 1664x936, 3440x1440: 1685x936.
         readonly property real screenShare: 0.65
+        readonly property real maxAspect: 1.8
         height: Math.min(Math.max(parent.height * screenShare, 520), parent.height * 0.9)
-        width: Math.min(Math.max(parent.width * screenShare, 800), parent.width * 0.9)
+        width: Math.min(Math.max(Math.min(parent.width * screenShare, height * maxAspect), 800),
+                        parent.width * 0.9)
         radius: Common.Appearance.rounding.tiny
         color: Qt.rgba(
             Common.Appearance.colors.bgDark.r,
