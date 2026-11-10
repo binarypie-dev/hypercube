@@ -3,7 +3,7 @@
 # Based on Bluefin's approach: https://github.com/ublue-os/bluefin/blob/main/build_files/base/03-install-kernel-akmods.sh
 # The NVIDIA driver itself (open kernel modules, userspace, container toolkit)
 # comes preinstalled from ghcr.io/ublue-os/base-nvidia; this script adds the
-# common hardware kmods and Hypercube's NVIDIA tweaks on top.
+# v4l2loopback kmod (from ublue-os/akmods) and Hypercube's NVIDIA tweaks on top.
 
 set -eoux pipefail
 
@@ -16,35 +16,32 @@ AKMODS_FLAVOR="${AKMODS_FLAVOR:-main}"
 KERNEL_VERSION=$(rpm -q kernel-core --queryformat "%{VERSION}-%{RELEASE}.%{ARCH}" | tail -n 1)
 echo "Using base image kernel: ${KERNEL_VERSION}"
 
-# Fetch akmods container (contains kmods for this kernel)
+# Fetch the akmods image built for exactly this kernel. The floating
+# "${AKMODS_FLAVOR}-${FEDORA_VERSION}" tag can point at a different kernel than
+# the base image when the two are published at different times; the
+# kernel-pinned tag fails fast instead of shipping a module for the wrong kernel.
+AKMODS_TAG="${AKMODS_FLAVOR}-${FEDORA_VERSION}-${KERNEL_VERSION}"
+echo "Using akmods image: ghcr.io/ublue-os/akmods:${AKMODS_TAG}"
 skopeo copy --retry-times 3 \
-  docker://ghcr.io/ublue-os/akmods:"${AKMODS_FLAVOR}"-"${FEDORA_VERSION}" \
+  docker://ghcr.io/ublue-os/akmods:"${AKMODS_TAG}" \
   dir:/tmp/akmods
 
 AKMODS_TARGZ=$(jq -r '.layers[].digest' </tmp/akmods/manifest.json | cut -d : -f 2)
 tar -xvzf /tmp/akmods/"$AKMODS_TARGZ" -C /tmp/
 mv /tmp/rpms/* /tmp/akmods/
 
-# Enable ublue-os akmods COPR
-sed -i 's@enabled=0@enabled=1@g' /etc/yum.repos.d/_copr_ublue-os-akmods.repo
-
-# Install hardware support kmods (xone, openrazer, framework-laptop,
-# v4l2loopback) together with their -kmod-common packages from common/.
-# Not every kmod exists for every Fedora release (framework-laptop is gone
-# from the 45 akmods image), so each one is installed on its own: a missing
-# kmod must not take the others down with it.
+# Install v4l2loopback (virtual webcam; loaded at boot via
+# /usr/lib/modules-load.d/v4l2loopback.conf). The NVIDIA kmods come from
+# base-nvidia, so this is the only kmod taken from akmods. Fail the build if it
+# is missing or won't install rather than shipping without it.
 shopt -s nullglob
-for kmod in xone openrazer framework-laptop v4l2loopback; do
-  kmod_rpms=(/tmp/akmods/kmods/kmod-"${kmod}"-*.rpm)
-  if [[ ${#kmod_rpms[@]} -eq 0 ]]; then
-    echo "WARNING: no ${kmod} kmod in akmods:${AKMODS_FLAVOR}-${FEDORA_VERSION}, skipping"
-    continue
-  fi
-  rpms=("${kmod_rpms[@]}" /tmp/akmods/common/"${kmod}"*.rpm)
-  echo "Installing ${kmod} kmod..."
-  dnf5 -y install "${rpms[@]}" || echo "WARNING: Failed to install ${kmod} kmod"
-done
+kmod_rpms=(/tmp/akmods/kmods/kmod-v4l2loopback-*.rpm /tmp/akmods/common/v4l2loopback-*.rpm)
 shopt -u nullglob
+if [[ ${#kmod_rpms[@]} -ne 2 ]]; then
+  echo "ERROR: expected kmod-v4l2loopback and v4l2loopback RPMs in akmods:${AKMODS_TAG}, found: ${kmod_rpms[*]:-none}"
+  exit 1
+fi
+dnf5 -y install "${kmod_rpms[@]}"
 
 ### NVIDIA Configuration ###
 # Fail early if the base image ever stops shipping the driver

@@ -179,7 +179,7 @@ Built on ublue-os/base-main, Hypercube includes:
 | Development | Distrobox, Podman |
 | Gaming | Steam |
 | Theming | Tokyo Night GTK/Qt themes |
-| Drivers | NVIDIA (akmods), v4l2loopback |
+| Drivers | NVIDIA (from base-nvidia), v4l2loopback (akmods) |
 
 ### Configurations
 
