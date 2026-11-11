@@ -44,7 +44,7 @@ echo "=========================================="
 echo ""
 
 # Test 1: Check packages that should be up to date
-run_test "Check up-to-date packages (starship, uwsm, lazygit)" 0 starship uwsm lazygit
+run_test "Check up-to-date packages (starship, quickshell, lazygit)" 0 starship quickshell lazygit
 
 # Test 2: Check a package that needs building (if any)
 # This test might be flaky if all packages are up to date

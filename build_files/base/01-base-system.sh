@@ -33,7 +33,8 @@ dnf5 -y install \
 # (/usr/lib/pam.d/greetd) already lists it as optional, but it silently does
 # nothing unless the module is installed: with it, logging in through the
 # greeter unlocks the login keyring with the account password and starts
-# gnome-keyring-daemon (secrets + SSH agent), in every session.
+# gnome-keyring-daemon (secrets + SSH agent), so apps no longer prompt for a
+# separate keyring password or fail to store secrets.
 dnf5 -y install \
     gnome-keyring \
     gnome-keyring-pam \

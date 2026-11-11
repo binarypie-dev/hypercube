@@ -56,9 +56,9 @@ ln -sf libnvidia-ml.so.1 /usr/lib64/libnvidia-ml.so
 
 # nvidia-settings ships an XDG autostart entry that runs
 # `nvidia-settings --load-config-only`. That needs an X server driven by the
-# NVIDIA driver, so under Hyprland (Wayland) it always fails. uwsm turns XDG
-# autostart entries into systemd user units, which then show up as failed
-# (app-nvidia\x2dsettings\x2dload@autostart.service). Drop the entry.
+# NVIDIA driver, so under a Wayland session it always fails (and session
+# managers that turn XDG autostart entries into systemd user units report it
+# as a failed app-nvidia\x2dsettings\x2dload@autostart.service). Drop it.
 rm -f /etc/xdg/autostart/nvidia-settings-load.desktop
 
 # Configure kernel arguments for NVIDIA (base-nvidia doesn't set any)

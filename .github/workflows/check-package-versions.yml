@@ -353,9 +353,7 @@ jobs:
             # Go projects
             [lazygit]="go.mod"
             [wifitui]="go.mod"
-            # Python projects
-            [uwsm]="pyproject.toml"
-            # Default for Hyprland ecosystem is CMakeLists.txt
+            # Default (CMake projects, e.g. quickshell) is CMakeLists.txt
           )
 
           UPSTREAM_CONTENT=""

@@ -47,10 +47,6 @@ Singleton {
     property var niriWorkspaces: ({})  // workspace id -> niri workspace object
     property var focusOrder: []        // window ids (strings), most recent first
 
-    // Hyprland is queried on demand; its clients carry focusHistoryID already.
-    property bool switcherPending: false
-    property int pendingStep: 1
-
     // ---------------------------------------------------------------- niri ---
 
     // niri has no focus timestamp in its window IPC, so the focus history has
@@ -58,16 +54,14 @@ Singleton {
     // output is focused, which decides where the overlay is mapped.
     Process {
         id: niriEvents
-        running: Compositor.isNiri
+        running: true
         command: ["niri", "msg", "-j", "event-stream"]
 
         stdout: SplitParser {
             onRead: line => root.handleNiriEvent(line)
         }
 
-        onExited: {
-            if (Compositor.isNiri) niriEventsRestart.restart()
-        }
+        onExited: niriEventsRestart.restart()
     }
 
     Timer {
@@ -201,55 +195,6 @@ Singleton {
         })
     }
 
-    // ----------------------------------------------------------- Hyprland ---
-
-    // Clients and monitors together, so the focused monitor is known without a
-    // second round trip.
-    Process {
-        id: windowProcess
-        command: ["sh", "-c", "printf '{\"clients\":%s,\"monitors\":%s}' \"$(hyprctl clients -j)\" \"$(hyprctl monitors -j)\""]
-
-        property string output: ""
-
-        stdout: SplitParser {
-            splitMarker: ""
-            onRead: data => {
-                windowProcess.output += data
-            }
-        }
-
-        onExited: {
-            try {
-                const data = JSON.parse(windowProcess.output)
-                root.windows = root.windowsFromHyprland(data.clients)
-
-                for (const mon of data.monitors) {
-                    if (mon.focused) {
-                        root.focusedOutput = mon.name
-                        break
-                    }
-                }
-            } catch (e) {
-                console.log("Failed to parse windows:", e)
-                root.windows = []
-            }
-            windowProcess.output = ""
-            root.prefetchIcons()
-
-            if (root.switcherPending) {
-                root.activateSwitcher(root.pendingStep)
-            }
-        }
-    }
-
-    // Filter out hidden windows and sort by focusHistoryID
-    // (0 = currently focused, then most recently focused)
-    function windowsFromHyprland(clients) {
-        const visible = clients.filter(w => w.mapped && !w.hidden)
-        visible.sort((a, b) => a.focusHistoryID - b.focusHistoryID)
-        return visible
-    }
-
     // ------------------------------------------------------------ switcher ---
 
     Process {
@@ -263,32 +208,18 @@ Singleton {
     }
 
     function refresh() {
-        if (Compositor.isNiri) {
-            root.windows = root.windowsFromNiri()
-            root.prefetchIcons()
-        } else {
-            windowProcess.running = true
-        }
+        root.windows = root.windowsFromNiri()
+        root.prefetchIcons()
     }
 
     // step is where the selection starts relative to the focused window: 1 for
     // Tab, -1 for Shift+Tab.
     function startSwitcher(step) {
-        const offset = step === undefined ? 1 : step
-
-        if (Compositor.isNiri) {
-            refresh()
-            activateSwitcher(offset)
-        } else {
-            // hyprctl is async; activate once the client list lands.
-            root.pendingStep = offset
-            root.switcherPending = true
-            refresh()
-        }
+        refresh()
+        activateSwitcher(step === undefined ? 1 : step)
     }
 
     function activateSwitcher(step) {
-        root.switcherPending = false
         if (root.windows.length === 0) {
             root.switcherActive = false
             return
@@ -304,7 +235,7 @@ Singleton {
         if (root.switcherActive) {
             if (root.windows.length === 0) return
             root.currentIndex = (root.currentIndex + 1) % root.windows.length
-        } else if (!root.switcherPending) {
+        } else {
             startSwitcher(1)
         }
     }
@@ -313,7 +244,7 @@ Singleton {
         if (root.switcherActive) {
             if (root.windows.length === 0) return
             root.currentIndex = (root.currentIndex - 1 + root.windows.length) % root.windows.length
-        } else if (!root.switcherPending) {
+        } else {
             startSwitcher(-1)
         }
     }
@@ -327,9 +258,7 @@ Singleton {
         }
 
         const window = root.windows[root.currentIndex]
-        focusProcess.command = Compositor.isNiri
-            ? ["niri", "msg", "action", "focus-window", "--id", window.address]
-            : ["hyprctl", "dispatch", "hl.dsp.focus({ window = \"address:" + window.address + "\" })"]
+        focusProcess.command = ["niri", "msg", "action", "focus-window", "--id", window.address]
         focusProcess.running = true
 
         root.switcherActive = false
@@ -337,7 +266,6 @@ Singleton {
     }
 
     function cancelSwitcher() {
-        root.switcherPending = false
         root.switcherActive = false
         root.currentIndex = 0
     }

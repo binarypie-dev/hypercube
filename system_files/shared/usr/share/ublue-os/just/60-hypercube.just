@@ -11,7 +11,7 @@ config-reset APP="all":
 
     # Map app names to config directories/files
     declare -A CONFIG_MAP
-    CONFIG_MAP[hypr]="hypr"
+    CONFIG_MAP[niri]="niri"
     CONFIG_MAP[fish]="fish"
     CONFIG_MAP[ghostty]="ghostty"
     CONFIG_MAP[alacritty]="alacritty"
@@ -76,7 +76,7 @@ config-diff APP="all":
     SOURCE_DIR="/usr/share/hypercube/config"
 
     declare -A CONFIG_MAP
-    CONFIG_MAP[hypr]="hypr"
+    CONFIG_MAP[niri]="niri"
     CONFIG_MAP[fish]="fish"
     CONFIG_MAP[ghostty]="ghostty"
     CONFIG_MAP[alacritty]="alacritty"
@@ -126,7 +126,7 @@ config-list:
     #!/usr/bin/bash
     echo "Available Hypercube configs:"
     echo ""
-    echo "  hypr        - Hyprland window manager"
+    echo "  niri        - niri compositor"
     echo "  fish        - Fish shell"
     echo "  ghostty     - Ghostty terminal"
     echo "  alacritty   - Alacritty terminal"
@@ -135,9 +135,9 @@ config-list:
     echo ""
     echo "Usage:"
     echo "  ujust config-reset           # Reset all configs"
-    echo "  ujust config-reset hypr      # Reset specific config"
+    echo "  ujust config-reset niri      # Reset specific config"
     echo "  ujust config-diff            # Show all differences"
-    echo "  ujust config-diff hypr       # Show specific differences"
+    echo "  ujust config-diff niri       # Show specific differences"
 
 # Show Hypercube developer environment status
 dx-status:
