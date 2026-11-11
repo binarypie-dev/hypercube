@@ -1,0 +1,62 @@
+# Hypercube swaylock configuration - Tokyo Night lock screen
+#
+# Installed as the system default at /etc/swaylock/config (swaylock doesn't
+# read XDG_CONFIG_DIRS). To customize, copy this file to
+# ~/.config/swaylock/config, which replaces it entirely.
+# Options are the long command-line flags without the dashes; see
+# `man swaylock`.
+#
+# Tokyo Night palette: bg #1a1b26, fg #c0caf5, blue #7aa2f7,
+# purple #bb9af7, cyan #7dcfff, green #9ece6a, red #f7768e
+
+image=/usr/share/backgrounds/hypercube/background.png
+scaling=fill
+color=1a1b26
+
+font=JetBrains Mono
+font-size=24
+indicator-radius=110
+indicator-thickness=8
+show-failed-attempts
+indicator-caps-lock
+ignore-empty-password
+
+# Idle
+inside-color=1a1b26e6
+ring-color=7aa2f7
+line-color=00000000
+separator-color=00000000
+text-color=c0caf5
+key-hl-color=bb9af7
+bs-hl-color=f7768e
+
+# Clearing the input
+inside-clear-color=1a1b26e6
+ring-clear-color=7dcfff
+line-clear-color=00000000
+text-clear-color=7dcfff
+
+# Checking the password
+inside-ver-color=1a1b26e6
+ring-ver-color=9ece6a
+line-ver-color=00000000
+text-ver-color=9ece6a
+
+# Wrong password
+inside-wrong-color=1a1b26e6
+ring-wrong-color=f7768e
+line-wrong-color=00000000
+text-wrong-color=f7768e
+
+# Caps Lock on
+inside-caps-lock-color=1a1b26e6
+ring-caps-lock-color=bb9af7
+line-caps-lock-color=00000000
+text-caps-lock-color=bb9af7
+caps-lock-key-hl-color=7aa2f7
+caps-lock-bs-hl-color=f7768e
+
+# Keyboard layout indicator
+layout-bg-color=1a1b26e6
+layout-border-color=414868
+layout-text-color=c0caf5

@@ -29,8 +29,14 @@ dnf5 -y install \
     xdg-utils
 
 ### Credential & Secret Storage
+# gnome-keyring-pam provides pam_gnome_keyring.so. greetd's PAM stack
+# (/usr/lib/pam.d/greetd) already lists it as optional, but it silently does
+# nothing unless the module is installed: with it, logging in through the
+# greeter unlocks the login keyring with the account password and starts
+# gnome-keyring-daemon (secrets + SSH agent), in every session.
 dnf5 -y install \
     gnome-keyring \
+    gnome-keyring-pam \
     seahorse
 
 ### Audio (Pipewire should be in base, but ensure full stack)

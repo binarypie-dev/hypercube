@@ -95,6 +95,13 @@ cat > /etc/niri/config.kdl << 'EOF'
 include "/usr/share/hypercube/config/niri/config.kdl"
 EOF
 
+### swaylock / swayidle - system defaults (niri session)
+# Neither honors XDG_CONFIG_DIRS (like zellij), so install the Hypercube
+# defaults to /etc. Users override with ~/.config/swaylock/config and
+# ~/.config/swayidle/config, which replace these files entirely.
+install -Dm644 "${CONFIG_DIR}/swaylock/config" /etc/swaylock/config
+install -Dm644 "${CONFIG_DIR}/swayidle/config" /etc/swayidle/config
+
 ### Neovim - devcube sandbox overrides
 # The editor config + AI agents ship baked into the devcube podman image
 # (ujust devcube-setup). Users keep ONLY personal plugin overrides here; this

@@ -113,6 +113,12 @@ recent-windows {
 // niri-session imports the login environment (XDG_CONFIG_DIRS etc. from
 // /usr/lib/environment.d) into systemd and D-Bus, so no extra env export is
 // needed here.
+//
+// Not started here because they run as systemd user services:
+//   - hypercube-polkit-agent.service (wanted by niri.service): the admin
+//     password dialog, used for unlocking LUKS drives, pkexec, ...
+//   - xdg-desktop-portal (+ -gnome/-gtk backends), D-Bus activated
+// GNOME Keyring is started and unlocked by PAM at login (pam_gnome_keyring).
 
 // Quickshell - bar, launcher, notifications, OSD, app switcher
 spawn-at-startup "quickshell"
@@ -120,13 +126,15 @@ spawn-at-startup "quickshell"
 // Wallpaper (shown behind workspaces and in the overview, see layer-rule below)
 spawn-at-startup "swaybg" "-m" "fill" "-i" "/usr/share/backgrounds/hypercube/background.png"
 
-// Idle / Lock (niri variant: uses niri msg instead of hyprctl for DPMS)
-spawn-at-startup "hypridle" "-c" "/usr/share/hypercube/config/niri/hypridle.conf"
+// Idle / Lock: dim, lock, DPMS off and suspend timers. Reads
+// ~/.config/swayidle/config, falling back to /etc/swayidle/config
+// (Hypercube default, from dot_files/swayidle/config). -w waits for the lock
+// screen before the system suspends.
+spawn-at-startup "swayidle" "-w"
 
-// Polkit authentication agent (for privilege escalation)
-spawn-sh-at-startup "systemctl --user start hyprpolkitagent"
-
-// GNOME Keyring (for secrets management, SSH keys, and certificates)
+// GNOME Keyring (secrets, SSH agent, certificates). PAM already started and
+// unlocked it at login; --start attaches to that daemon and makes sure every
+// component is running (and starts a locked one if PAM didn't).
 spawn-at-startup "gnome-keyring-daemon" "--start"
 
 
@@ -142,7 +150,7 @@ binds {
     Mod+Space hotkey-overlay-title="Hub: apps" { spawn "qs" "ipc" "call" "shell" "toggleHub"; }
     Mod+N hotkey-overlay-title="Hub: notifications" { spawn "qs" "ipc" "call" "shell" "toggleHubTab" "notifications"; }
     Mod+Escape hotkey-overlay-title="Close all panels" { spawn "qs" "ipc" "call" "shell" "closeAll"; }
-    Mod+Ctrl+Escape hotkey-overlay-title="Lock screen" { spawn-sh "pidof hyprlock || hyprlock"; }
+    Mod+Ctrl+Escape hotkey-overlay-title="Lock screen" { spawn-sh "pidof swaylock || swaylock -f"; }
 
     // App switcher (Quickshell)
     Mod+Tab hotkey-overlay-title="Next window" { spawn "qs" "ipc" "call" "shell" "nextWindow"; }
