@@ -235,10 +235,56 @@ Singleton {
         onExited: btProcess.running = true
     }
 
+    // Pairing state for the UI
+    property string pairingMac: ""      // MAC currently being paired ("" when idle)
+    property string pairFailedMac: ""   // MAC of the last failed pairing attempt
+
+    // Pairing has to happen inside a single, long-lived bluetoothctl session:
+    // BlueZ calls back into the registered agent to confirm the pairing, and a
+    // one-shot `bluetoothctl pair <mac>` exits (taking its agent with it) before
+    // that happens. That left the device ACL-connected but never paired.
+    // Here we register a NoInputNoOutput agent, keep stdin open, auto-answer any
+    // "(yes/no)" agent prompts, and wait until BlueZ reports the device as paired.
+    readonly property string btPairScript: "
+        MAC=\"$1\"
+        is_paired() { bluetoothctl info \"$MAC\" 2>/dev/null | grep -q \"Paired: yes\"; }
+
+        bluetoothctl pairable on >/dev/null 2>&1
+
+        if ! is_paired; then
+            {
+                sleep 1                     # let the agent register first
+                echo \"pair $MAC\"
+                for i in $(seq 1 30); do
+                    sleep 1
+                    is_paired && break
+                    echo yes                # confirm any agent prompt
+                done
+                echo quit
+            } | bluetoothctl --agent NoInputNoOutput >/dev/null 2>&1
+        fi
+
+        if ! is_paired; then
+            bluetoothctl cancel-pairing \"$MAC\" >/dev/null 2>&1
+            exit 1
+        fi
+
+        bluetoothctl trust \"$MAC\" >/dev/null 2>&1
+        for i in 1 2 3; do
+            bluetoothctl connect \"$MAC\" 2>/dev/null | grep -q \"Connection successful\" && exit 0
+            sleep 1
+        done
+        exit 0   # paired and trusted; the connect can be retried from My Devices
+    "
+
     Process {
         id: pairProcess
-        command: ["bluetoothctl", "pair", ""]
-        onExited: btProcess.running = true
+        command: ["bash", "-c", root.btPairScript, "bt-pair", ""]
+        onExited: (exitCode, exitStatus) => {
+            root.pairFailedMac = exitCode === 0 ? "" : root.pairingMac
+            root.pairingMac = ""
+            btProcess.running = true
+        }
     }
 
     // Control functions
@@ -279,8 +325,10 @@ Singleton {
     }
 
     function pairDevice(mac) {
-        // Enable pairable mode, then pair, then connect
-        pairProcess.command = ["sh", "-c", "bluetoothctl pairable on && bluetoothctl pair " + mac + " && bluetoothctl trust " + mac + " && bluetoothctl connect " + mac]
+        if (pairProcess.running) return  // One pairing at a time
+        pairingMac = mac
+        pairFailedMac = ""
+        pairProcess.command = ["bash", "-c", root.btPairScript, "bt-pair", mac]
         pairProcess.running = true
     }
 
