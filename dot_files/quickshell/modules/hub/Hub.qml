@@ -13,7 +13,7 @@ import "../../services" as Services
 //
 // Keys (window-level shortcuts, so they work even while the search box has
 // focus):  Tab / Shift+Tab or Ctrl+L / Ctrl+H  next / previous tab
-//          Ctrl+1 .. Ctrl+9                    jump to tab
+//          Ctrl+1 .. Ctrl+9, Ctrl+0            jump to tab (0 = tenth)
 //          Esc                                 clear search (apps), else close
 PanelWindow {
     id: root
@@ -85,6 +85,7 @@ PanelWindow {
                 if (Services.Battery.pluggedIn && Services.Battery.percent >= 95) return I.icons.plug
                 if (Services.Battery.charging) return I.icons.batteryCharging
                 return I.batteryIcon(Services.Battery.percent, false)
+            case "thermals": return I.icons.thermometer
             case "windows": return I.icons.list
         }
         return I.icons.apps
@@ -100,6 +101,10 @@ PanelWindow {
                 if (Services.BluetoothStatus.connected) return C.blue
                 return Services.BluetoothStatus.powered ? C.fgDark : C.comment
             case "weather": return C.cyan
+            case "thermals":
+                return Services.Thermals.level >= 1
+                    ? Services.Thermals.levelColor(Services.Thermals.level, C)
+                    : C.fgDark
             case "system":
                 if (Services.Battery.present && Services.Battery.percent <= 20 && !Services.Battery.charging) return C.error
                 return C.fgDark
@@ -112,6 +117,7 @@ PanelWindow {
         if (id === "notifications")
             return Root.GlobalStates.unreadNotificationCount > 0 && !Root.GlobalStates.doNotDisturb
         if (id === "system") return Services.Updates.needsAttention
+        if (id === "thermals") return Services.Thermals.alert
         return false
     }
 
@@ -155,6 +161,7 @@ PanelWindow {
         Shortcut { sequence: "Ctrl+7"; onActivated: root.jumpTo(6) }
         Shortcut { sequence: "Ctrl+8"; onActivated: root.jumpTo(7) }
         Shortcut { sequence: "Ctrl+9"; onActivated: root.jumpTo(8) }
+        Shortcut { sequence: "Ctrl+0"; onActivated: root.jumpTo(9) }
     }
 
     // One icon tab in the title bar
@@ -191,7 +198,7 @@ PanelWindow {
                         : root.tabIconColor(tabItem.modelData.id))
             }
 
-            // Attention dot (unread notifications, pending update)
+            // Attention dot (unread notifications, pending update, overheating)
             Rectangle {
                 visible: tabItem.alert
                 width: 6
@@ -234,13 +241,18 @@ PanelWindow {
     Rectangle {
         id: panel
         anchors.centerIn: parent
-        // Size from the screen height and keep a fixed 16:10 shape, so the
-        // panel looks the same on any monitor (and doesn't balloon on
-        // ultrawides). Values are logical pixels, so HiDPI scaling is
-        // already accounted for. ~1080p: 594x950, 1440p+: 680x1088.
-        readonly property real aspect: 1.6
-        height: Math.min(Math.max(parent.height * 0.55, 520), 680, parent.height * 0.9)
-        width: Math.min(height * aspect, parent.width * 0.9)
+        // Scale with the screen in both directions: 65% of its width and
+        // 65% of its height, so the panel takes the same share of any
+        // monitor. Width is capped at 1.8x the height so it doesn't stretch
+        // across ultrawides (16:9 and 16:10 screens stay under the cap).
+        // Minimums keep it usable on small screens (never past 90% of the
+        // screen). Values are logical pixels, so HiDPI scaling is already
+        // accounted for. 1080p: 1248x702, 1440p: 1664x936, 3440x1440: 1685x936.
+        readonly property real screenShare: 0.65
+        readonly property real maxAspect: 1.8
+        height: Math.min(Math.max(parent.height * screenShare, 520), parent.height * 0.9)
+        width: Math.min(Math.max(Math.min(parent.width * screenShare, height * maxAspect), 800),
+                        parent.width * 0.9)
         radius: Common.Appearance.rounding.tiny
         color: Qt.rgba(
             Common.Appearance.colors.bgDark.r,
@@ -358,6 +370,7 @@ PanelWindow {
                             case "bluetooth": return "../panels/BluetoothView.qml"
                             case "calendar": return "../panels/CalendarView.qml"
                             case "weather": return "../panels/WeatherView.qml"
+                            case "thermals": return "../panels/ThermalsView.qml"
                             case "system": return "../panels/SystemView.qml"
                             case "windows": return "../panels/WindowsView.qml"
                         }
@@ -391,7 +404,7 @@ PanelWindow {
                         model: {
                             const hints = [
                                 { key: "Tab/S-Tab", action: "tabs" },
-                                { key: "^1-9", action: "jump" }
+                                { key: "^1-0", action: "jump" }
                             ]
                             if (root.currentTab === "apps") {
                                 hints.push({ key: "^j/^k", action: "move" })

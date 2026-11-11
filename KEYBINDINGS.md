@@ -98,7 +98,7 @@ The **Super** key (Windows/Command key) is the main modifier.
 | Keybinding | Action |
 |------------|--------|
 | `Tab` / `Shift + Tab` | Next / previous tab (also `Ctrl + L` / `Ctrl + H`) |
-| `Ctrl + 1-9` | Jump to tab, left to right: windows, apps, notify, audio, net, bt, weather, cal, system |
+| `Ctrl + 1-9`, `Ctrl + 0` | Jump to tab, left to right: windows, apps, notify, audio, net, bt, weather, cal, temps, system (`0` is the tenth) |
 | `Ctrl + J` / `Ctrl + K` | Move through app results |
 | `J` / `K` | Move through windows (windows tab) |
 | `Enter` | Launch selected app / focus selected window |

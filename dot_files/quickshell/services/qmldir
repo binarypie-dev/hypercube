@@ -12,6 +12,7 @@ singleton Network 1.0 Network.qml
 singleton Notifications 1.0 Notifications.qml
 singleton Power 1.0 Power.qml
 singleton Privacy 1.0 Privacy.qml
+singleton Thermals 1.0 Thermals.qml
 singleton Updates 1.0 Updates.qml
 singleton Weather 1.0 Weather.qml
 singleton Windows 1.0 Windows.qml
