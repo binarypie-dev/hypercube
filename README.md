@@ -70,7 +70,7 @@ Every tool is configured with vim keybindings out of the box:
 
 - **Hyprland** - Dynamic tiling Wayland compositor for keyboard-driven efficiency
 - **niri** (preview) - Scrollable-tiling compositor, available as a second session in the greeter with the same Quickshell shell
-- **Quickshell** - Custom shell with notifications, app launcher, and system controls
+- **Quickshell** - Custom shell with notifications, app launcher, system controls, and a temperature dashboard
 
 ### Development Tools
 

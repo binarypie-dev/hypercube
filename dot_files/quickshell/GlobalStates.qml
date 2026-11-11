@@ -87,6 +87,7 @@ Singleton {
         { id: "bluetooth",     label: "bt",      mode: "BLUETOOTH", insert: false, group: "left" },
         { id: "weather",       label: "weather", mode: "WEATHER",   insert: false, group: "clock" },
         { id: "calendar",      label: "cal",     mode: "CALENDAR",  insert: false, group: "clock" },
+        { id: "thermals",      label: "temps",   mode: "THERMALS",  insert: false, group: "end" },
         { id: "system",        label: "system",  mode: "SYSTEM",    insert: false, group: "end" }
     ]
 
