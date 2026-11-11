@@ -234,6 +234,8 @@ ColumnLayout {
                         Layout.fillWidth: true
                         deviceName: modelData.name
                         deviceMac: modelData.mac
+                        isPairing: Services.BluetoothStatus.pairingMac === modelData.mac
+                        pairFailed: Services.BluetoothStatus.pairFailedMac === modelData.mac
                         onPairClicked: Services.BluetoothStatus.pairDevice(modelData.mac)
                     }
                 }
@@ -308,6 +310,8 @@ ColumnLayout {
         id: availableItem
         property string deviceName: ""
         property string deviceMac: ""
+        property bool isPairing: false
+        property bool pairFailed: false
 
         signal pairClicked()
 
@@ -319,8 +323,8 @@ ColumnLayout {
             id: availableMouse
             anchors.fill: parent
             hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
-            onClicked: pairClicked()
+            cursorShape: Services.BluetoothStatus.pairingMac === "" ? Qt.PointingHandCursor : Qt.ArrowCursor
+            onClicked: if (Services.BluetoothStatus.pairingMac === "") pairClicked()
         }
 
         RowLayout {
@@ -339,10 +343,12 @@ ColumnLayout {
             }
 
             Text {
-                text: "Tap to pair"
+                text: isPairing ? "[Pairing...]" : (pairFailed ? "[Failed] Tap to retry" : "Tap to pair")
                 font.family: Common.Appearance.fonts.mono
                 font.pixelSize: Common.Appearance.fontSize.small
-                color: Common.Appearance.colors.comment
+                color: isPairing
+                    ? Common.Appearance.colors.cyan
+                    : (pairFailed ? Common.Appearance.colors.red : Common.Appearance.colors.comment)
             }
         }
     }
