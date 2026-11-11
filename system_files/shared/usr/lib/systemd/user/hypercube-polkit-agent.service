@@ -1,0 +1,30 @@
+# Polkit authentication agent for the niri session.
+#
+# This is what pops up the password dialog when something needs admin rights
+# through polkit: unlocking LUKS drives in Nautilus / GNOME Disks (udisks),
+# pkexec, system flatpak installs, NetworkManager system connections, ...
+# Without an agent those requests fail with "Not authorized".
+#
+# Wanted by niri.service (enabled globally by
+# build_files/hyprland/02-niri-session.sh) and ordered after it: niri.service
+# is Type=notify and only reports ready once it has exported WAYLAND_DISPLAY
+# to the systemd user manager, so the agent always finds the display.
+# It is tied to niri.service rather than graphical-session.target so it
+# doesn't also start in the Hyprland session, which runs hyprpolkitagent
+# (only one agent can register per session).
+
+[Unit]
+Description=Polkit authentication agent (niri session)
+Documentation=man:polkit(8)
+PartOf=niri.service
+After=niri.service
+
+[Service]
+ExecStart=/usr/libexec/polkit-mate-authentication-agent-1
+Restart=on-failure
+RestartSec=1
+Slice=session.slice
+TimeoutStopSec=5
+
+[Install]
+WantedBy=niri.service

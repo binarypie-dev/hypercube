@@ -104,7 +104,9 @@ Singleton {
 
     Process {
         id: lockProcess
-        command: ["hyprlock"]
+        command: ["sh", "-c", Compositor.isNiri
+            ? "pidof swaylock || swaylock -f"
+            : "pidof hyprlock || hyprlock"]
     }
 
     function suspend() {

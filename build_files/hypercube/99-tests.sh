@@ -22,6 +22,13 @@ REQUIRED_PACKAGES=(
   "xwayland-satellite"
   "swaybg"
   "xdg-desktop-portal-gnome"
+  "swaylock"
+  "swayidle"
+  # Passwords: polkit agent (admin prompts, e.g. unlocking LUKS drives) and
+  # the PAM module that unlocks GNOME Keyring at login
+  "mate-polkit"
+  "gnome-keyring"
+  "gnome-keyring-pam"
   # Terminals
   "ghostty"
   "zellij"
@@ -64,7 +71,10 @@ REQUIRED_FILES=(
   "/usr/share/hypercube/config/starship/starship.toml"
   "/etc/niri/config.kdl"
   "/usr/share/hypercube/config/niri/config.kdl"
-  "/usr/share/hypercube/config/niri/hypridle.conf"
+  "/etc/swaylock/config"
+  "/etc/swayidle/config"
+  "/usr/lib/systemd/user/hypercube-polkit-agent.service"
+  "/usr/libexec/polkit-mate-authentication-agent-1"
   "/usr/share/hypercube/config/xdg-desktop-portal/niri-portals.conf"
   "/usr/share/wayland-sessions/niri.desktop"
   # Theming
@@ -93,6 +103,27 @@ if ! niri validate -c /etc/niri/config.kdl; then
   exit 1
 fi
 echo "  OK: niri config is valid"
+
+### niri's polkit agent must start with the session, or nothing can ask for
+### the admin password
+if ! systemctl --global is-enabled hypercube-polkit-agent.service &>/dev/null; then
+  echo "ERROR: hypercube-polkit-agent.service is not enabled for user sessions!"
+  exit 1
+fi
+echo "  OK: hypercube-polkit-agent.service enabled for niri sessions"
+
+### greetd's PAM stack must load pam_gnome_keyring so login unlocks the
+### keyring. Fedora's greetd PAM file lists it as optional ("-auth"), which is
+### silently skipped unless the module itself is installed, so check both.
+if ! grep -qs 'pam_gnome_keyring' /etc/pam.d/greetd /usr/lib/pam.d/greetd; then
+  echo "ERROR: greetd PAM stack does not include pam_gnome_keyring!"
+  exit 1
+fi
+if [ ! -e /usr/lib64/security/pam_gnome_keyring.so ]; then
+  echo "ERROR: pam_gnome_keyring.so is not installed!"
+  exit 1
+fi
+echo "  OK: greetd PAM stack unlocks GNOME Keyring"
 
 ### Check os-release branding
 if ! grep -q "ID=hypercube" /usr/lib/os-release; then

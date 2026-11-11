@@ -1,0 +1,35 @@
+# Hypercube swayidle configuration - auto-lock / idle for the niri session
+#
+# Installed as the system default at /etc/swayidle/config (swayidle doesn't
+# read XDG_CONFIG_DIRS). To customize, copy this file to
+# ~/.config/swayidle/config, which replaces it entirely.
+#
+# Each line takes the same form as swayidle's command-line arguments; see
+# `man swayidle`. Idle inhibitors (video players, games, ...) pause the
+# timeouts.
+
+# `loginctl lock-session` (and the timeout below) lock through this command.
+# pidof avoids stacking a second lock screen on top of the first.
+lock 'pidof swaylock || swaylock -f'
+
+# Lock before suspend. swaylock -f only returns once the screen is locked and
+# swayidle runs with -w, so the system never suspends unlocked.
+before-sleep 'pidof swaylock || swaylock -f'
+
+# Avoid having to press a key twice to turn the display back on after resume
+after-resume 'niri msg action power-on-monitors'
+
+# Dim the screen after 2.5 minutes (not to 0, which blanks OLED panels)
+timeout 150 'brightnessctl -s set 10' resume 'brightnessctl -r'
+
+# Turn off the keyboard backlight after 2.5 minutes
+timeout 150 'brightnessctl -sd rgb:kbd_backlight set 0' resume 'brightnessctl -rd rgb:kbd_backlight'
+
+# Lock after 5 minutes
+timeout 300 'loginctl lock-session'
+
+# Turn the screens off 30 seconds after locking
+timeout 330 'niri msg action power-off-monitors' resume 'niri msg action power-on-monitors'
+
+# Suspend after 30 minutes
+timeout 1800 'systemctl suspend'
