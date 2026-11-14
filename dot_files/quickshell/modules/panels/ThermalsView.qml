@@ -393,11 +393,6 @@ Flickable {
                     color: Common.Appearance.colors.cyan
                 }
             }
-
-            StatusPill {
-                visible: card.primary !== null
-                level: card.primary ? card.primary.level : 0
-            }
         }
 
         Text {
