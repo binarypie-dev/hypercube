@@ -29,7 +29,7 @@ build ghcr="0" nocache="0":
 
     echo "========================================"
     echo "Building: ${IMAGE_FULL}"
-    echo "Base:     ghcr.io/ublue-os/base-main:{{ fedora_version }}"
+    echo "Base:     ghcr.io/ublue-os/base-nvidia:{{ fedora_version }}"
     echo "========================================"
 
     BUILD_ARGS=()
@@ -99,66 +99,39 @@ build-qcow2-fast:
     set -euo pipefail
 
     LOCAL_IMAGE="localhost/{{ image_name }}:{{ fedora_version }}"
-    OUTPUT_DIR="${PWD}/.vm"
-    RAW_FILE="${OUTPUT_DIR}/{{ image_name }}.raw"
-    QCOW2_FILE="${OUTPUT_DIR}/{{ image_name }}.qcow2"
-    DISK_SIZE="64G"
+    QCOW2_FILE="${PWD}/.vm/{{ image_name }}.qcow2"
 
-    echo "Building qcow2 from ${LOCAL_IMAGE} using bootc install..."
+    just _image-to-root-storage
 
-    # Check if image exists in user storage
-    if ! {{ PODMAN }} image exists "${LOCAL_IMAGE}"; then
-        echo "Error: Image ${LOCAL_IMAGE} not found. Run 'just build' first."
-        exit 1
-    fi
-
-    mkdir -p "${OUTPUT_DIR}"
-
-    # Copy image to root storage (required for sudo podman run)
-    if [[ "${UID}" -gt 0 ]]; then
-        echo "Copying image to root podman storage..."
-        # Remove old image from root storage first to ensure fresh copy
-        {{ SUDO }} {{ PODMAN }} rmi "${LOCAL_IMAGE}" 2>/dev/null || true
-        # Use podman save/load instead of scp for reliability
-        {{ PODMAN }} save "${LOCAL_IMAGE}" | {{ SUDO }} {{ PODMAN }} load
-    fi
-
-    # Remove existing disks to start fresh
-    rm -f "${RAW_FILE}" "${QCOW2_FILE}"
-
-    # Create a raw disk image (loopback works properly with raw)
-    echo "Creating ${DISK_SIZE} raw disk image..."
-    truncate -s "${DISK_SIZE}" "${RAW_FILE}"
-
-    # Use bootc install to-disk from within the container
-    # This is much faster than bootc-image-builder as it directly installs
-    {{ SUDO }} {{ PODMAN }} run \
-        --rm \
-        -it \
-        --privileged \
-        --pid=host \
-        --security-opt label=type:unconfined_t \
-        -v /var/lib/containers/storage:/var/lib/containers/storage \
-        -v "${RAW_FILE}":/disk.raw \
-        -v /dev:/dev \
-        "${LOCAL_IMAGE}" \
-        bootc install to-disk --skip-fetch-check --generic-image --via-loopback --filesystem btrfs /disk.raw
-
-    # Convert raw to qcow2 (sparse, much smaller)
-    echo "Converting to qcow2..."
-    qemu-img convert -f raw -O qcow2 "${RAW_FILE}" "${QCOW2_FILE}"
-    rm -f "${RAW_FILE}"
-
-    # Fix ownership
-    if [[ "${UID}" -gt 0 ]]; then
-        {{ SUDO }} chown "${UID}:$(id -g)" "${QCOW2_FILE}"
-    fi
+    SUDO="{{ SUDO }}" PODMAN="{{ PODMAN }}" \
+        ./scripts/ci/bootc-to-qcow2.sh "${LOCAL_IMAGE}" "${QCOW2_FILE}"
 
     echo ""
     echo "========================================"
     echo "qcow2 built: ${QCOW2_FILE}"
     echo "Run 'just run-qcow2' to test"
     echo "========================================"
+
+# bootc install and bootc-image-builder run rootful. No-op as root.
+
+# Copy the locally built image into root podman storage
+[private]
+_image-to-root-storage:
+    #!/usr/bin/bash
+    set -euo pipefail
+
+    LOCAL_IMAGE="localhost/{{ image_name }}:{{ fedora_version }}"
+
+    if ! {{ PODMAN }} image exists "${LOCAL_IMAGE}"; then
+        echo "Error: Image ${LOCAL_IMAGE} not found. Run 'just build' first."
+        exit 1
+    fi
+    [[ "${UID}" -eq 0 ]] && exit 0
+
+    echo "Copying ${LOCAL_IMAGE} to root podman storage..."
+    # Remove the old copy first so the root store always has the fresh build
+    {{ SUDO }} {{ PODMAN }} rmi "${LOCAL_IMAGE}" 2>/dev/null || true
+    {{ PODMAN }} save "${LOCAL_IMAGE}" | {{ SUDO }} {{ PODMAN }} load
 
 # Build qcow2 disk image using bootc-image-builder (slower, more options)
 [group('VM')]
@@ -378,6 +351,64 @@ delete-test-vm:
     rmdir "$(pwd)/.vm" 2>/dev/null || true
 
     echo "Test VM deleted."
+
+# ============================================
+# Test Recipes
+# ============================================
+
+# Full local CI, mirroring the GitHub build: build the image (which runs
+# build_files/hypercube/99-tests.sh), then `ci-disk` and `smoke`.
+
+# Build the image, boot it headless in QEMU and run the smoke checks
+[group('Test')]
+ci: build ci-disk smoke
+
+# The CI disk is the local image installed with bootc, plus a throwaway SSH
+# key for root and sshd enabled. Both are on this disk only; the image itself
+# is unchanged.
+
+# Build the CI test disk (.vm/ci/disk.qcow2) with a throwaway SSH key
+[group('Test')]
+ci-disk:
+    #!/usr/bin/bash
+    set -euo pipefail
+
+    LOCAL_IMAGE="localhost/{{ image_name }}:{{ fedora_version }}"
+    CI_DIR="${PWD}/.vm/ci"
+    mkdir -p "${CI_DIR}"
+
+    # Throwaway key, regenerated for every disk
+    rm -f "${CI_DIR}/id_ed25519" "${CI_DIR}/id_ed25519.pub"
+    ssh-keygen -q -t ed25519 -N "" -C "hypercube-ci" -f "${CI_DIR}/id_ed25519"
+
+    just _image-to-root-storage
+
+    # console=ttyS0 puts the boot log on the serial console (saved by
+    # `just smoke`); systemd.wants=sshd.service starts sshd on this disk only.
+    SUDO="{{ SUDO }}" PODMAN="{{ PODMAN }}" \
+        ./scripts/ci/bootc-to-qcow2.sh "${LOCAL_IMAGE}" "${CI_DIR}/disk.qcow2" \
+        --root-ssh-authorized-keys /output/id_ed25519.pub \
+        --karg console=tty0 \
+        --karg console=ttyS0,115200 \
+        --karg systemd.wants=sshd.service
+
+# Checks (scripts/ci/guest-checks.sh): no failed units, bootc/rpm-ostree
+# status sane, the greeter comes up, and a niri session starts on the VM's
+# headless output. VM_KEEP=1 leaves the VM running for debugging; see
+# scripts/ci/vm-smoke.sh for the other knobs.
+
+# Boot the CI disk headless in QEMU and run the smoke checks over SSH
+[group('Test')]
+smoke:
+    #!/usr/bin/bash
+    set -euo pipefail
+
+    CI_DIR="${PWD}/.vm/ci"
+    if [[ ! -f "${CI_DIR}/disk.qcow2" || ! -f "${CI_DIR}/id_ed25519" ]]; then
+        echo "Error: no CI disk at ${CI_DIR}. Run 'just ci-disk' first."
+        exit 1
+    fi
+    ./scripts/ci/vm-smoke.sh "${CI_DIR}/disk.qcow2" "${CI_DIR}/id_ed25519"
 
 # ============================================
 # ISO Recipes

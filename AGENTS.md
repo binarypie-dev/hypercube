@@ -19,6 +19,22 @@ just check              # Validate Justfile syntax
 just fix                # Fix Justfile formatting
 ```
 
+### Local CI (build + headless VM smoke test)
+
+```bash
+just ci                  # build, then ci-disk + smoke (same build as GitHub CI, plus a boot test)
+just ci-disk             # install the local image to .vm/ci/disk.qcow2 with a throwaway root SSH key
+just smoke               # boot it headless in QEMU and run scripts/ci/guest-checks.sh over SSH
+VM_KEEP=1 just smoke     # leave the VM running afterwards to SSH in and debug
+```
+
+The smoke checks: no failed systemd units, `bootc status`/`rpm-ostree status`
+show one booted deployment, greetd and its cage greeter come up, and a test
+user logged in through greetd gets a running niri session (on the VM's
+headless virtio-gpu output) with the polkit agent and Quickshell. Needs
+`qemu-system-x86_64`, `qemu-img` and `ssh-keygen`; KVM and OVMF are used when
+available. The serial console log is kept at `.vm/ci/serial.log`.
+
 ### VM/ISO Testing
 
 ```bash
