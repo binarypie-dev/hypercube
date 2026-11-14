@@ -46,12 +46,15 @@ dnf5 -y install \
     pipewire-alsa \
     wireplumber
 
-### Networking (using iwd instead of wpa_supplicant for faster, lighter WiFi)
+### Networking
+# NetworkManager's default wpa_supplicant WiFi backend. The iwd backend didn't
+# scan on its own after boot or resume, so saved networks never autoconnected.
 dnf5 -y install \
     NetworkManager \
     NetworkManager-wifi \
     NetworkManager-bluetooth \
-    iwd
+    wpa_supplicant
+dnf5 -y remove iwd 2>/dev/null || true
 
 ### Bluetooth
 dnf5 -y install \
@@ -134,14 +137,10 @@ systemctl enable NetworkManager.service
 systemctl enable bluetooth.service
 systemctl enable power-profiles-daemon.service
 systemctl enable flatpak-add-flathub.service
-systemctl enable iwd.service
-# NM's iwd backend doesn't rescan after resume; nudge it so autoconnect fires
-systemctl enable hypercube-wifi-resume.service
 systemctl enable hypercube-migrate.service
 
 ### Disable services we don't need
 systemctl disable gdm.service 2>/dev/null || true
 systemctl disable sddm.service 2>/dev/null || true
-systemctl disable wpa_supplicant.service 2>/dev/null || true
 
 echo "Hypercube base system installed successfully"
