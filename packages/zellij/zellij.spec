@@ -4,8 +4,8 @@
 %global debug_package %{nil}
 
 Name:           zellij
-Version:        0.45.1
-Release:        3%{?dist}
+Version:        0.46.0
+Release:        1%{?dist}
 Summary:        A terminal workspace and multiplexer
 
 License:        MIT
@@ -93,6 +93,8 @@ mkdir -p %{buildroot}%{_datadir}/fish/vendor_completions.d
 %{_datadir}/fish/vendor_completions.d/%{name}.fish
 
 %changelog
+* Thu Nov 12 2026 Hypercube <hypercube@binarypie.dev> - 0.46.0-1
+- Update to 0.46.0
 * Tue Oct 27 2026 Hypercube <hypercube@binarypie.dev> - 0.45.1-3
 - Build without vendored_curl and link the system libcurl; the bundled
   curl 8.4.0 in curl-sys doesn't compile against OpenSSL 4
