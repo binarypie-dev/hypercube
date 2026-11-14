@@ -134,7 +134,9 @@ keys differ:
 | `Super + O` | Overview |
 | `Super + Shift + /` | Show all niri keybindings |
 | `Super + Shift + E` | Quit niri |
-| `Ctrl + Print` | niri's built-in screenshot tool |
+| `Print` | Screenshot a region (niri's built-in tool; Space toggles the pointer, Enter confirms) |
+| `Ctrl + Print` | Screenshot the focused monitor |
+| `Alt + Print` | Screenshot the focused window |
 
 There is no scratchpad workspace in niri, so `Super + T` / `Super + Shift + T`
 and the Hyprland-only `Super + P` (pseudotile) are not bound.
