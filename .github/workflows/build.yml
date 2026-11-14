@@ -10,6 +10,8 @@ on:
       - 'system_files/**'
       - 'dot_files/**'
       - 'branding/**'
+      - 'Justfile'
+      - 'scripts/ci/**'
       - '.github/workflows/build.yml'
   schedule:
     - cron: "05 10 * * *" # 10:05am UTC everyday
@@ -40,8 +42,67 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Pull requests: the same `just ci` you run locally. It builds the image
+  # (running build_files/hypercube/99-tests.sh), installs it to a qcow2 with
+  # bootc, boots it headless in QEMU/KVM and runs scripts/ci/guest-checks.sh
+  # over SSH. Nothing is pushed.
+  ci:
+    name: just ci (build + boot smoke test)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest-m
+    timeout-minutes: 120
+
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Maximize build space
+        # v10 (untagged upstream): deletes toolchain dirs instead of apt-get
+        # removing packages, which broke when the runner image dropped powershell
+        uses: ublue-os/remove-unwanted-software@695eb75bc387dbcd9685a8e72d23439d8686cba6
+
+      - name: Install just
+        uses: extractions/setup-just@v3
+
+      - name: Install QEMU and OVMF
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends qemu-system-x86 qemu-utils ovmf openssh-client
+
+      - name: Check KVM
+        run: |
+          if [[ -e /dev/kvm ]]; then
+            ls -l /dev/kvm
+          else
+            echo "::warning::/dev/kvm is missing; the VM will run under TCG and be much slower"
+          fi
+
+      - name: just ci
+        # Run as root so the image is built straight into root podman storage
+        # (bootc install runs rootful) instead of being copied there, which
+        # would need twice the disk space.
+        run: |
+          sudo env "PATH=${PATH}" \
+            FEDORA_VERSION="${FEDORA_VERSION}" \
+            AKMODS_FLAVOR="${AKMODS_FLAVOR}" \
+            just ci
+
+      - name: Upload VM serial log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vm-serial-log
+          path: .vm/ci/serial.log
+          if-no-files-found: ignore
+
+  # main, the nightly schedule and manual runs: build, push and sign the
+  # published image.
   build_push:
     name: Build and push image
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest-m
 
     permissions:
