@@ -31,10 +31,12 @@ VM_MEMORY="${VM_MEMORY:-8192}"
 VM_CPUS="${VM_CPUS:-4}"
 SSH_PORT="${SSH_PORT:-2222}"
 BOOT_TIMEOUT="${BOOT_TIMEOUT:-600}"
-# There's no NVIDIA GPU in the VM, so NVIDIA's persistence daemon and
-# container-toolkit CDI generator fail (the live ISO disables the latter for
-# the same reason).
-ALLOWED_FAILED_UNITS="${ALLOWED_FAILED_UNITS:-nvidia-persistenced.service ublue-nvctk-cdi.service}"
+# Units that fail because of the VM, not the image:
+# - nvidia-persistenced, ublue-nvctk-cdi: there's no NVIDIA GPU in the VM.
+# - mcelog: the VM gets the host CPU (-cpu host), and mcelog refuses AMD
+#   family 0x19+ (Zen 3/4) CPUs, which some runners have.
+# The live ISO disables ublue-nvctk-cdi and mcelog for the same reasons.
+ALLOWED_FAILED_UNITS="${ALLOWED_FAILED_UNITS:-nvidia-persistenced.service ublue-nvctk-cdi.service mcelog.service}"
 NIRI_TIMEOUT="${NIRI_TIMEOUT:-120}"
 
 OVERLAY="${WORK_DIR}/smoke-overlay.qcow2"

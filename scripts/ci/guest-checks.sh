@@ -139,15 +139,28 @@ ci_user_systemctl() {
 if wait_for "${NIRI_TIMEOUT}" ci_user_systemctl is-active --quiet niri.service; then
     pass "niri.service is active for ${CI_USER}"
 
+    # niri exports NIRI_SOCKET to the user manager; fall back to the socket
+    # itself (niri.wayland-N.PID.sock in the runtime dir).
     niri_socket="$(ci_user_systemctl show-environment 2>/dev/null | sed -n 's/^NIRI_SOCKET=//p')"
+    if [[ -z "${niri_socket}" ]]; then
+        niri_socket="$(compgen -G "/run/user/${ci_uid}/niri.*.sock" | head -1)"
+    fi
     niri_msg() {
         runuser -u "${CI_USER}" -- env XDG_RUNTIME_DIR="/run/user/${ci_uid}" NIRI_SOCKET="${niri_socket}" niri msg "$@"
     }
-    outputs="$(niri_msg --json outputs 2>/dev/null | jq -r 'keys | join(", ")' 2>/dev/null)"
-    if [[ -n "${outputs}" ]]; then
-        pass "niri has outputs: ${outputs}"
+    niri_outputs() { niri_msg --json outputs 2>/dev/null | jq -er 'select(length > 0) | keys | join(", ")'; }
+    if wait_for 30 niri_outputs; then
+        pass "niri has outputs: $(niri_outputs)"
     else
-        fail "niri is running but reports no outputs (or IPC failed)"
+        fail "niri is running but reports no outputs, or its IPC failed (socket: ${niri_socket:-not found})"
+        echo "    --- niri msg outputs"
+        niri_msg outputs 2>&1 | sed 's/^/    /'
+        echo "    --- DRM connectors"
+        for status in /sys/class/drm/card*-*/status; do
+            [[ -e "${status}" ]] && echo "    $(basename "$(dirname "${status}")"): $(cat "${status}")"
+        done
+        echo "    --- niri log"
+        journalctl -b --no-pager -n 40 _UID="${ci_uid}" _COMM=niri 2>&1 | sed 's/^/    /'
     fi
 
     # The polkit agent (the admin password prompt) hangs off niri.service
