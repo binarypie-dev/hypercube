@@ -356,12 +356,17 @@ delete-test-vm:
 # Test Recipes
 # ============================================
 
-# Full local CI, mirroring the GitHub build: build the image (which runs
-# build_files/hypercube/99-tests.sh), then `ci-disk` and `smoke`.
+# Full CI, the same locally and on pull requests: `ci-preflight`, then build
+# the image (which runs build_files/hypercube/99-tests.sh), `ci-disk`, `smoke`.
 
 # Build the image, boot it headless in QEMU and run the smoke checks
 [group('Test')]
-ci: build ci-disk smoke
+ci: ci-preflight build ci-disk smoke
+
+# Check this machine has what `just ci` needs (tools, KVM, disk, memory)
+[group('Test')]
+ci-preflight:
+    ./scripts/ci/preflight.sh
 
 # The CI disk is the local image installed with bootc, plus a throwaway SSH
 # key for root and sshd enabled. Both are on this disk only; the image itself

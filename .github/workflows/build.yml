@@ -72,22 +72,18 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends qemu-system-x86 qemu-utils ovmf openssh-client
 
-      - name: Check KVM
-        run: |
-          if [[ -e /dev/kvm ]]; then
-            ls -l /dev/kvm
-          else
-            echo "::warning::/dev/kvm is missing; the VM will run under TCG and be much slower"
-          fi
-
       - name: just ci
         # Run as root so the image is built straight into root podman storage
         # (bootc install runs rootful) instead of being copied there, which
         # would need twice the disk space.
+        # `just ci` starts with `just ci-preflight`, which prints what this
+        # runner has (tools, KVM, RAM, disk) and fails fast if something is
+        # missing. REQUIRE_KVM=1: without KVM the boot test is too slow.
         run: |
           sudo env "PATH=${PATH}" \
             FEDORA_VERSION="${FEDORA_VERSION}" \
             AKMODS_FLAVOR="${AKMODS_FLAVOR}" \
+            REQUIRE_KVM=1 \
             just ci
 
       - name: Upload VM serial log

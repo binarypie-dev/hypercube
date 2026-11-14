@@ -22,7 +22,8 @@ just fix                # Fix Justfile formatting
 ### Local CI (build + headless VM smoke test)
 
 ```bash
-just ci                  # build, then ci-disk + smoke (same build as GitHub CI, plus a boot test)
+just ci-preflight        # check this machine has the tools, KVM, RAM and disk space just ci needs
+just ci                  # ci-preflight, build, ci-disk, smoke (also what pull requests run in CI)
 just ci-disk             # install the local image to .vm/ci/disk.qcow2 with a throwaway root SSH key
 just smoke               # boot it headless in QEMU and run scripts/ci/guest-checks.sh over SSH
 VM_KEEP=1 just smoke     # leave the VM running afterwards to SSH in and debug
