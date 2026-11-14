@@ -83,6 +83,19 @@ else
     warn "OVMF not found; the VM boots with legacy BIOS instead of UEFI (install edk2-ovmf / ovmf)"
 fi
 
+render_node="$(compgen -G '/dev/dri/renderD*' | head -1 || true)"
+if [[ -n "${render_node}" ]] &&
+    qemu-system-x86_64 -device help 2>/dev/null | grep -q '"virtio-vga-gl"' &&
+    qemu-system-x86_64 -display help 2>/dev/null | grep -qx 'egl-headless'; then
+    ok "virgl 3D for the VM (${render_node}): niri's output check will run"
+else
+    why=()
+    [[ -z "${render_node}" ]] && why+=("no /dev/dri/renderD* (no GPU; try: sudo modprobe vgem)")
+    qemu-system-x86_64 -device help 2>/dev/null | grep -q '"virtio-vga-gl"' || why+=("QEMU lacks virtio-vga-gl")
+    qemu-system-x86_64 -display help 2>/dev/null | grep -qx 'egl-headless' || why+=("QEMU lacks the egl-headless display (Debian/Ubuntu: qemu-system-modules-opengl)")
+    warn "no virgl 3D for the VM: $(IFS=';'; echo "${why[*]}"). niri still starts, but its output check is skipped"
+fi
+
 echo
 echo "Kernel features used by bootc install"
 if [[ -e /dev/loop-control ]]; then

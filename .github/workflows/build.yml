@@ -70,7 +70,21 @@ jobs:
       - name: Install QEMU and OVMF
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends qemu-system-x86 qemu-utils ovmf openssh-client
+          sudo apt-get install -y --no-install-recommends \
+            qemu-system-x86 qemu-system-modules-opengl qemu-utils ovmf openssh-client \
+            libegl1 libgl1-mesa-dri
+
+      - name: Provide a render node for virgl (vgem)
+        # niri refuses software rendering, so the VM needs a 3D-capable GPU
+        # (virgl) to light up an output. Runners have no GPU; vgem gives the
+        # host a render node so QEMU can render virgl with Mesa's llvmpipe.
+        # Best effort: without it the niri output check is skipped, not failed.
+        run: |
+          if ! sudo modprobe vgem 2>/dev/null; then
+            sudo apt-get install -y --no-install-recommends "linux-modules-extra-$(uname -r)" || true
+            sudo modprobe vgem || echo "::warning::vgem unavailable; the niri output check will be skipped"
+          fi
+          ls -l /dev/dri 2>/dev/null || true
 
       - name: just ci
         # Run as root so the image is built straight into root podman storage

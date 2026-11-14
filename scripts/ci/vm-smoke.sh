@@ -13,6 +13,12 @@
 #   SSH_PORT       host port forwarded to the guest's port 22 (default 2222)
 #   BOOT_TIMEOUT   seconds to wait for SSH (default 600; TCG is much slower)
 #   VM_KEEP=1      leave the VM running afterwards for debugging
+#   VM_GPU         auto (default), virgl or plain. niri refuses software
+#                  rendering, so it only gets an output when the guest has a
+#                  3D-capable GPU: virgl (virtio-vga-gl + egl-headless), which
+#                  needs a host DRM render node (a real GPU, or `modprobe vgem`)
+#                  and QEMU's OpenGL display modules. "plain" (virtio-vga, no
+#                  3D) still boots niri, but it can't light up an output.
 #   ALLOWED_FAILED_UNITS, NIRI_TIMEOUT  forwarded to guest-checks.sh
 
 set -euo pipefail
@@ -79,6 +85,35 @@ else
     BOOT_TIMEOUT=$((BOOT_TIMEOUT * 3))
 fi
 
+# --- GPU ---------------------------------------------------------------------
+VM_GPU="${VM_GPU:-auto}"
+render_node="$(compgen -G '/dev/dri/renderD*' | head -1 || true)"
+virgl_supported() {
+    [[ -n "${render_node}" ]] &&
+        qemu-system-x86_64 -device help 2>/dev/null | grep -q '"virtio-vga-gl"' &&
+        qemu-system-x86_64 -display help 2>/dev/null | grep -qx 'egl-headless'
+}
+if [[ "${VM_GPU}" == "auto" ]]; then
+    if virgl_supported; then VM_GPU=virgl; else VM_GPU=plain; fi
+fi
+case "${VM_GPU}" in
+    virgl)
+        virgl_supported || { echo "Error: VM_GPU=virgl needs a host render node (/dev/dri/renderD*) and QEMU with virtio-vga-gl and egl-headless" >&2; exit 1; }
+        GPU_ARGS=(-device virtio-vga-gl -display "egl-headless,rendernode=${render_node}")
+        NIRI_REQUIRE_OUTPUTS=1
+        echo "GPU: virgl via ${render_node} (niri gets a real output)"
+        ;;
+    plain)
+        GPU_ARGS=(-device virtio-vga -display none)
+        NIRI_REQUIRE_OUTPUTS=0
+        echo "GPU: virtio-vga without 3D (no host render node or QEMU GL modules); niri will run without an output"
+        ;;
+    *)
+        echo "Error: VM_GPU must be auto, virgl or plain" >&2
+        exit 2
+        ;;
+esac
+
 # --- Boot ----------------------------------------------------------------------
 # shellcheck disable=SC2317 # invoked via trap
 cleanup() {
@@ -103,16 +138,15 @@ trap cleanup EXIT
 rm -f "${OVERLAY}" "${SERIAL_LOG}"
 qemu-img create -q -f qcow2 -F qcow2 -b "${BASE_DISK}" "${OVERLAY}"
 
-# virtio-vga with no display: the guest gets a DRM device with a connected
-# virtual output, so niri's normal TTY backend runs on a headless output.
+# No window either way: the guest gets a DRM device with a connected virtual
+# output, so niri's normal TTY backend runs on a headless output.
 qemu-system-x86_64 \
     "${ACCEL_ARGS[@]}" \
     "${FIRMWARE_ARGS[@]}" \
     -m "${VM_MEMORY}" \
     -smp "${VM_CPUS}" \
     -drive "file=${OVERLAY},format=qcow2,if=virtio" \
-    -device virtio-vga \
-    -display none \
+    "${GPU_ARGS[@]}" \
     -netdev "user,id=net0,hostfwd=tcp:127.0.0.1:${SSH_PORT}-:22" \
     -device virtio-net-pci,netdev=net0 \
     -device virtio-rng-pci \
@@ -150,7 +184,7 @@ echo "SSH is up after ${SECONDS}s"
 set +e
 # shellcheck disable=SC2029 # expanding these on the host is the point
 ssh "${SSH_OPTS[@]}" root@localhost \
-    "ALLOWED_FAILED_UNITS='${ALLOWED_FAILED_UNITS}' NIRI_TIMEOUT='${NIRI_TIMEOUT}' bash -s" \
+    "ALLOWED_FAILED_UNITS='${ALLOWED_FAILED_UNITS}' NIRI_TIMEOUT='${NIRI_TIMEOUT}' NIRI_REQUIRE_OUTPUTS='${NIRI_REQUIRE_OUTPUTS}' bash -s" \
     < "${SCRIPT_DIR}/guest-checks.sh"
 status=$?
 set -e

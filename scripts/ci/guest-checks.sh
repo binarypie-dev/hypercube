@@ -6,11 +6,15 @@
 # Env (forwarded by vm-smoke.sh):
 #   ALLOWED_FAILED_UNITS  space-separated units allowed to be failed in a VM
 #   NIRI_TIMEOUT          seconds to wait for the niri session (default 120)
+#   NIRI_REQUIRE_OUTPUTS  1 = fail if niri has no output; 0 = the VM has no
+#                         3D GPU, so report a missing output as skipped when
+#                         niri says it refused software rendering
 
 set -uo pipefail
 
 ALLOWED_FAILED_UNITS="${ALLOWED_FAILED_UNITS:-}"
 NIRI_TIMEOUT="${NIRI_TIMEOUT:-120}"
+NIRI_REQUIRE_OUTPUTS="${NIRI_REQUIRE_OUTPUTS:-1}"
 CI_USER="hypercube-ci"
 
 failures=0
@@ -149,8 +153,14 @@ if wait_for "${NIRI_TIMEOUT}" ci_user_systemctl is-active --quiet niri.service; 
         runuser -u "${CI_USER}" -- env XDG_RUNTIME_DIR="/run/user/${ci_uid}" NIRI_SOCKET="${niri_socket}" niri msg "$@"
     }
     niri_outputs() { niri_msg --json outputs 2>/dev/null | jq -er 'select(length > 0) | keys | join(", ")'; }
+    niri_log() { journalctl -b --no-pager _UID="${ci_uid}" _COMM=niri 2>/dev/null; }
     if wait_for 30 niri_outputs; then
         pass "niri has outputs: $(niri_outputs)"
+    elif [[ "${NIRI_REQUIRE_OUTPUTS}" != "1" ]] && niri_log | grep -q 'software EGL renderers are skipped'; then
+        # niri rejects llvmpipe; without a 3D-capable virtual GPU it can't
+        # drive the output. Not an image problem, but not a pass either.
+        echo "SKIP: niri has no output: the VM has no 3D GPU and niri refuses software rendering (run with VM_GPU=virgl on a host with a GPU or vgem)"
+        echo "::warning title=niri output not tested::the VM had no 3D-capable GPU, so niri could not light up an output"
     else
         fail "niri is running but reports no outputs, or its IPC failed (socket: ${niri_socket:-not found})"
         echo "    --- niri msg outputs"
