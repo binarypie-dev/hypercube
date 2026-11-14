@@ -1,5 +1,5 @@
 Name:           hyprcursor
-Version:        0.1.13
+Version:        0.1.14
 Release:        1%{?dist}
 Summary:        The hyprland cursor format, library and utilities
 
@@ -51,5 +51,7 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Tue Nov 10 2026 Hypercube <hypercube@binarypie.dev> - 0.1.14-1
+- Update to 0.1.14
 * Mon Dec 16 2024 Hypercube <hypercube@binarypie.dev> - 0.1.13-1
 - Initial package for Hypercube (based on sdegler/hyprland COPR)
