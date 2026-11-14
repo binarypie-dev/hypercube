@@ -26,7 +26,7 @@ Rectangle {
     border.width: Appearance.borderWidth.thin
     border.color: Appearance.colors.border
 
-    // Match Hyprland window rounding
+    // Match window rounding
     radius: Appearance.rounding.window
 
     // Layout

@@ -60,26 +60,6 @@ import = ["/usr/share/hypercube/config/alacritty/alacritty.toml"]
 # Your customizations below:
 EOF
 
-### Hyprland - stub that requires system config
-# Since Hyprland 0.55 the config is Lua (~/.config/hypr/hyprland.lua).
-# Users can customize by adding settings after the require line.
-# Hyprland evaluates linearly: system config first, then user customizations
-# (later hl.config() calls override earlier values).
-mkdir -p /etc/skel/.config/hypr
-cat > /etc/skel/.config/hypr/hyprland.lua << 'EOF'
--- Hypercube Hyprland Configuration
--- System defaults are required below. Add your customizations after this line.
--- Settings defined after the require will override the defaults.
--- To replace defaults entirely, remove or comment out the require line.
-
-require("/usr/share/hypercube/config/hypr/hyprland.lua")
-
--- Your customizations below:
-
-EOF
-# LuaLS config so editors pick up the hl API stubs in ~/.config/hypr
-install -Dm644 "${CONFIG_DIR}/hypr/.luarc.json" /etc/skel/.config/hypr/.luarc.json
-
 ### niri - system config stub that includes the Hypercube defaults
 # niri doesn't honor XDG_CONFIG_DIRS. It reads ~/.config/niri/config.kdl and
 # falls back to /etc/niri/config.kdl, so install a stub there that includes
@@ -95,7 +75,7 @@ cat > /etc/niri/config.kdl << 'EOF'
 include "/usr/share/hypercube/config/niri/config.kdl"
 EOF
 
-### swaylock / swayidle - system defaults (niri session)
+### swaylock / swayidle - system defaults
 # Neither honors XDG_CONFIG_DIRS (like zellij), so install the Hypercube
 # defaults to /etc. Users override with ~/.config/swaylock/config and
 # ~/.config/swayidle/config, which replace these files entirely.

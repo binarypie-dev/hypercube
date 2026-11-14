@@ -4,7 +4,6 @@ singleton Audio 1.0 Audio.qml
 singleton Battery 1.0 Battery.qml
 singleton BluetoothStatus 1.0 BluetoothStatus.qml
 singleton Brightness 1.0 Brightness.qml
-singleton Compositor 1.0 Compositor.qml
 singleton Datacube 1.0 Datacube.qml
 singleton DateTime 1.0 DateTime.qml
 singleton IconResolver 1.0 IconResolver.qml

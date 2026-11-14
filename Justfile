@@ -485,7 +485,8 @@ build-iso-local: _titanoboa-setup
     cp -r iso_files _titanoboa/iso_files
 
     # Build ISO with Titanoboa
-    # livesys=1 enables livesys-scripts from binarypie/hypercube COPR (includes Hyprland support)
+    # livesys=1 enables livesys-scripts from binarypie/hypercube COPR; the niri live
+    # session itself is set up by iso_files/hook-post-rootfs.sh
     # HOOK_post_rootfs installs Anaconda and copies live ISO configs
     # Parameters (positional): image livesys flatpaks_file compression extra_kargs container_image polkit livesys_repo
     cd _titanoboa
@@ -539,7 +540,8 @@ build-iso-ghcr: _titanoboa-setup
     rm -rf _titanoboa/iso_files
     cp -r iso_files _titanoboa/iso_files
 
-    # livesys=1 enables livesys-scripts from binarypie/hypercube COPR (includes Hyprland support)
+    # livesys=1 enables livesys-scripts from binarypie/hypercube COPR; the niri live
+    # session itself is set up by iso_files/hook-post-rootfs.sh
     # HOOK_post_rootfs installs Anaconda and copies live ISO configs
     # Parameters (positional): image livesys flatpaks_file compression extra_kargs container_image polkit livesys_repo
     cd _titanoboa

@@ -56,8 +56,8 @@ run_test "Get starship version from GitHub" "starship"
 # Test 2: Get version for lazygit
 run_test "Get lazygit version from GitHub" "lazygit"
 
-# Test 3: Get version for uwsm (uses tags instead of releases)
-run_test "Get uwsm version from tags" "uwsm"
+# Test 3: Get version for quickshell (uses tags instead of releases)
+run_test "Get quickshell version from tags" "quickshell"
 
 # Test 4: Nonexistent package should fail
 test_count=$((test_count + 1))

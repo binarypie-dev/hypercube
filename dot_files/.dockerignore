@@ -1,6 +1,6 @@
 # Build context for the devcube image is dot_files/. Exclude everything by
 # default and re-include only the dirs the Containerfile bakes, so the heavy
-# desktop configs (hypr backgrounds, quickshell assets, ...) never enter the
+# desktop configs (quickshell assets, ...) never enter the
 # build context.
 *
 !devcube/

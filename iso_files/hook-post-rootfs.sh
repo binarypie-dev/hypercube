@@ -79,42 +79,59 @@ if [[ -d /usr/share/plymouth/themes/hypercube ]]; then
     cp /usr/share/plymouth/themes/hypercube/animation-*.png /usr/share/anaconda/pixmaps/hypercube/ 2>/dev/null || true
 fi
 
-# Copy base image Hyprland configs for live environment
-# This gives users the full Hypercube experience to test before installing
-if [[ -d /usr/share/hypercube/config/hypr ]]; then
-    mkdir -p /usr/share/hypr/config.live.d/
-    cp /usr/share/hypercube/config/hypr/* /usr/share/hypr/config.live.d/
+# Live session: autologin liveuser straight into niri with the installer.
+# livesys-main sources /var/lib/livesys/livesys-session-extra on every live
+# boot (after creating liveuser), so do the session setup there instead of
+# relying on a per-desktop livesys-<session> script.
+sed -i 's/^livesys_session=.*/livesys_session=/' /etc/sysconfig/livesys
+mkdir -p /var/lib/livesys
+cat > /var/lib/livesys/livesys-session-extra << 'LIVESYS_EOF'
+# Hypercube: niri live session (written by iso_files/hook-post-rootfs.sh)
 
-    # Add live environment configuration
-    # Since Hyprland 0.55 the config is Lua, so append Lua to hyprland.lua.
-    cat >> /usr/share/hypr/config.live.d/hyprland.lua << 'EOF'
+# Autologin liveuser into niri; skip the greeter and onboarding
+cat > /etc/greetd/config.toml << GREETD_EOF
+[terminal]
+vt = 1
 
--- Live ISO - Environment variables for XDG config discovery
--- These are normally set by systemd user session but greetd skips that
-hl.env("XDG_CONFIG_DIRS", "/etc/xdg:/usr/share/hypercube/config")
-hl.env("XDG_DATA_DIRS", "/usr/local/share:/usr/share:/usr/share/hypercube/data")
-hl.env("GTK_THEME", "Tokyonight-Dark")
-hl.env("QT_QPA_PLATFORMTHEME", "qt6ct")
+[default_session]
+command = "niri-session"
+user = "liveuser"
+GREETD_EOF
 
--- Live ISO - Window rules for Anaconda installer
--- Prevent fullscreen, keep as tiled window so user can access terminal
-hl.window_rule({ match = { class = "^(anaconda)$" },  tile = true })
-hl.window_rule({ match = { class = "^(liveinst)$" },  tile = true })
-hl.window_rule({ match = { class = "^(anaconda)$" },  no_initial_focus = true })
-hl.window_rule({ match = { class = "^(liveinst)$" },  no_initial_focus = true })
-
--- Live ISO - Auto-launch installer
-hl.on("hyprland.start", function()
-    hl.exec_cmd("liveinst")
-end)
-EOF
+# Show the hard disk installer in the launcher
+if [ -f /usr/share/applications/liveinst.desktop ]; then
+    sed -i -e 's/NoDisplay=true/NoDisplay=false/' /usr/share/applications/liveinst.desktop
 fi
 
-# Configure livesys to use the hyprland session
-# The livesys-hyprland script is already provided by livesys-scripts from binarypie/hypercube COPR
-sed -i 's/^livesys_session=.*/livesys_session=hyprland/' /etc/sysconfig/livesys
-# If the line doesn't exist, add it
-grep -q '^livesys_session=' /etc/sysconfig/livesys || echo 'livesys_session=hyprland' >> /etc/sysconfig/livesys
+# niri config: Hypercube defaults plus installer autostart and window rules
+mkdir -p /home/liveuser/.config/niri
+cat > /home/liveuser/.config/niri/config.kdl << 'NIRI_EOF'
+include "/usr/share/hypercube/config/niri/config.kdl"
+
+// Live ISO - make sure XDG config discovery and theming work even if the
+// systemd user environment (environment.d) wasn't picked up
+environment {
+    XDG_CONFIG_DIRS "/etc/xdg:/usr/share/hypercube/config"
+    XDG_DATA_DIRS "/usr/local/share:/usr/share:/usr/share/hypercube/data"
+    GTK_THEME "Tokyonight-Dark"
+    QT_QPA_PLATFORMTHEME "qt6ct"
+}
+
+// Live ISO - auto-launch the installer
+spawn-at-startup "liveinst"
+
+// Live ISO - keep the installer a normal tiled window so the terminal and
+// the rest of the desktop stay reachable
+window-rule {
+    match app-id="^(anaconda|liveinst)$"
+    open-fullscreen false
+    open-maximized true
+}
+NIRI_EOF
+chown -R liveuser:liveuser /home/liveuser/.config
+
+echo "echo 'Please type liveinst and press Enter to start the installer'" >> /home/liveuser/.bashrc
+LIVESYS_EOF
 
 # Disable services that shouldn't run in live environment
 # These are update/setup services that don't make sense on live media
@@ -125,7 +142,7 @@ systemctl disable hypercube-first-boot.service || true
 
 # Remove onboarding wizard from greetd config for live environment
 # The initial_session runs hypercube-onboard which is for installed systems only
-# On live ISO, we want livesys to handle the session (boots into Hyprland with installer)
+# On live ISO, we want livesys to handle the session (boots into niri with installer)
 if [[ -f /etc/greetd/config.toml ]]; then
     sed -i '/^\[initial_session\]/,$d' /etc/greetd/config.toml
     echo "Removed greetd initial_session for live environment"

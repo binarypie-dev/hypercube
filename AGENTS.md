@@ -4,7 +4,7 @@ This file provides guidance to coding agents when working with code in this repo
 
 ## Project Overview
 
-Hypercube is a container-based Linux distribution built on Fedora Atomic (via Universal Blue's `base-nvidia:44`). It's a keyboard-first Hyprland desktop with vim keybindings, Tokyo Night theming, and developer tooling. The image is built as an OCI container and deployed via bootc.
+Hypercube is a container-based Linux distribution built on Fedora Atomic (via Universal Blue's `base-nvidia:44`). It's a keyboard-first niri desktop with vim keybindings, Tokyo Night theming, and developer tooling. The image is built as an OCI container and deployed via bootc.
 
 ## Build Commands
 
@@ -55,7 +55,7 @@ The `Containerfile` defines a multi-stage build:
 | Directory                | Purpose                                               |
 | ------------------------ | ----------------------------------------------------- |
 | `build_files/base/`      | Kernel, greetd, audio, networking, portals            |
-| `build_files/hyprland/`  | Compositor, shell, terminal, editor, CLI tools        |
+| `build_files/desktop/`   | Compositor, shell, terminal, editor, CLI tools        |
 | `build_files/dx/`        | Language servers, containers (Distrobox/Podman)       |
 | `build_files/apps/`      | Applications (Steam, etc.)                            |
 | `build_files/hypercube/` | Branding, packages, theming, config deployment, tests |
@@ -74,7 +74,7 @@ Configs follow XDG Base Directory specification:
 
 `build_files/hypercube/99-tests.sh` validates the build by checking:
 
-- Required packages are installed (greetd, hyprland, ghostty, neovim, etc.)
+- Required packages are installed (greetd, niri, ghostty, neovim, etc.)
 - Required files exist (branding, configs, themes, plymouth)
 - os-release contains `ID=hypercube`
 - Required services are enabled (greetd, NetworkManager)
@@ -83,7 +83,7 @@ Failures exit with code 1, preventing the image from being published.
 
 ### COPR Packages
 
-26 custom packages are maintained in `packages/` with RPM spec files. Package metadata, dependencies, and build ordering are defined in `scripts/packages/config.sh`. Packages are built in 5 dependency-ordered batches.
+16 custom packages are maintained in `packages/` with RPM spec files. Package metadata, dependencies, and build ordering are defined in `scripts/packages/config.sh`. None currently depend on each other, so they build in a single batch.
 
 ## Shell Script Conventions
 
