@@ -48,6 +48,8 @@ REQUIRED_PACKAGES=(
   "lutris"
   "vulkan-tools" # vulkaninfo, used by Lutris for GPU detection
   "xrandr"       # required by Lutris at startup to enumerate resolutions
+  # Kernel modules
+  "kmod-v4l2loopback"
 )
 
 for pkg in "${REQUIRED_PACKAGES[@]}"; do
@@ -96,6 +98,14 @@ for file in "${REQUIRED_FILES[@]}"; do
   fi
   echo "  OK: $file exists"
 done
+
+### Check v4l2loopback was built for the kernel that ships in the image
+KERNEL_VERSION=$(rpm -q kernel-core --queryformat "%{VERSION}-%{RELEASE}.%{ARCH}" | tail -n 1)
+if ! modinfo -k "$KERNEL_VERSION" v4l2loopback &>/dev/null; then
+  echo "ERROR: v4l2loopback module not found for kernel $KERNEL_VERSION!"
+  exit 1
+fi
+echo "  OK: v4l2loopback module present for kernel $KERNEL_VERSION"
 
 ### Validate the niri config (follows the include into /usr/share/hypercube)
 if ! niri validate -c /etc/niri/config.kdl; then

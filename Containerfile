@@ -9,7 +9,7 @@ ARG FEDORA_VERSION="44"
 ARG IMAGE_NAME=hypercube
 ARG IMAGE_VENDOR=binarypie-dev
 ARG SHA_HEAD_SHORT=""
-ARG AKMODS_FLAVOR="coreos-stable"
+ARG AKMODS_FLAVOR="main"
 
 # ============================================
 # Stage 1: Context Aggregation
