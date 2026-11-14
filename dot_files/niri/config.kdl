@@ -240,9 +240,13 @@ binds {
     XF86AudioPlay  allow-when-locked=true { spawn "playerctl" "play-pause"; }
     XF86AudioPrev  allow-when-locked=true { spawn "playerctl" "previous"; }
 
-    // Screenshot with Gradia (same as Hyprland); niri's own tool on Ctrl+Print
-    Print { spawn "flatpak" "run" "be.alexandervanhee.gradia" "--screenshot=INTERACTIVE"; }
-    Ctrl+Print { screenshot; }
+    // Screenshots use niri's built-in tool. Gradia (used on Hyprland) goes
+    // through the xdg Screenshot portal, which xdg-desktop-portal-gnome only
+    // serves under GNOME Shell, so it fails in niri. Captures are copied to
+    // the clipboard and saved to ~/Pictures/Screenshots.
+    Print      { screenshot; }
+    Ctrl+Print { screenshot-screen; }
+    Alt+Print  { screenshot-window; }
 
     // Session
     Mod+Shift+E { quit; }
