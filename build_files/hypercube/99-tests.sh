@@ -29,6 +29,9 @@ REQUIRED_PACKAGES=(
   "mate-polkit"
   "gnome-keyring"
   "gnome-keyring-pam"
+  # WiFi: NetworkManager's wpa_supplicant backend (iwd didn't autoconnect)
+  "NetworkManager-wifi"
+  "wpa_supplicant"
   # Terminals
   "ghostty"
   "zellij"
@@ -125,6 +128,15 @@ if [ ! -e /usr/lib64/security/pam_gnome_keyring.so ]; then
 fi
 echo "  OK: greetd PAM stack unlocks GNOME Keyring"
 
+### Check WiFi uses wpa_supplicant, not iwd
+# NM's iwd backend didn't scan after boot/resume, so saved networks never
+# autoconnected until something asked for a scan.
+if grep -rqs "wifi.backend *= *iwd" /etc/NetworkManager/ /usr/lib/NetworkManager/; then
+  echo "ERROR: NetworkManager is configured to use the iwd WiFi backend!"
+  exit 1
+fi
+echo "  OK: NetworkManager uses the wpa_supplicant WiFi backend"
+
 ### Check os-release branding
 if ! grep -q "ID=hypercube" /usr/lib/os-release; then
   echo "ERROR: os-release branding not applied!"
@@ -136,7 +148,6 @@ echo "  OK: os-release branding applied"
 REQUIRED_SERVICES=(
   "greetd.service"
   "NetworkManager.service"
-  "hypercube-wifi-resume.service"
 )
 
 for svc in "${REQUIRED_SERVICES[@]}"; do
