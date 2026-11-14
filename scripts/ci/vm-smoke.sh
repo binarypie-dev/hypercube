@@ -31,9 +31,10 @@ VM_MEMORY="${VM_MEMORY:-8192}"
 VM_CPUS="${VM_CPUS:-4}"
 SSH_PORT="${SSH_PORT:-2222}"
 BOOT_TIMEOUT="${BOOT_TIMEOUT:-600}"
-# No NVIDIA GPU in the VM, so NVIDIA's container-toolkit CDI generator fails
-# (the live ISO disables it for the same reason).
-ALLOWED_FAILED_UNITS="${ALLOWED_FAILED_UNITS:-ublue-nvctk-cdi.service}"
+# There's no NVIDIA GPU in the VM, so NVIDIA's persistence daemon and
+# container-toolkit CDI generator fail (the live ISO disables the latter for
+# the same reason).
+ALLOWED_FAILED_UNITS="${ALLOWED_FAILED_UNITS:-nvidia-persistenced.service ublue-nvctk-cdi.service}"
 NIRI_TIMEOUT="${NIRI_TIMEOUT:-120}"
 
 OVERLAY="${WORK_DIR}/smoke-overlay.qcow2"
@@ -79,6 +80,9 @@ fi
 # --- Boot ----------------------------------------------------------------------
 # shellcheck disable=SC2317 # invoked via trap
 cleanup() {
+    # QEMU (run as root in CI) creates the log owner-only; let the CI
+    # artifact upload and non-root users read it.
+    chmod a+r "${SERIAL_LOG}" 2>/dev/null || true
     if [[ "${VM_KEEP:-0}" == "1" ]]; then
         echo
         echo "VM left running (VM_KEEP=1). Connect with:"

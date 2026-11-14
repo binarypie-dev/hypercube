@@ -87,6 +87,7 @@ jobs:
             just ci
 
       - name: Upload VM serial log
+        # Only the serial log: .vm/ci also holds the throwaway SSH key.
         if: failure()
         uses: actions/upload-artifact@v4
         with:

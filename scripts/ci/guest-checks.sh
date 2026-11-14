@@ -120,16 +120,28 @@ user = "greeter"
 command = "niri-session"
 user = "${CI_USER}"
 GREETD
+# greetd runs initial_session only once per boot and records that in its
+# runfile. First-boot onboarding already used it, so clear the marker or the
+# restart goes straight to the greeter.
+rm -f /run/greetd.run
 systemctl restart greetd.service
 
-ci_user_systemctl() { systemctl --user -M "${CI_USER}@" "$@"; }
+# Talk to the test user's systemd directly over its bus. (`systemctl --user
+# -M user@` would open a new PAM login session on every poll.) Fails quietly
+# until the user is logged in and their manager is up.
+ci_uid="$(id -u "${CI_USER}")"
+ci_user_systemctl() {
+    runuser -u "${CI_USER}" -- env \
+        XDG_RUNTIME_DIR="/run/user/${ci_uid}" \
+        DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/${ci_uid}/bus" \
+        systemctl --user "$@"
+}
 if wait_for "${NIRI_TIMEOUT}" ci_user_systemctl is-active --quiet niri.service; then
     pass "niri.service is active for ${CI_USER}"
 
     niri_socket="$(ci_user_systemctl show-environment 2>/dev/null | sed -n 's/^NIRI_SOCKET=//p')"
-    uid="$(id -u "${CI_USER}")"
     niri_msg() {
-        runuser -u "${CI_USER}" -- env XDG_RUNTIME_DIR="/run/user/${uid}" NIRI_SOCKET="${niri_socket}" niri msg "$@"
+        runuser -u "${CI_USER}" -- env XDG_RUNTIME_DIR="/run/user/${ci_uid}" NIRI_SOCKET="${niri_socket}" niri msg "$@"
     }
     outputs="$(niri_msg --json outputs 2>/dev/null | jq -r 'keys | join(", ")' 2>/dev/null)"
     if [[ -n "${outputs}" ]]; then
@@ -155,8 +167,12 @@ if wait_for "${NIRI_TIMEOUT}" ci_user_systemctl is-active --quiet niri.service; 
     fi
 else
     fail "niri.service did not become active within ${NIRI_TIMEOUT}s"
-    ci_user_systemctl status --no-pager --lines=30 niri.service 2>&1 | sed 's/^/    /'
-    journalctl -b --no-pager -n 50 _UID="$(id -u "${CI_USER}")" 2>&1 | sed 's/^/    /'
+    echo "    --- sessions"
+    loginctl list-sessions --no-legend 2>&1 | sed 's/^/    /'
+    echo "    --- greetd"
+    journalctl -b --no-pager -n 40 -u greetd.service 2>&1 | sed 's/^/    /'
+    echo "    --- ${CI_USER} (niri-session, niri, user manager)"
+    journalctl -b --no-pager -n 80 _UID="${ci_uid}" 2>&1 | sed 's/^/    /'
 fi
 
 # Leave the VM as we found it (the disk is a throwaway overlay anyway)
