@@ -100,6 +100,15 @@ jobs:
             REQUIRE_KVM=1 \
             just ci
 
+      - name: Upload VM screenshots
+        # Greeter, desktop, hub, terminal, polkit dialog, lock screen
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vm-screenshots
+          path: .vm/ci/screenshots/*.png
+          if-no-files-found: ignore
+
       - name: Upload VM serial log
         # Only the serial log: .vm/ci also holds the throwaway SSH key.
         if: failure()

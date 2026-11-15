@@ -19,7 +19,10 @@
 #                  needs a host DRM render node (a real GPU, or `modprobe vgem`)
 #                  and QEMU's OpenGL display modules. "plain" (virtio-vga, no
 #                  3D) still boots niri, but it can't light up an output.
-#   ALLOWED_FAILED_UNITS, NIRI_TIMEOUT  forwarded to guest-checks.sh
+#   ALLOWED_FAILED_UNITS, ALLOWED_FAILED_USER_UNITS, NIRI_TIMEOUT
+#                  forwarded to the in-VM checks (scripts/ci/guest/*.sh)
+#
+# Screenshots taken by the checks land in <disk dir>/screenshots/.
 
 set -euo pipefail
 
@@ -43,7 +46,13 @@ BOOT_TIMEOUT="${BOOT_TIMEOUT:-600}"
 #   family 0x19+ (Zen 3/4) CPUs, which some runners have.
 # The live ISO disables ublue-nvctk-cdi and mcelog for the same reasons.
 ALLOWED_FAILED_UNITS="${ALLOWED_FAILED_UNITS:-nvidia-persistenced.service ublue-nvctk-cdi.service mcelog.service}"
+# User units in the test session that fail because of the VM / image layout,
+# not the desktop:
+# - grub-boot-success: Fedora's "mark boot successful" timer writes to
+#   /boot/grub2, which is read-only on bootc. (Fails on installs too.)
+ALLOWED_FAILED_USER_UNITS="${ALLOWED_FAILED_USER_UNITS:-grub-boot-success.service}"
 NIRI_TIMEOUT="${NIRI_TIMEOUT:-120}"
+SHOT_DIR="${WORK_DIR}/screenshots"
 
 OVERLAY="${WORK_DIR}/smoke-overlay.qcow2"
 SERIAL_LOG="${WORK_DIR}/serial.log"
@@ -120,6 +129,7 @@ cleanup() {
     # QEMU (run as root in CI) creates the log owner-only; let the CI
     # artifact upload and non-root users read it.
     chmod a+r "${SERIAL_LOG}" 2>/dev/null || true
+    chmod -R a+rX "${SHOT_DIR}" 2>/dev/null || true
     if [[ "${VM_KEEP:-0}" == "1" ]]; then
         echo
         echo "VM left running (VM_KEEP=1). Connect with:"
@@ -136,6 +146,7 @@ cleanup() {
 trap cleanup EXIT
 
 rm -f "${OVERLAY}" "${SERIAL_LOG}"
+rm -rf "${SHOT_DIR}"
 qemu-img create -q -f qcow2 -F qcow2 -b "${BASE_DISK}" "${OVERLAY}"
 
 # No window either way: the guest gets a DRM device with a connected virtual
@@ -182,11 +193,23 @@ done
 echo "SSH is up after ${SECONDS}s"
 
 set +e
+# The stages share helpers and the failure count, so they run as one script:
+# 00-lib, 10-system, 20-login, 30-session, 40-polkit-luks, 90-summary.
 # shellcheck disable=SC2029 # expanding these on the host is the point
-ssh "${SSH_OPTS[@]}" root@localhost \
-    "ALLOWED_FAILED_UNITS='${ALLOWED_FAILED_UNITS}' NIRI_TIMEOUT='${NIRI_TIMEOUT}' NIRI_REQUIRE_OUTPUTS='${NIRI_REQUIRE_OUTPUTS}' bash -s" \
-    < "${SCRIPT_DIR}/guest-checks.sh"
+cat "${SCRIPT_DIR}"/guest/*.sh | ssh "${SSH_OPTS[@]}" root@localhost \
+    "ALLOWED_FAILED_UNITS='${ALLOWED_FAILED_UNITS}' ALLOWED_FAILED_USER_UNITS='${ALLOWED_FAILED_USER_UNITS}' NIRI_TIMEOUT='${NIRI_TIMEOUT}' NIRI_REQUIRE_OUTPUTS='${NIRI_REQUIRE_OUTPUTS}' bash -s"
 status=$?
+
+# Fetch the screenshots, pass or fail
+mkdir -p "${SHOT_DIR}"
+ssh "${SSH_OPTS[@]}" root@localhost 'cd /var/tmp/ci-screenshots 2>/dev/null && tar -cf - *.png 2>/dev/null' |
+    tar -xf - -C "${SHOT_DIR}" 2>/dev/null
+shots=("${SHOT_DIR}"/*.png)
+if [[ -e "${shots[0]}" ]]; then
+    echo
+    echo "Screenshots (${#shots[@]}) in ${SHOT_DIR}:"
+    for shot in "${shots[@]}"; do echo "  $(basename "${shot}")"; done
+fi
 set -e
 
 if ((status != 0)); then

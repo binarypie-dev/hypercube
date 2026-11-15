@@ -29,10 +29,24 @@ just smoke               # boot it headless in QEMU and run scripts/ci/guest-che
 VM_KEEP=1 just smoke     # leave the VM running afterwards to SSH in and debug
 ```
 
-The smoke checks: no failed systemd units, `bootc status`/`rpm-ostree status`
-show one booted deployment, greetd and its cage greeter come up, and a test
-user logged in through greetd gets a running niri session (on the VM's
-headless virtio-gpu output) with the polkit agent and Quickshell. Needs
+The smoke checks (`scripts/ci/guest/*.sh`, run in order as one script):
+
+1. **System**: no failed systemd units, `bootc status`/`rpm-ostree status`
+   show one booted deployment, greetd and its cage greeter come up.
+2. **Login**: a scripted greeter logs a test user in with a *password*
+   through greetd's IPC (greetd -> PAM -> logind -> niri-session), like
+   hypercube-greeter does.
+3. **Session**: niri has an output; no failed user units; polkit agent,
+   PipeWire, Quickshell, swaybg, swayidle and gnome-keyring are up; the
+   login keyring is unlocked by the password; the SSH agent answers; the
+   portal reports dark mode; Quickshell's bar exists, its IPC opens the hub,
+   and its log has no QML errors; Ghostty opens a window.
+4. **Polkit and lock**: unlocking a LUKS loop device with udisksctl brings
+   up the polkit agent's password dialog; the password is typed in (wtype,
+   installed on the throwaway disk) and the drive unlocks. Then
+   `loginctl lock-session` starts swaylock, and the password unlocks it.
+
+Screenshots of each step end up in `.vm/ci/screenshots/` (a CI artifact). Needs
 `qemu-system-x86_64`, `qemu-img` and `ssh-keygen`; KVM and OVMF are used when
 available. The serial console log is kept at `.vm/ci/serial.log`.
 
