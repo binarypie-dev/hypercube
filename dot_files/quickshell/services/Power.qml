@@ -93,9 +93,7 @@ Singleton {
 
     Process {
         id: logoutProcess
-        command: ["sh", "-c", Compositor.isNiri
-            ? "niri msg action quit --skip-confirmation || loginctl terminate-session $XDG_SESSION_ID"
-            : "hyprctl dispatch 'hl.dsp.exit()' || loginctl terminate-session $XDG_SESSION_ID"]
+        command: ["sh", "-c", "niri msg action quit --skip-confirmation || loginctl terminate-session $XDG_SESSION_ID"]
     }
 
     function lock() {
@@ -104,9 +102,7 @@ Singleton {
 
     Process {
         id: lockProcess
-        command: ["sh", "-c", Compositor.isNiri
-            ? "pidof swaylock || swaylock -f"
-            : "pidof hyprlock || hyprlock"]
+        command: ["sh", "-c", "pidof swaylock || swaylock -f"]
     }
 
     function suspend() {

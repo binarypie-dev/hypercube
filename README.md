@@ -10,33 +10,6 @@
 <details>
 <summary><strong>COPR Package Build Status</strong></summary>
 
-#### Hyprland Core Libraries
-| Package | Status |
-|---------|--------|
-| hyprutils | [![hyprutils](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprutils/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprutils/) |
-| hyprlang | [![hyprlang](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprlang/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprlang/) |
-| hyprwayland-scanner | [![hyprwayland-scanner](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprwayland-scanner/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprwayland-scanner/) |
-| hyprgraphics | [![hyprgraphics](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprgraphics/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprgraphics/) |
-| hyprcursor | [![hyprcursor](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprcursor/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprcursor/) |
-| hyprland-protocols | [![hyprland-protocols](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland-protocols/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland-protocols/) |
-| hyprwire | [![hyprwire](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprwire/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprwire/) |
-| aquamarine | [![aquamarine](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/aquamarine/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/aquamarine/) |
-| hyprland-qt-support | [![hyprland-qt-support](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland-qt-support/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland-qt-support/) |
-| glaze | [![glaze](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/glaze/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/glaze/) |
-
-#### Hyprland Compositor & Tools
-| Package | Status |
-|---------|--------|
-| hyprland | [![hyprland](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland/) |
-| hyprlock | [![hyprlock](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprlock/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprlock/) |
-| hypridle | [![hypridle](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hypridle/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hypridle/) |
-| hyprpaper | [![hyprpaper](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprpaper/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprpaper/) |
-| xdg-desktop-portal-hyprland | [![xdg-desktop-portal-hyprland](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/xdg-desktop-portal-hyprland/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/xdg-desktop-portal-hyprland/) |
-| hyprpolkitagent | [![hyprpolkitagent](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprpolkitagent/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprpolkitagent/) |
-| hyprtoolkit | [![hyprtoolkit](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprtoolkit/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprtoolkit/) |
-| hyprland-guiutils | [![hyprland-guiutils](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland-guiutils/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/hyprland-guiutils/) |
-| uwsm | [![uwsm](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/uwsm/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/binarypie/hypercube/package/uwsm/) |
-
 #### CLI Tools
 | Package | Status |
 |---------|--------|
@@ -53,7 +26,7 @@
 
 </details>
 
-Hypercube is an opinionated, ready-to-use development environment built on [Universal Blue's base-nvidia](https://github.com/ublue-os/main) image with Fedora 44. It provides a complete Hyprland-based workflow with consistent vim keybindings across all tools and Tokyo Night theming throughout.
+Hypercube is an opinionated, ready-to-use development environment built on [Universal Blue's base-nvidia](https://github.com/ublue-os/main) image with Fedora 44. It provides a complete niri-based workflow with consistent vim keybindings across all tools and Tokyo Night theming throughout.
 
 ## Features
 
@@ -62,14 +35,13 @@ Hypercube is an opinionated, ready-to-use development environment built on [Univ
 Every tool is configured with vim keybindings out of the box:
 
 - **Fish shell** with vi mode enabled
-- **Hyprland** window management via `hjkl` keys
+- **niri** window management via `hjkl` keys
 - **Ghostty terminal** with vim-style pane navigation
 - **Neovim** with LazyVim as the primary editor
 
 ### Desktop Environment
 
-- **Hyprland** - Dynamic tiling Wayland compositor for keyboard-driven efficiency
-- **niri** (preview) - Scrollable-tiling compositor, available as a second session in the greeter with the same Quickshell shell
+- **niri** - Scrollable-tiling Wayland compositor for keyboard-driven efficiency
 - **Quickshell** - Custom shell with notifications, app launcher, system controls, and a temperature dashboard
 
 ### Development Tools
@@ -96,7 +68,7 @@ Tokyo Night color scheme everywhere:
 ## Screenshots
 
 <!-- TODO: Add screenshots
-![Hyprland Desktop](screenshots/desktop.png)
+![Desktop](screenshots/desktop.png)
 ![Neovim Editing](screenshots/neovim.png)
 ![Terminal with Starship](screenshots/terminal.png)
 -->
@@ -147,14 +119,14 @@ Hypercube ships default configurations in `/usr/share/hypercube/config/`. Use th
 # List available configs
 ujust config-list
 
-# Reset a specific app's config (e.g., hyprland)
-ujust config-reset hypr
+# Reset a specific app's config (e.g., niri)
+ujust config-reset niri
 
 # Reset all Hypercube configs
 ujust config-reset
 
 # See differences between your config and defaults
-ujust config-diff hypr
+ujust config-diff niri
 
 # See all differences
 ujust config-diff
@@ -170,7 +142,7 @@ Built on ublue-os/base-main, Hypercube includes:
 
 | Category | Packages |
 |----------|----------|
-| Compositor | Hyprland, Hyprlock, Hypridle, Hyprpaper, Hyprshot; niri (preview session) |
+| Compositor | niri, swaylock, swayidle, swaybg, mate-polkit (admin password prompts), GNOME Keyring |
 | Browsers | Firefox, Brave Origin |
 | Shell | Quickshell (notifications, launcher, system controls) |
 | Terminals | Ghostty |
@@ -186,14 +158,14 @@ Built on ublue-os/base-main, Hypercube includes:
 All configurations live in `/usr/share/hypercube/config/` and are symlinked to `~/.config/` on first login:
 
 - Fish shell with vim mode and Starship prompt
-- Hyprland with vim-style navigation
+- niri with vim-style navigation
 - Neovim with LazyVim distribution
 - Ghostty with Tokyo Night colors
 - GTK/Qt theming with dark mode
 
 ## Documentation
 
-- **[Keybindings Reference](KEYBINDINGS.md)** - Complete keybinding guide for Hyprland, Ghostty, and more
+- **[Keybindings Reference](KEYBINDINGS.md)** - Complete keybinding guide for niri, Ghostty, and more
 - **[Contributing Guide](CONTRIBUTING.md)** - Repository structure, build system, and development workflow
 
 ## Community & Support
@@ -207,7 +179,7 @@ All configurations live in `/usr/share/hypercube/config/` and are symlinked to `
 Hypercube is built on excellent open source projects:
 
 - [Universal Blue](https://universal-blue.org/) - Image-based desktop platform
-- [Hyprland](https://hyprland.org/) - Wayland compositor
+- [niri](https://github.com/niri-wm/niri) - Scrollable-tiling Wayland compositor
 - [Quickshell](https://quickshell.outfoxxed.me/) - Qt6/QML shell toolkit
 - [LazyVim](https://www.lazyvim.org/) - Neovim distribution
 - [Tokyo Night](https://github.com/folke/tokyonight.nvim) - Color scheme

@@ -17,7 +17,7 @@ Singleton {
     property var rightmostScreen: null
 
     // Determine leftmost and rightmost screens from their positions in the
-    // compositor's global layout (works the same on Hyprland and niri)
+    // compositor's global layout
     function updateScreenPositions() {
         let screens = Quickshell.screens
         if (!screens || screens.length === 0) return

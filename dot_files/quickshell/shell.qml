@@ -23,11 +23,11 @@ ShellRoot {
         Services.Thermals.start()
     }
 
-    // Hub always opens on the focused output on niri (it only gives
-    // keyboard focus to layer surfaces there); otherwise keep it where it
-    // last was, falling back to the first screen.
+    // Hub always opens on the focused output (niri only gives keyboard focus
+    // to layer surfaces there); until that is known keep it where it last
+    // was, falling back to the first screen.
     function hubTarget() {
-        return (Services.Compositor.isNiri && Services.Windows.focusedScreen)
+        return Services.Windows.focusedScreen
             || GlobalStates.hubScreen || Quickshell.screens[0]
     }
 

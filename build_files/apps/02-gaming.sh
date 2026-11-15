@@ -23,7 +23,7 @@ sed -i 's@enabled=1@enabled=0@g' /etc/yum.repos.d/fedora-steam.repo
 ### display resolutions; without the binary it crashes (xrandr -> None ->
 ### TypeError). It also probes `vulkaninfo` for GPU/Vulkan detection. Neither
 ### is pulled in on this Wayland-first image, so install them explicitly.
-### xrandr works under the XWayland already provided by Hyprland.
+### xrandr works under the XWayland provided by xwayland-satellite on niri.
 dnf5 -y install \
     lutris \
     vulkan-tools \

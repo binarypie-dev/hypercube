@@ -1,5 +1,5 @@
 # Hypercube Settings
-# System-wide defaults for GTK applications running under Hyprland
+# System-wide defaults for GTK applications
 
 [org/gnome/desktop/interface]
 color-scheme='prefer-dark'
@@ -7,4 +7,4 @@ gtk-theme='Tokyonight-Dark'
 icon-theme='Tokyonight-Dark'
 cursor-theme='Adwaita'
 
-# Note: XKB options are now configured in Hyprland (hyprland.lua)
+# Note: XKB options are configured in niri (dot_files/niri/config.kdl)

@@ -2,9 +2,9 @@
 // NIRI CONFIG - Tokyo Night Theme with Vim-like Keybindings
 // #######################################################################################
 //
-// Hypercube's niri session runs the same Quickshell desktop shell as the
-// Hyprland session. Keybindings follow the Hyprland ones wherever niri has an
-// equivalent, so switching sessions keeps the same muscle memory.
+// Hypercube's desktop: niri with the Quickshell desktop shell (bar, launcher,
+// notifications, OSD, app switcher), swaylock + swayidle for locking, and a
+// polkit agent + GNOME Keyring for passwords and secrets.
 //
 // This file is the system default (/usr/share/hypercube/config/niri/config.kdl).
 // /etc/niri/config.kdl includes it. To customize, create
@@ -33,7 +33,6 @@ input {
         dwt
     }
 
-    // Matches Hyprland's follow_mouse = 1
     focus-follows-mouse
 }
 
@@ -102,8 +101,7 @@ hotkey-overlay {
     skip-at-startup
 }
 
-// Quickshell provides the window switcher on Super+Tab (same as Hyprland), so
-// niri's built-in recent-windows switcher is turned off to free those keys.
+// Quickshell provides the window switcher on Super+Tab, so niri's built-in recent-windows switcher is turned off to free those keys.
 recent-windows {
     off
 }
@@ -116,7 +114,8 @@ recent-windows {
 //
 // Not started here because they run as systemd user services:
 //   - hypercube-polkit-agent.service (wanted by niri.service): the admin
-//     password dialog, used for unlocking LUKS drives, pkexec, ...
+//     password dialog (polkit),
+//     used for unlocking LUKS drives, pkexec, system flatpak installs, ...
 //   - xdg-desktop-portal (+ -gnome/-gtk backends), D-Bus activated
 // GNOME Keyring is started and unlocked by PAM at login (pam_gnome_keyring).
 
@@ -240,10 +239,10 @@ binds {
     XF86AudioPlay  allow-when-locked=true { spawn "playerctl" "play-pause"; }
     XF86AudioPrev  allow-when-locked=true { spawn "playerctl" "previous"; }
 
-    // Screenshots use niri's built-in tool. Gradia (used on Hyprland) goes
-    // through the xdg Screenshot portal, which xdg-desktop-portal-gnome only
-    // serves under GNOME Shell, so it fails in niri. Captures are copied to
-    // the clipboard and saved to ~/Pictures/Screenshots.
+    // Screenshots use niri's built-in tool. Gradia goes through the xdg
+    // Screenshot portal, which xdg-desktop-portal-gnome only serves under
+    // GNOME Shell, so it fails in niri. Captures are copied to the clipboard
+    // and saved to ~/Pictures/Screenshots.
     Print      { screenshot; }
     Ctrl+Print { screenshot-screen; }
     Alt+Print  { screenshot-window; }

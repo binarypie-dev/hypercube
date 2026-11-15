@@ -52,7 +52,7 @@ Compares package versions in spec files against what's currently built in COPR t
 ./scripts/packages/check-copr-versions.sh
 
 # Check specific packages
-./scripts/packages/check-copr-versions.sh starship lazygit uwsm
+./scripts/packages/check-copr-versions.sh starship lazygit quickshell
 
 # Use in scripts (capture JSON output)
 output=$(./scripts/packages/check-copr-versions.sh starship lazygit 2>&1)

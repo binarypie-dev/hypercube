@@ -28,13 +28,10 @@ hypercube/
 │   ├── gitui/                   # Gitui config
 │   ├── gtk-3.0/                 # GTK3 settings
 │   ├── gtk-4.0/                 # GTK4 settings
-│   ├── hypr/                    # Hyprland configs
-│   │   ├── hyprland.lua         # Main compositor config (Lua, 0.55+)
-│   │   ├── hyprland-kiosk.lua   # Kiosk-mode compositor config
-│   │   ├── .luarc.json          # Lua LSP config for editing hyprland.lua
-│   │   ├── hyprlock.conf        # Lock screen
-│   │   ├── hypridle.conf        # Idle management
-│   │   └── hyprpaper.conf       # Wallpaper
+│   ├── niri/                    # niri compositor config (config.kdl)
+│   ├── swayidle/                # Idle management (installed to /etc/swayidle)
+│   ├── swaylock/                # Lock screen (installed to /etc/swaylock)
+│   ├── xdg-desktop-portal/      # Portal routing for niri
 │   ├── devcube/                 # devcube IDE image (Containerfile, devc wrapper)
 │   ├── lazygit/                 # Lazygit config
 │   ├── nvim/                    # Neovim/LazyVim config (baked into devcube)

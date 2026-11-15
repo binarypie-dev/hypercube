@@ -17,7 +17,7 @@ FocusScope {
     // Opening the tab by hand (Ctrl+9 / click) starts a switcher session so
     // selection and Enter work the same as with Mod+Tab
     Component.onCompleted: {
-        if (!Services.Windows.switcherActive && !Services.Windows.switcherPending) {
+        if (!Services.Windows.switcherActive) {
             Services.Windows.startSwitcher(0)
         }
     }
@@ -232,7 +232,7 @@ FocusScope {
 
                     // Workspace
                     Text {
-                        // Hyprland 0.57+ omits workspace.id for special workspaces; fall back to the name
+                        // Fall back to the workspace name if it has no index
                         text: "ws" + (row.modelData.workspace
                             ? (row.modelData.workspace.id ?? row.modelData.workspace.name)
                             : "?")

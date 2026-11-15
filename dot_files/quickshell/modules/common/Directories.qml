@@ -21,10 +21,6 @@ QtObject {
     readonly property string hypercubeCache: cacheHome + "/hypercube"
     readonly property string hypercubeState: stateHome + "/hypercube"
 
-    // Hyprland directories
-    readonly property string hyprlandConfig: configHome + "/hypr"
-    readonly property string hyprlandSocket: runtimeDir + "/hypr"
-
     // Common application directories
     readonly property string applicationsUser: dataHome + "/applications"
     readonly property string applicationsSystem: "/usr/share/applications"

@@ -12,7 +12,7 @@ of three things, and they live in different worlds:
 
 | Press | Talks to | Layer |
 |---|---|---|
-| **`Super` + …** | the OS | Hyprland windows & workspaces |
+| **`Super` + …** | the OS | niri windows & workspaces |
 | **`Ctrl+Space`** then a key | the multiplexer | zellij (inside `devc`): panes, tabs, sessions, agents |
 | **`Space` + …** | the editor | Neovim (LazyVim) |
 
@@ -26,36 +26,38 @@ There is no pane-mode vs tab-mode vs resize-mode to juggle. See
 > panes; Neovim keeps its own `Ctrl+hjkl` for moving between its splits. The two
 > are intentionally separate — Neovim is the editor layer, zellij the mux layer.
 
-## Hyprland Window Management
+## niri Window Management
 
-The **Super** key (Windows/Command key) is the main modifier.
+The **Super** key (Windows/Command key) is the main modifier. niri lays windows
+out as a horizontally scrolling strip of columns per workspace; workspaces are
+stacked vertically. Run `Super + Shift + /` to see every binding.
 
 ### Navigation
 
 | Keybinding | Action |
 |------------|--------|
-| `Super + H` | Focus window left |
-| `Super + J` | Focus window down |
-| `Super + K` | Focus window up |
-| `Super + L` | Focus window right |
+| `Super + H / L` (or `Left / Right`) | Focus column left / right |
+| `Super + J / K` (or `Down / Up`) | Focus window down / up, continuing to the next / previous workspace |
+| `Super + Home / End` | Focus first / last column |
+| `Super + O` | Overview |
 
 ### Window Movement
 
 | Keybinding | Action |
 |------------|--------|
-| `Super + Shift + H` | Move window left |
-| `Super + Shift + J` | Move window down |
-| `Super + Shift + K` | Move window up |
-| `Super + Shift + L` | Move window right |
+| `Super + Shift + H / L` | Move column left / right |
+| `Super + Shift + J / K` | Move window down / up, continuing to the next / previous workspace |
+| `Super + [` / `Super + ]` | Pull window into / push it out of the neighbouring column |
+| `Super + ,` / `Super + .` | Consume window into column / expel it |
 
-### Window Resizing
+### Window Sizing
 
 | Keybinding | Action |
 |------------|--------|
-| `Super + Ctrl + H` | Resize left |
-| `Super + Ctrl + J` | Resize down |
-| `Super + Ctrl + K` | Resize up |
-| `Super + Ctrl + L` | Resize right |
+| `Super + Ctrl + H / L` | Column width -10% / +10% |
+| `Super + Ctrl + J / K` | Window height +10% / -10% |
+| `Super + S` | Cycle column width (1/3, 1/2, 2/3) |
+| `Super + M` | Maximize column |
 
 ### Window Actions
 
@@ -64,8 +66,7 @@ The **Super** key (Windows/Command key) is the main modifier.
 | `Super + C` | Close active window |
 | `Super + V` | Toggle floating |
 | `Super + F` | Toggle fullscreen |
-| `Super + P` | Toggle pseudotile |
-| `Super + S` | Toggle split direction |
+| `Super + W` | Toggle tabbed column |
 
 ### Workspaces
 
@@ -73,9 +74,9 @@ The **Super** key (Windows/Command key) is the main modifier.
 |------------|--------|
 | `Super + 1-0` | Switch to workspace 1-10 |
 | `Super + Shift + 1-0` | Move window to workspace 1-10 |
-| `Super + Mouse Wheel` | Cycle workspaces |
+| `Super + Mouse Wheel` | Cycle workspaces (horizontal wheel: columns) |
 
-### Applications
+### Applications and Session
 
 | Keybinding | Action |
 |------------|--------|
@@ -84,7 +85,13 @@ The **Super** key (Windows/Command key) is the main modifier.
 | `Super + Space` | Open the hub on apps: launcher + quick settings (Quickshell) |
 | `Super + N` | Open the hub on notifications |
 | `Super + Tab` / `Super + Shift + Tab` | Open the hub on windows / step through them; release `Super` to focus |
-| `Super + Shift + L` | Lock screen |
+| `Super + Escape` | Close all panels |
+| `Super + Ctrl + Escape` | Lock screen (swaylock) |
+| `Super + Shift + P` | Turn monitors off |
+| `Super + Shift + E` | Log out (quit niri) |
+| `Print` | Screenshot a region (niri's built-in tool; Space toggles the pointer, Enter confirms) |
+| `Ctrl + Print` | Screenshot the focused monitor |
+| `Alt + Print` | Screenshot the focused window |
 
 ### Mouse
 
@@ -104,47 +111,12 @@ The **Super** key (Windows/Command key) is the main modifier.
 | `Enter` | Launch selected app / focus selected window |
 | `Esc` | Clear search, then close |
 
----
-
-## niri Session (preview)
-
-niri is available as a second session in the greeter, alongside Hyprland
-(which stays the default). It runs the same Quickshell bar, launcher,
-notifications, OSD and app switcher, and keeps the Hyprland keys wherever niri
-has an equivalent: `Super + Q/C/E/N/V/F`, `Super + Space`, `Super + H/J/K/L` (and
-`Shift`/`Ctrl` variants), `Super + 0-9`, `Super + Tab`, `Super + Escape`,
-`Super + Ctrl + Escape` and the multimedia keys all work the same.
-
-niri lays windows out as a horizontally scrolling strip of columns, so a few
-keys differ:
-
-| Keybinding | Action |
-|------------|--------|
-| `Super + H / L` | Focus column left / right |
-| `Super + J / K` | Focus window down / up, continuing to the next / previous workspace |
-| `Super + Shift + H / L` | Move column left / right |
-| `Super + Shift + J / K` | Move window down / up, continuing to the next / previous workspace |
-| `Super + Ctrl + H / L` | Column width -10% / +10% |
-| `Super + Ctrl + J / K` | Window height +10% / -10% |
-| `Super + S` | Cycle column width (1/3, 1/2, 2/3) |
-| `Super + M` | Maximize column |
-| `Super + W` | Toggle tabbed column |
-| `Super + [` / `Super + ]` | Pull window into / push it out of the neighbouring column |
-| `Super + ,` / `Super + .` | Consume window into column / expel it |
-| `Super + O` | Overview |
-| `Super + Shift + /` | Show all niri keybindings |
-| `Super + Shift + E` | Quit niri |
-| `Print` | Screenshot a region (niri's built-in tool; Space toggles the pointer, Enter confirms) |
-| `Ctrl + Print` | Screenshot the focused monitor |
-| `Alt + Print` | Screenshot the focused window |
-
-There is no scratchpad workspace in niri, so `Super + T` / `Super + Shift + T`
-and the Hyprland-only `Super + P` (pseudotile) are not bound.
-
 Config: `/usr/share/hypercube/config/niri/config.kdl`. To customize it, create
 `~/.config/niri/config.kdl` starting with
 `include "/usr/share/hypercube/config/niri/config.kdl"` and add your settings
 after it.
+
+---
 
 ## Ghostty Terminal
 

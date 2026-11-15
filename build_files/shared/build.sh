@@ -15,13 +15,13 @@ rsync -rlpvh /ctx/system_files/shared/ /
 
 ### Run build scripts in order from each phase directory
 # Phase 1: Base system (greetd, portals, hardware)
-# Phase 2: Hyprland desktop
+# Phase 2: Desktop (niri)
 # Phase 3: DX tooling
 # Phase 4: Hypercube theming/branding
 
 BUILD_DIRS=(
     "/ctx/build_files/base"
-    "/ctx/build_files/hyprland"
+    "/ctx/build_files/desktop"
     "/ctx/build_files/dx"
     "/ctx/build_files/apps"
     "/ctx/build_files/hypercube"

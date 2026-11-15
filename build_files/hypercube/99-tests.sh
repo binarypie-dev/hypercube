@@ -12,16 +12,12 @@ REQUIRED_PACKAGES=(
   "greetd"
   "cage"
   "hypercube-utils"
-  # Hyprland stack
-  "hyprland"
-  "hyprlock"
-  "hypridle"
-  "quickshell"
-  # niri session
+  # Desktop (niri session)
   "niri"
   "xwayland-satellite"
-  "swaybg"
   "xdg-desktop-portal-gnome"
+  "quickshell"
+  "swaybg"
   "swaylock"
   "swayidle"
   # Passwords: polkit agent (admin prompts, e.g. unlocking LUKS drives) and
@@ -104,13 +100,13 @@ if ! niri validate -c /etc/niri/config.kdl; then
 fi
 echo "  OK: niri config is valid"
 
-### niri's polkit agent must start with the session, or nothing can ask for
-### the admin password
+### Polkit agent must start with the graphical session, or nothing can ask
+### for the admin password
 if ! systemctl --global is-enabled hypercube-polkit-agent.service &>/dev/null; then
   echo "ERROR: hypercube-polkit-agent.service is not enabled for user sessions!"
   exit 1
 fi
-echo "  OK: hypercube-polkit-agent.service enabled for niri sessions"
+echo "  OK: hypercube-polkit-agent.service enabled for user sessions"
 
 ### greetd's PAM stack must load pam_gnome_keyring so login unlocks the
 ### keyring. Fedora's greetd PAM file lists it as optional ("-auth"), which is
@@ -124,6 +120,15 @@ if [ ! -e /usr/lib64/security/pam_gnome_keyring.so ]; then
   exit 1
 fi
 echo "  OK: greetd PAM stack unlocks GNOME Keyring"
+
+### Hyprland is gone; make sure nothing pulled it back in
+for pkg in hyprland hyprlock hypridle hyprpolkitagent uwsm; do
+  if rpm -q "$pkg" &>/dev/null; then
+    echo "ERROR: '$pkg' should not be installed!"
+    exit 1
+  fi
+done
+echo "  OK: no Hyprland packages installed"
 
 ### Check os-release branding
 if ! grep -q "ID=hypercube" /usr/lib/os-release; then

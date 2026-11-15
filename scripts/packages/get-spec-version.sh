@@ -13,7 +13,7 @@ usage() {
     echo ""
     echo "Examples:"
     echo "  $0 starship"
-    echo "  $0 hyprland"
+    echo "  $0 quickshell"
     exit 1
 }
 
