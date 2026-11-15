@@ -52,15 +52,19 @@ if ((session_up)) && ((have_output)); then
         "udisksctl unlock -b ${loopdev} --key-file ${luks_key} > /var/tmp/ci-udisks.out 2>&1; echo \$? > /var/tmp/ci-udisks.rc" \
         &>/dev/null
 
-    polkit_dialog() {
-        niri_json windows | jq -e 'any(.[]; ((.app_id // "") + " " + (.title // "")) | test("polkit|authenticat"; "i"))'
+    polkit_window() {
+        niri_json windows | jq -ce 'first(.[] | select(((.app_id // "") + " " + (.title // "")) | test("polkit|authenticat"; "i")))'
     }
-    if wait_for 30 polkit_dialog; then
+    if wait_for 30 polkit_window; then
         pass "polkit agent shows a password dialog for the LUKS unlock"
-        echo "    window: $(niri_json windows | jq -r '[.[] | select(((.app_id // "") + " " + (.title // "")) | test("polkit|authenticat"; "i"))][0] | "\(.app_id) — \(.title)"')"
+        dialog="$(polkit_window)"
+        echo "    window: $(jq -r '"\(.app_id) — \(.title) (focused: \(.is_focused))"' <<<"${dialog}")"
         sleep 2
         shot 06-polkit-dialog
         if ((have_wtype)); then
+            # Make sure keystrokes go to the dialog, not whatever had focus
+            in_session niri msg action focus-window --id "$(jq -r .id <<<"${dialog}")" &>/dev/null
+            sleep 1
             type_password
             if wait_for 60 test -s /var/tmp/ci-udisks.rc; then
                 rc="$(cat /var/tmp/ci-udisks.rc)"
@@ -74,6 +78,15 @@ if ((session_up)) && ((have_output)); then
             else
                 fail "udisksctl did not finish within 60s of typing the password"
                 shot 06b-polkit-after-typing
+                echo "    --- focused window"
+                niri_json focused-window | jq -r '"\(.app_id) — \(.title)"' 2>&1 | indent
+                echo "    --- polkit (authentication results)"
+                journalctl -b --no-pager -n 20 -u polkit.service 2>&1 | indent
+                echo "    --- polkit agent"
+                journalctl -b --no-pager -n 20 _UID="${ci_uid}" _COMM=polkit-mate-aut 2>&1 | indent
+                journalctl -b --no-pager -n 10 _COMM=polkit-agent-he 2>&1 | indent
+                echo "    --- udisksctl"
+                indent < /var/tmp/ci-udisks.out 2>/dev/null
             fi
         fi
     else

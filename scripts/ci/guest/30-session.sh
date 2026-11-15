@@ -11,8 +11,14 @@ if ((session_up)); then
     [[ -n "${wl_display}" ]] || wl_display="$(wayland_display_of "${ci_uid}")"
     niri_socket="$(session_var NIRI_SOCKET)"
     [[ -n "${niri_socket}" ]] || niri_socket="$(compgen -G "/run/user/${ci_uid}/niri.*.sock" | head -1)"
-    # Run a command as the test user, inside their session
-    in_session() { user_env WAYLAND_DISPLAY="${wl_display}" NIRI_SOCKET="${niri_socket}" "$@"; }
+    # Run a command as the test user with their session's full environment
+    # (the user manager's, which niri and everything it spawns get:
+    # XDG_CONFIG_DIRS from environment.d, WAYLAND_DISPLAY, NIRI_SOCKET, ...).
+    # Lines systemctl had to shell-quote are skipped.
+    mapfile -t session_env < <(ci_user_systemctl show-environment 2>/dev/null | grep -v "\$'")
+    in_session() {
+        user_env "${session_env[@]}" WAYLAND_DISPLAY="${wl_display}" NIRI_SOCKET="${niri_socket}" "$@"
+    }
     niri_json() { in_session niri msg --json "$@" 2>/dev/null; }
     shot() { screenshot "$1" "${ci_uid}" "${wl_display}"; }
 
@@ -62,8 +68,10 @@ if ((session_up)); then
             ci_user_systemctl status --no-pager --lines=15 "${unit}" 2>&1 | indent
         fi
     done
+    # Match the command line: the kernel's process name is cut at 15
+    # characters (gnome-keyring-daemon shows as "gnome-keyring-d").
     for proc in quickshell swaybg swayidle gnome-keyring-daemon; do
-        if wait_for 20 pgrep -u "${CI_USER}" -x "${proc}"; then
+        if wait_for 20 pgrep -u "${CI_USER}" -f "(^|/)${proc}( |$)"; then
             pass "${proc} is running"
         else
             fail "${proc} is not running"
