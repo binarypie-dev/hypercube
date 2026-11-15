@@ -1,0 +1,4 @@
+# These stages run as one concatenated script (see scripts/ci/vm-smoke.sh):
+# variables set in one file (CI_USER, session_up, failures, ...) are used in
+# later ones, which shellcheck can't see when checking files one at a time.
+disable=SC2034,SC2154
