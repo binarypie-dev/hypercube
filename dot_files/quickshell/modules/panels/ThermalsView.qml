@@ -20,8 +20,17 @@ Flickable {
     // Two cards per row when there is room
     readonly property int cardColumns: Math.max(1, Math.floor(width / 380))
 
+    // Only show the scrollbar (and reserve a gutter for it) when the content
+    // is taller than the view, so it never overlaps the cards
+    readonly property bool needsScroll: contentHeight > height + 1
+    readonly property int scrollGutter: needsScroll
+        ? scrollBar.width + Common.Appearance.spacing.small
+        : 0
+
     ScrollBar.vertical: ScrollBar {
+        id: scrollBar
         policy: ScrollBar.AsNeeded
+        visible: root.needsScroll
         width: 6
 
         contentItem: Rectangle {
@@ -33,10 +42,10 @@ Flickable {
 
     ColumnLayout {
         id: contentColumn
-        width: root.width
+        width: root.width - root.scrollGutter
         spacing: Common.Appearance.spacing.medium
 
-        // Header: title, overall status and the hottest sensor
+        // Header: title and the hottest sensor
         RowLayout {
             Layout.fillWidth: true
             spacing: Common.Appearance.spacing.medium
@@ -64,11 +73,6 @@ Flickable {
                 font.family: Common.Appearance.fonts.mono
                 font.pixelSize: Common.Appearance.fontSize.small
                 color: Common.Appearance.colors.fgDark
-            }
-
-            StatusPill {
-                visible: Services.Thermals.ready
-                level: Services.Thermals.level
             }
         }
 
@@ -253,30 +257,6 @@ Flickable {
             anchors.top: parent.top
             anchors.margins: Common.Appearance.spacing.medium
             spacing: Common.Appearance.spacing.small
-        }
-    }
-
-    // OK / WARM / HOT badge
-    component StatusPill: Rectangle {
-        id: pill
-        property int level: 0
-        readonly property color levelColor: Services.Thermals.levelColor(level, Common.Appearance.colors)
-
-        implicitWidth: pillText.implicitWidth + Common.Appearance.spacing.medium * 2
-        implicitHeight: 18
-        radius: Common.Appearance.rounding.tiny
-        color: Qt.rgba(levelColor.r, levelColor.g, levelColor.b, 0.15)
-        border.width: 1
-        border.color: levelColor
-
-        Text {
-            id: pillText
-            anchors.centerIn: parent
-            text: Services.Thermals.levelName(pill.level)
-            font.family: Common.Appearance.fonts.mono
-            font.pixelSize: Common.Appearance.fontSize.tiny
-            font.bold: true
-            color: pill.levelColor
         }
     }
 
