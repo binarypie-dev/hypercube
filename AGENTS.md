@@ -42,8 +42,8 @@ The smoke checks (`scripts/ci/guest/*.sh`, run in order as one script):
    portal reports dark mode; Quickshell's bar exists, its IPC opens the hub,
    and its log has no QML errors; Ghostty opens a window.
 4. **Polkit and lock**: unlocking a LUKS loop device with udisksctl brings
-   up the polkit agent's password dialog; the password is typed in (wtype,
-   installed on the throwaway disk) and the drive unlocks. Then
+   up the polkit agent's password dialog; the password is typed in on a
+   temporary uinput keyboard and the drive unlocks. Then
    `loginctl lock-session` starts swaylock, and the password unlocks it.
 
 Screenshots of each step end up in `.vm/ci/screenshots/` (a CI artifact). Needs
