@@ -17,8 +17,11 @@ ensure_wtype() {
     timeout 300 dnf5 -y -q install wtype &>/dev/null || timeout 300 dnf -y -q install wtype &>/dev/null
     command -v wtype >/dev/null
 }
+# One wtype call for the text *and* Enter: each call is a new virtual
+# keyboard with its own keymap, and GTK3 (the polkit dialog) ignored the
+# Enter sent by a second one, leaving the typed password unsubmitted.
 type_password() {
-    in_session wtype "${CI_PASSWORD}" && sleep 0.5 && in_session wtype -k Return
+    in_session wtype -d 20 "${CI_PASSWORD}" -s 300 -k Return
 }
 
 if ((session_up)) && ((have_output)); then
