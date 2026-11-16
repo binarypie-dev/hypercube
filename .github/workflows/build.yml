@@ -103,7 +103,7 @@ jobs:
       - name: Upload VM screenshots
         # Greeter, desktop, hub, terminal, polkit dialog, lock screen
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vm-screenshots
           path: .vm/ci/screenshots/*.png
@@ -112,7 +112,7 @@ jobs:
       - name: Upload VM serial log
         # Only the serial log: .vm/ci also holds the throwaway SSH key.
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: vm-serial-log
           path: .vm/ci/serial.log
