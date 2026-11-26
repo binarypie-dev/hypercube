@@ -1,5 +1,5 @@
 Name:           hyprgraphics
-Version:        0.6.0
+Version:        0.7.0
 Release:        1%{?dist}
 Summary:        Hyprland graphics / resource utilities
 
@@ -63,6 +63,8 @@ Development files for %{name}.
 %{_libdir}/pkgconfig/%{name}.pc
 
 %changelog
+* Thu Nov 26 2026 Hypercube <hypercube@binarypie.dev> - 0.7.0-1
+- Update to 0.7.0
 * Wed Nov 04 2026 Hypercube <hypercube@binarypie.dev> - 0.6.0-1
 - Update to 0.6.0
 - libhyprgraphics SONAME 4 -> 5
